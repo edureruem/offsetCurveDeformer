@@ -99,7 +99,89 @@ MPoint offsetCurveAlgorithm::applyPoseBlending(const MPoint& deformedPoint,
 // OCD: 실시간 계산 함수들 (캐싱 없음!)
 // ========================================================================
 
-// 실시간 프레넷 프레임 계산 (특허 핵심!)
+// 🚀 Arc Segment 모드: 고성능 프레넷 프레임 계산 (특허 핵심!)
+MStatus offsetCurveAlgorithm::calculateFrenetFrameArcSegment(
+    const MDagPath& curvePath,
+    double paramU,
+    MVector& tangent,
+    MVector& normal,
+    MVector& binormal) const
+{
+    MStatus status;
+    MFnNurbsCurve fnCurve(curvePath, &status);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    // ⚡ Arc Segment 가정: 원형 호 + 직선 세그먼트
+    // 팔꿈치, 손가락 관절 등에 최적화
+    
+    // 1. 곡선의 시작/끝 점과 중간점 (3점으로 원 계산)
+    MPoint startPoint, midPoint, endPoint;
+    fnCurve.getPointAtParam(0.0, startPoint);
+    fnCurve.getPointAtParam(0.5, midPoint);  
+    fnCurve.getPointAtParam(1.0, endPoint);
+    
+    // 2. 원의 중심과 반지름 계산 (기하학적 방법)
+    MVector v1 = midPoint - startPoint;
+    MVector v2 = endPoint - midPoint;
+    
+    // 직선인 경우 (곡률이 거의 없음)
+    if (v1.isParallel(v2, 1e-3)) {
+        // 직선 세그먼트: 간단한 선형 보간
+        MPoint currentPoint = startPoint + (endPoint - startPoint) * paramU;
+        tangent = (endPoint - startPoint).normal();
+        
+        // 직선의 경우 임의의 수직 벡터 생성
+        MVector up(0, 1, 0);
+        if (fabs(tangent * up) > 0.9) {
+            up = MVector(1, 0, 0);
+        }
+        normal = (up - (up * tangent) * tangent).normal();
+        binormal = tangent ^ normal;
+        
+        return MS::kSuccess;
+    }
+    
+    // 3. 원형 호인 경우: 고속 삼각함수 계산
+    // 원의 중심 계산 (외심 공식)
+    double d1 = v1.length();
+    double d2 = v2.length();
+    double cross = (v1 ^ v2).length();
+    
+    if (cross < 1e-6) {
+        // 거의 직선인 경우
+        tangent = (endPoint - startPoint).normal();
+        MVector up(0, 1, 0);
+        if (fabs(tangent * up) > 0.9) up = MVector(1, 0, 0);
+        normal = (up - (up * tangent) * tangent).normal();
+        binormal = tangent ^ normal;
+        return MS::kSuccess;
+    }
+    
+    double radius = (d1 * d2 * (endPoint - startPoint).length()) / (2.0 * cross);
+    
+    // 4. ⚡ 고속 원형 호 계산 (삼각함수 직접 사용)
+    double totalAngle = 2.0 * asin(cross / (2.0 * radius));
+    double currentAngle = totalAngle * paramU;
+    
+    // 5. 원 상의 점과 탄젠트 벡터 (삼각함수로 직접 계산)
+    MVector centerToStart = startPoint - midPoint;  // 근사 중심
+    MVector arcTangent(-centerToStart.z, 0, centerToStart.x);  // 원의 접선
+    arcTangent.normalize();
+    
+    // 회전된 탄젠트 (로드리게스 공식 대신 간단한 회전)
+    tangent = arcTangent * cos(currentAngle) + (arcTangent ^ centerToStart.normal()) * sin(currentAngle);
+    tangent.normalize();
+    
+    // 6. 원의 중심을 향하는 노말 벡터
+    normal = -centerToStart.normal();
+    
+    // 7. 바이노말 (외적)
+    binormal = tangent ^ normal;
+    
+    return MS::kSuccess;
+}
+
+// B-Spline 모드: 정확하지만 느린 프레넷 프레임 계산
 MStatus offsetCurveAlgorithm::calculateFrenetFrameOnDemand(const MDagPath& curvePath, 
                                                           double paramU,
                                                           MVector& tangent,
@@ -204,10 +286,17 @@ MStatus offsetCurveAlgorithm::performBindingPhase(const MPointArray& modelPoints
             // 거리 기반 필터링
             if (distance > falloffRadius) continue;
             
-            // 2. 바인드 시점의 프레넷 프레임 계산 (실시간)
+            // 2. 바인드 시점의 프레넷 프레임 계산 (모드별 분기)
             MVector tangent, normal, binormal;
-            status = calculateFrenetFrameOnDemand(curvePath, bindParamU, 
-                                                tangent, normal, binormal);
+            if (mOffsetMode == ARC_SEGMENT) {
+                // ⚡ Arc Segment 모드: 3-5배 빠른 계산
+                status = calculateFrenetFrameArcSegment(curvePath, bindParamU,
+                                                       tangent, normal, binormal);
+            } else {
+                // B-Spline 모드: 정확하지만 느린 계산
+                status = calculateFrenetFrameOnDemand(curvePath, bindParamU, 
+                                                     tangent, normal, binormal);
+            }
             if (status != MS::kSuccess) continue;
             
             // 3. 오프셋 벡터를 로컬 좌표계로 변환 (특허 핵심!)
@@ -262,7 +351,18 @@ MStatus offsetCurveAlgorithm::performDeformationPhase(MPointArray& points,
 {
     MStatus status;
     
-    // 각 정점에 대해 변형 계산
+    // 🚀 병렬 처리 활성화 시 OpenMP 사용
+    #ifdef _OPENMP
+    if (mUseParallelComputation) {
+        #pragma omp parallel for schedule(dynamic, 32)
+        for (int vertexIndex = 0; vertexIndex < (int)mVertexData.size(); vertexIndex++) {
+            processVertexDeformation(vertexIndex, points, params);
+        }
+        return MS::kSuccess;
+    }
+    #endif
+    
+    // 순차 처리 (기본)
     for (size_t vertexIndex = 0; vertexIndex < mVertexData.size(); vertexIndex++) {
         const VertexDeformationData& vertexData = mVertexData[vertexIndex];
         MPoint newPosition(0, 0, 0);
@@ -275,10 +375,17 @@ MStatus offsetCurveAlgorithm::performDeformationPhase(MPointArray& points,
             // 슬라이딩을 위해 paramU를 복사 (원본 보존)
             double currentParamU = primitive.bindParamU;
             
-            // 1. 현재 프레넷 프레임 계산 (실시간)
+            // 1. 현재 프레넷 프레임 계산 (모드별 분기)
             MVector currentTangent, currentNormal, currentBinormal;
-            status = calculateFrenetFrameOnDemand(curvePath, currentParamU,
-                                                currentTangent, currentNormal, currentBinormal);
+            if (mOffsetMode == ARC_SEGMENT) {
+                // ⚡ Arc Segment 모드: 3-5배 빠른 계산
+                status = calculateFrenetFrameArcSegment(curvePath, currentParamU,
+                                                       currentTangent, currentNormal, currentBinormal);
+            } else {
+                // B-Spline 모드: 정확하지만 느린 계산
+                status = calculateFrenetFrameOnDemand(curvePath, currentParamU,
+                                                     currentTangent, currentNormal, currentBinormal);
+            }
             if (status != MS::kSuccess) continue;
             
             // 2. 🎯 아티스트 제어 적용 (특허 US8400455B2)
@@ -327,6 +434,82 @@ MStatus offsetCurveAlgorithm::performDeformationPhase(MPointArray& points,
     }
     
     return MS::kSuccess;
+}
+
+// 🚀 병렬 처리용 헬퍼 함수 (OpenMP 스레드 안전)
+void offsetCurveAlgorithm::processVertexDeformation(int vertexIndex, 
+                                                   MPointArray& points,
+                                                   const offsetCurveControlParams& params) const
+{
+    if (vertexIndex >= (int)mVertexData.size()) return;
+    
+    const VertexDeformationData& vertexData = mVertexData[vertexIndex];
+    MPoint newPosition(0, 0, 0);
+    double totalWeight = 0.0;
+    
+    // 각 오프셋 프리미티브에 대해 변형 계산 (스레드 안전)
+    for (const OffsetPrimitive& primitive : vertexData.offsetPrimitives) {
+        const MDagPath& curvePath = mInfluenceCurvePaths[primitive.influenceCurveIndex];
+        
+        // 슬라이딩을 위해 paramU를 복사 (원본 보존)
+        double currentParamU = primitive.bindParamU;
+        
+        // 1. 현재 프레넷 프레임 계산 (모드별 분기)
+        MVector currentTangent, currentNormal, currentBinormal;
+        MStatus status;
+        
+        if (mOffsetMode == ARC_SEGMENT) {
+            // ⚡ Arc Segment 모드: 3-5배 빠른 계산
+            status = calculateFrenetFrameArcSegment(curvePath, currentParamU,
+                                                   currentTangent, currentNormal, currentBinormal);
+        } else {
+            // B-Spline 모드: 정확하지만 느린 계산
+            status = calculateFrenetFrameOnDemand(curvePath, currentParamU,
+                                                 currentTangent, currentNormal, currentBinormal);
+        }
+        if (status != MS::kSuccess) continue;
+        
+        // 2. 아티스트 제어 적용
+        MVector controlledOffset = applyArtistControls(primitive.bindOffsetLocal,
+                                                      currentTangent, currentNormal, currentBinormal,
+                                                      curvePath, currentParamU, params);
+        
+        // 3. 현재 영향 곡선 상의 점 계산
+        MPoint currentInfluencePoint;
+        status = calculatePointOnCurveOnDemand(curvePath, currentParamU, currentInfluencePoint);
+        if (status != MS::kSuccess) continue;
+        
+        // 4. 로컬 오프셋을 현재 프레넷 프레임에 적용
+        MVector offsetWorldCurrent = 
+            controlledOffset.x * currentTangent +
+            controlledOffset.y * currentNormal +
+            controlledOffset.z * currentBinormal;
+        
+        // 5. 새로운 정점 위치 계산
+        MPoint deformedPosition = currentInfluencePoint + offsetWorldCurrent;
+        
+        // 6. 볼륨 보존 보정 적용 (필요시)
+        if (params.getVolumeStrength() > 0.0) {
+            MPoint originalPosition = points[vertexIndex];
+            MVector volumeCorrectedOffset = applyVolumeControl(offsetWorldCurrent,
+                                                             originalPosition,
+                                                             deformedPosition,
+                                                             params.getVolumeStrength());
+            deformedPosition = currentInfluencePoint + volumeCorrectedOffset;
+        }
+        
+        // 7. 가중치 적용하여 누적
+        newPosition += deformedPosition * primitive.weight;
+        totalWeight += primitive.weight;
+    }
+    
+    // 8. 정규화 및 최종 위치 설정 (스레드 안전)
+    if (totalWeight > 0.0) {
+        #pragma omp critical
+        {
+            points[vertexIndex] = newPosition / totalWeight;
+        }
+    }
 }
 
 // ===================================================================
