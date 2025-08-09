@@ -21,8 +21,7 @@
 #include <map>
 #include <memory>
 
-#include "offsetCurveData.h"
-#include "offsetCurveStrategy.h"
+#include "offsetCurveControlParams.h"
 
 // Offset Curve 오프셋 방식 정의
 enum offsetCurveOffsetMode {
@@ -30,50 +29,25 @@ enum offsetCurveOffsetMode {
     B_SPLINE = 1        // B-스플라인 방식
 };
 
-// 정점 데이터 저장 구조체
-struct offsetCurveVertexData {
-    unsigned int vertexIndex;            // 정점 인덱스
-    MPoint originalPosition;             // 원본 위치
-    std::vector<offsetCurveInfluence> influences;   // 영향 데이터
-};
-
-// 아티스트 제어 파라미터 구조체
-struct offsetCurveControlParams {
-    double volumeStrength;       // 볼륨 보존 강도
-    double slideEffect;          // 슬라이딩 효과
-    double rotationDistribution; // 회전 분포
-    double scaleDistribution;    // 스케일 분포
-    double twistDistribution;    // 꼬임 분포
-    double axialSliding;         // 축 방향 슬라이딩
-    double normalOffset;         // 법선 오프셋 강도
-    bool enablePoseBlending;     // 포즈 블렌딩 활성화
-    MPointArray poseTarget;      // 포즈 타겟
-    double poseWeight;           // 포즈 가중치
+// 오프셋 프리미티브: 최소한의 수학적 파라미터만 저장 (실제 곡선 생성 안 함)
+struct OffsetPrimitive {
+    // === 핵심: 4개 값만 저장 ===
+    int influenceCurveIndex;             // 영향 곡선 인덱스 (MDagPath 참조용)
+    double bindParamU;                   // 바인드 시점의 곡선 파라미터 u
+    MVector bindOffsetLocal;             // 바인드 시점의 로컬 오프셋 벡터 (T,N,B 좌표계)
+    double weight;                       // 영향 가중치
     
-    // 기본 생성자
-    offsetCurveControlParams() : 
-        volumeStrength(1.0),
-        slideEffect(0.0),
-        rotationDistribution(1.0),
-        scaleDistribution(1.0),
-        twistDistribution(1.0),
-        axialSliding(0.0),
-        normalOffset(1.0),
-        enablePoseBlending(false),
-        poseWeight(0.0)
-    {}
+    OffsetPrimitive() : 
+        influenceCurveIndex(-1), bindParamU(0.0), weight(0.0) {}
 };
 
-// 병렬 처리를 위한 작업 데이터
-struct offsetCurveTaskData {
-    unsigned int startIdx;
-    unsigned int endIdx;
-    MPointArray* points;
-    const std::vector<offsetCurveData>* curveData;
-    std::map<unsigned int, offsetCurveVertexData>* vertexData;
-    offsetCurveControlParams params;
-    offsetCurveOffsetMode offsetMode;
-    IOffsetCurveStrategy* strategy;
+// 정점 변형 데이터 (단순화)
+struct VertexDeformationData {
+    unsigned int vertexIndex;                    // 정점 인덱스
+    MPoint bindPosition;                         // 바인드 시점의 위치
+    std::vector<OffsetPrimitive> offsetPrimitives; // 핵심: 수학적 파라미터만!
+    
+    VertexDeformationData() : vertexIndex(0) {}
 };
 
 class offsetCurveAlgorithm {
@@ -87,13 +61,21 @@ public:
                        double falloffRadius,
                        int maxInfluences);
     
-    // 변형 계산 (아티스트 제어 파라미터 추가)
+    // === OCD 알고리즘 ===
+    
+    // 바인딩 페이즈: 각 정점에 대한 오프셋 프리미티브 생성 (수학적으로만!)
+    MStatus performBindingPhase(const MPointArray& modelPoints,
+                               const std::vector<MDagPath>& influenceCurves,
+                               double falloffRadius = 10.0,
+                               int maxInfluences = 3);
+    
+    // 변형 페이즈: 정확한 수학 공식으로 변형 계산
+    MStatus performDeformationPhase(MPointArray& points,
+                                   const offsetCurveControlParams& params);
+    
+    // 레거시 호환성 메서드들 (단순화)
     MStatus computeDeformation(MPointArray& points,
                              const offsetCurveControlParams& params);
-    
-    // 오프셋 곡선 계산
-    MStatus computeOffsetCurves(const MPointArray& points,
-                              const std::vector<MDagPath>& curvePaths);
     
     // 병렬 처리 활성화/비활성화
     void enableParallelComputation(bool enable);
@@ -102,67 +84,65 @@ public:
     void setPoseTarget(const MPointArray& poseTarget);
     
 private:
-    // 각 정점의 영향 맵 계산
-    void computeInfluenceWeights(unsigned int vertexIndex,
-                               const MPoint& point,
-                               const std::vector<offsetCurveData>& curves,
-                               double falloffRadius,
-                               int maxInfluences);
-    
-    // 부피 보존 계산 (향상된 알고리즘)
-    MVector computeVolumePreservation(const MPoint& originalPoint,
-                                    const MPoint& deformedPoint,
-                                    const std::vector<offsetCurveInfluence>& influences,
-                                    double volumeStrength);
-    
-    // 슬라이딩 효과 계산 (확장 기능)
-    MPoint computeSlideEffect(const MPoint& originalPoint,
-                            const MPoint& deformedPoint,
-                            const std::vector<offsetCurveInfluence>& influences,
-                            double slideEffect);
-    
-    // 회전 분포 적용
-    void applyRotationDistribution(MMatrix& transformMatrix, 
-                                 const offsetCurveInfluence& influence,
-                                 double rotationFactor);
-    
-    // 스케일 분포 적용
-    void applyScaleDistribution(MMatrix& transformMatrix, 
-                              const offsetCurveInfluence& influence,
-                              double scaleFactor);
-    
-    // 꼬임 분포 적용
-    void applyTwistDistribution(MVector& normal, 
-                              MVector& binormal,
-                              const offsetCurveInfluence& influence,
-                              double twistFactor);
-    
-    // 축 방향 슬라이딩 적용
-    MPoint applyAxialSliding(const MPoint& point,
-                           const offsetCurveInfluence& influence,
-                           double slidingFactor);
-    
-    // 병렬 처리 작업 함수
-    static void parallelDeformationTask(void* data, MThreadRootTask* root);
-    
     // 포즈 블렌딩 적용
     MPoint applyPoseBlending(const MPoint& deformedPoint, 
                            unsigned int vertexIndex,
                            double blendWeight);
-
-private:
-    // 내부 상태 및 데이터
-    offsetCurveOffsetMode mOffsetMode;
-    std::vector<offsetCurveData> mCurveDataList;
-    std::map<unsigned int, offsetCurveVertexData> mVertexDataMap;
-    bool mUseParallelComputation;
+    // === OCD 알고리즘: 최소한의 데이터만 ===
+    offsetCurveOffsetMode mOffsetMode;                          // Arc vs B-spline 모드
+    std::vector<MDagPath> mInfluenceCurvePaths;                 // 영향 곡선 경로들 (데이터 저장 안 함!)
+    std::vector<VertexDeformationData> mVertexData;             // 정점별 오프셋 프리미티브들
     
-    // 전략 패턴 구현
-    std::unique_ptr<IOffsetCurveStrategy> mStrategy;
+    // === 성능 및 기타 ===
+    bool mUseParallelComputation;                               // 병렬 처리 플래그
+    MPointArray mPoseTargetPoints;                              // 포즈 타겟 (선택사항)
     
-    // 입력 메시 및 포즈 데이터
-    MPointArray mOriginalPoints;
-    MPointArray mPoseTargetPoints;
+    // === 실시간 계산 함수들 (캐싱 없음!) ===
+    MStatus calculateFrenetFrameOnDemand(const MDagPath& curvePath, 
+                                        double paramU,
+                                        MVector& tangent,
+                                        MVector& normal, 
+                                        MVector& binormal) const;
+    
+    MStatus calculatePointOnCurveOnDemand(const MDagPath& curvePath,
+                                         double paramU,
+                                         MPoint& point) const;
+    
+    MStatus findClosestPointOnCurveOnDemand(const MDagPath& curvePath,
+                                           const MPoint& modelPoint,
+                                           double& paramU,
+                                           MPoint& closestPoint,
+                                           double& distance) const;
+    
+    // === 아티스트 제어 함수들 (특허 US8400455B2) ===
+    MVector applyTwistControl(const MVector& offsetLocal,
+                             const MVector& tangent,
+                             const MVector& normal,
+                             const MVector& binormal,
+                             double twistAmount,
+                             double paramU) const;
+    
+    MVector applySlideControl(const MVector& offsetLocal,
+                             const MDagPath& curvePath,
+                             double& paramU,
+                             double slideAmount) const;
+    
+    MVector applyScaleControl(const MVector& offsetLocal,
+                             double scaleAmount,
+                             double paramU) const;
+    
+    MVector applyVolumeControl(const MVector& deformedOffset,
+                              const MPoint& originalPosition,
+                              const MPoint& deformedPosition,
+                              double volumeStrength) const;
+    
+    MVector applyArtistControls(const MVector& bindOffsetLocal,
+                               const MVector& currentTangent,
+                               const MVector& currentNormal,
+                               const MVector& currentBinormal,
+                               const MDagPath& curvePath,
+                               double& paramU,
+                               const offsetCurveControlParams& params) const;
 };
 
 #endif // OFFSETCURVEALGORITHM_H

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * offsetCurveControlParams.cpp
  * Offset Curve Deformer의 아티스트 제어 파라미터 클래스 구현
  * 소니 특허(US8400455) 기반 구현
@@ -6,7 +6,7 @@
 
 #include "offsetCurveControlParams.h"
 
- // 생성자
+// 생성자
 offsetCurveControlParams::offsetCurveControlParams()
 {
     // 기본값 초기화
@@ -127,4 +127,3 @@ void offsetCurveControlParams::resetToDefaults()
     mEnablePoseBlending = false;  // 기본 포즈 블렌딩 비활성화
     mPoseWeight = 0.0;           // 기본 포즈 가중치 없음
 }
-

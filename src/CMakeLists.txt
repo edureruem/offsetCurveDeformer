@@ -2,16 +2,13 @@ set(SOURCE_FILES
     "pluginMain.cpp"
     "offsetCurveAlgorithm.cpp"
     "offsetCurveAlgorithm.h"
-    "offsetCurveBinding.cpp"
-    "offsetCurveBinding.h"
+
     "offsetCurveControlParams.cpp"
     "offsetCurveControlParams.h"
-    "offsetCurveData.cpp"
-    "offsetCurveData.h"
+
     "offsetCurveDeformerNode.cpp"
     "offsetCurveDeformerNode.h"
-    "offsetCurveStrategy.cpp"
-    "offsetCurveStrategy.h"
+
 )
 
 find_package(Maya REQUIRED)

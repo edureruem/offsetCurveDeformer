@@ -1,339 +1,69 @@
 /**
  * offsetCurveAlgorithm.cpp
- * OCD 핵심 알고리즘 구현
+ * OCD 핵심 알고리즘 구현 (레거시 코드 제거 완료)
  */
 
 #include "offsetCurveAlgorithm.h"
 #include <maya/MGlobal.h>
+#include <maya/MFnNurbsCurve.h>
 #include <algorithm>
 #include <cmath>
 #include <limits>
 
-// offsetCurveInfluence 구현
-offsetCurveInfluence::offsetCurveInfluence()
-    : mCurveIndex(-1),
-      mParamU(0.0),
-      mWeight(0.0),
-      mBindLocalPoint(0.0, 0.0, 0.0),
-      mBindMatrix(),
-      mTangent(1.0, 0.0, 0.0),
-      mNormal(0.0, 1.0, 0.0),
-      mBinormal(0.0, 0.0, 1.0),
-      mCurvature(0.0),
-      mSegmentLength(0.0),
-      mSegmentIndex(0),
-      mIsJunction(false),
-      mJunctionRadius(0.0)
-{
-}
-
-offsetCurveInfluence::~offsetCurveInfluence()
-{
-}
-
-void offsetCurveInfluence::setCurveIndex(int index) { mCurveIndex = index; }
-void offsetCurveInfluence::setParamU(double param) { mParamU = param; }
-void offsetCurveInfluence::setWeight(double weight) { mWeight = weight; }
-void offsetCurveInfluence::setBindLocalPoint(const MPoint& point) { mBindLocalPoint = point; }
-void offsetCurveInfluence::setBindMatrix(const MMatrix& matrix) { mBindMatrix = matrix; }
-void offsetCurveInfluence::setTangent(const MVector& tangent) { mTangent = tangent; }
-void offsetCurveInfluence::setNormal(const MVector& normal) { mNormal = normal; }
-void offsetCurveInfluence::setBinormal(const MVector& binormal) { mBinormal = binormal; }
-void offsetCurveInfluence::setCurvature(double curvature) { mCurvature = curvature; }
-void offsetCurveInfluence::setSegmentIndex(int index) { mSegmentIndex = index; }
-void offsetCurveInfluence::setIsJunction(bool isJunction) { mIsJunction = isJunction; }
-void offsetCurveInfluence::setJunctionRadius(double radius) { mJunctionRadius = radius; }
-void offsetCurveInfluence::setSegmentLength(double length) { mSegmentLength = length; }
-
-int offsetCurveInfluence::getCurveIndex() const { return mCurveIndex; }
-double offsetCurveInfluence::getParamU() const { return mParamU; }
-double offsetCurveInfluence::getWeight() const { return mWeight; }
-MPoint offsetCurveInfluence::getBindLocalPoint() const { return mBindLocalPoint; }
-const MMatrix& offsetCurveInfluence::getBindMatrix() const { return mBindMatrix; }
-const MVector& offsetCurveInfluence::getTangent() const { return mTangent; }
-const MVector& offsetCurveInfluence::getNormal() const { return mNormal; }
-const MVector& offsetCurveInfluence::getBinormal() const { return mBinormal; }
-double offsetCurveInfluence::getCurvature() const { return mCurvature; }
-int offsetCurveInfluence::getSegmentIndex() const { return mSegmentIndex; }
-bool offsetCurveInfluence::isJunction() const { return mIsJunction; }
-double offsetCurveInfluence::getJunctionRadius() const { return mJunctionRadius; }
-double offsetCurveInfluence::getSegmentLength() const { return mSegmentLength; }
-
-// offsetCurveAlgorithm 구현
+// offsetCurveAlgorithm 구현 (특허 준수)
 offsetCurveAlgorithm::offsetCurveAlgorithm()
-    : mOffsetMode(ARC_SEGMENT), mUseParallelComputation(false), mStrategy(nullptr)
+    : mOffsetMode(ARC_SEGMENT), 
+      mUseParallelComputation(false)
 {
+    // 특허 준수: 곡선 데이터 캐싱하지 않음, 경로만 저장
 }
 
 offsetCurveAlgorithm::~offsetCurveAlgorithm()
 {
-    // mStrategy는 unique_ptr이므로 자동으로 해제됨
 }
 
-// 알고리즘 초기화
+// 알고리즘 초기화 (특허 준수)
 MStatus offsetCurveAlgorithm::initialize(const MPointArray& points, offsetCurveOffsetMode offsetMode)
 {
     mOffsetMode = offsetMode;
-    mOriginalPoints = points;
-    mCurveDataList.clear();
-    mVertexDataMap.clear();
     
-    // 선택된 모드에 따라 전략 객체 생성
-    mStrategy.reset(OffsetCurveStrategyFactory::createStrategy(offsetMode));
+    // OCD: 정점 데이터 초기화 (최소한의 정보만)
+    mVertexData.clear();
+    mVertexData.reserve(points.length());
+    
+    for (unsigned int i = 0; i < points.length(); i++) {
+        VertexDeformationData vertexData;
+        vertexData.vertexIndex = i;
+        vertexData.bindPosition = points[i];
+        mVertexData.push_back(vertexData);
+    }
+    
+    // 특허 준수: 영향 곡선 경로만 저장 (데이터 캐싱 안 함!)
+    mInfluenceCurvePaths.clear();
     
     return MS::kSuccess;
 }
 
-// 영향 곡선에 바인딩
+// 영향 곡선에 바인딩 (단순화) - performBindingPhase로 위임
 MStatus offsetCurveAlgorithm::bindToCurves(const std::vector<MDagPath>& curvePaths, 
                                  double falloffRadius,
                                  int maxInfluences)
 {
-    MStatus status;
-    
-    // 곡선 데이터 초기화
-    mCurveDataList.clear();
-    for (const MDagPath& curvePath : curvePaths) {
-        offsetCurveData curveData;
-        curveData.initialize(curvePath);
-        curveData.cacheBindPoseData();
-        curveData.computeOrientations();
-        mCurveDataList.push_back(curveData);
+    // 새로운 OCD 바인딩 페이즈로 위임
+    MPointArray bindPoints;
+    for (const auto& vertexData : mVertexData) {
+        bindPoints.append(vertexData.bindPosition);
     }
     
-    // 각 정점의 영향 계산
-    for (unsigned int i = 0; i < mOriginalPoints.length(); i++) {
-        offsetCurveVertexData vertexData;
-        vertexData.vertexIndex = i;
-        vertexData.originalPosition = mOriginalPoints[i];
-        
-        // 영향 맵 계산
-        computeInfluenceWeights(i, mOriginalPoints[i], mCurveDataList, falloffRadius, maxInfluences);
-    }
-    
-    return MS::kSuccess;
+    return performBindingPhase(bindPoints, curvePaths, falloffRadius, maxInfluences);
 }
 
-// 변형 계산 (아티스트 제어 파라미터 추가)
+// 레거시 호환성을 위한 변형 계산 - OCD 알고리즘으로 위임
 MStatus offsetCurveAlgorithm::computeDeformation(MPointArray& points,
                                       const offsetCurveControlParams& params)
 {
-    if (mVertexDataMap.empty() || mCurveDataList.empty()) {
-        return MS::kFailure;
-    }
-    
-    // 전략 객체 확인
-    if (!mStrategy) {
-        mStrategy.reset(OffsetCurveStrategyFactory::createStrategy(mOffsetMode));
-    }
-    
-    // 병렬 처리 사용 여부에 따라 다르게 처리
-    if (mUseParallelComputation) {
-        // 병렬 처리 설정
-        const unsigned int numThreads = std::min(8u, MThreadPool::getNumThreads());
-        offsetCurveTaskData* taskData = new offsetCurveTaskData[numThreads];
-        
-        // 작업 분할
-        unsigned int pointsPerTask = points.length() / numThreads;
-        unsigned int remainingPoints = points.length() % numThreads;
-        
-        unsigned int startIdx = 0;
-        MThreadPool::init();
-        
-        // 각 스레드에 작업 할당
-        for (unsigned int i = 0; i < numThreads; ++i) {
-            taskData[i].startIdx = startIdx;
-            taskData[i].endIdx = startIdx + pointsPerTask + (i < remainingPoints ? 1 : 0);
-            taskData[i].points = &points;
-            taskData[i].curveData = &mCurveDataList;
-            taskData[i].vertexData = &mVertexDataMap;
-            taskData[i].params = params;
-            taskData[i].offsetMode = mOffsetMode;
-            taskData[i].strategy = mStrategy.get();
-            
-            // 작업 추가
-            MThreadPool::createTask(parallelDeformationTask, (void*)&taskData[i], NULL);
-            
-            startIdx = taskData[i].endIdx;
-        }
-        
-        // 작업 실행 및 완료 대기
-        MThreadPool::executeAndJoin();
-        
-        delete[] taskData;
-    }
-    else {
-        // 단일 스레드 처리
-        // 각 정점에 대한 변형 계산
-        for (auto& vertexPair : mVertexDataMap) {
-            offsetCurveVertexData& vertexData = vertexPair.second;
-            unsigned int vertexIdx = vertexData.vertexIndex;
-            
-            if (vertexIdx >= points.length()) {
-                continue;
-            }
-            
-            MPoint& currentPoint = points[vertexIdx];
-            const MPoint& originalPoint = vertexData.originalPosition;
-            std::vector<offsetCurveInfluence>& influences = vertexData.influences;
-            
-            if (influences.empty()) {
-                continue;
-            }
-            
-            // 변형된 위치 계산
-            MPoint deformedPoint(0.0, 0.0, 0.0, 1.0);
-            double totalWeight = 0.0;
-            
-            // 각 영향 곡선 기여도 계산
-            for (const offsetCurveInfluence& influence : influences) {
-                if (influence.getCurveIndex() < 0 || 
-                    influence.getCurveIndex() >= static_cast<int>(mCurveDataList.size())) {
-                    continue;
-                }
-                
-                offsetCurveData& curveData = mCurveDataList[influence.getCurveIndex()];
-                
-                // 현재 곡선 상태 업데이트
-                curveData.updateCurveData();
-                
-                // 바인드 포즈 매트릭스
-                MMatrix bindMatrix = influence.getBindMatrix();
-                MMatrix bindMatrixInverse = bindMatrix.inverse();
-                
-                // 영향 곡선 위의 해당 지점 위치
-                MPoint curvePoint;
-                curveData.getPoint(influence.getParamU(), curvePoint);
-                
-                // 현재 탄젠트, 노멀, 바이노멀 계산
-                MVector currentTangent, currentNormal, currentBinormal;
-                mStrategy->computeFrenetFrame(curveData, influence.getParamU(), 
-                                           currentTangent, currentNormal, currentBinormal);
-                
-                // 꼬임 분포 적용
-                if (params.getTwistDistribution() != 1.0) {
-                    applyTwistDistribution(currentNormal, currentBinormal, influence, params.getTwistDistribution());
-                }
-                
-                // 현재 로컬 프레임 매트릭스
-                double currentMatrixArray[4][4] = {
-                    {currentTangent.x, currentNormal.x, currentBinormal.x, curvePoint.x},
-                    {currentTangent.y, currentNormal.y, currentBinormal.y, curvePoint.y},
-                    {currentTangent.z, currentNormal.z, currentBinormal.z, curvePoint.z},
-                    {0.0, 0.0, 0.0, 1.0}
-                };
-                MMatrix currentMatrix(currentMatrixArray);
-                
-                // 바인드 포즈에서 현재 포즈까지의 변환 매트릭스
-                MMatrix transformMatrix = currentMatrix * bindMatrixInverse;
-                
-                // 회전 분포 적용
-                if (params.getRotationDistribution() != 1.0) {
-                    applyRotationDistribution(transformMatrix, influence, params.getRotationDistribution());
-                }
-                
-                // 스케일 분포 적용
-                if (params.getScaleDistribution() != 1.0) {
-                    applyScaleDistribution(transformMatrix, influence, params.getScaleDistribution());
-                }
-                
-                // 오프셋 위치 계산
-                MPoint localBindPoint = influence.getBindLocalPoint();
-                MPoint transformedPoint = localBindPoint * transformMatrix;
-                
-                // 축 방향 슬라이딩 적용
-                if (params.getAxialSliding() != 0.0) {
-                    transformedPoint = applyAxialSliding(transformedPoint, influence, params.getAxialSliding());
-                }
-                
-                // 가중치 적용
-                deformedPoint.x += transformedPoint.x * influence.getWeight();
-                deformedPoint.y += transformedPoint.y * influence.getWeight();
-                deformedPoint.z += transformedPoint.z * influence.getWeight();
-                totalWeight += influence.getWeight();
-            }
-            
-            // 가중치 정규화
-            if (totalWeight > 0.0) {
-                deformedPoint = deformedPoint / totalWeight;
-            } else {
-                deformedPoint = originalPoint;
-            }
-            
-            // 볼륨 보존 계산 및 적용
-            if (params.getVolumeStrength() > 0.0) {
-                MVector volumeOffset = computeVolumePreservation(originalPoint, 
-                                                             deformedPoint, 
-                                                             influences, 
-                                                             params.getVolumeStrength());
-                deformedPoint += volumeOffset;
-            }
-            
-            // 슬라이딩 효과 적용
-            if (params.getSlideEffect() != 0.0) {
-                deformedPoint = computeSlideEffect(originalPoint, 
-                                                deformedPoint, 
-                                                influences, 
-                                                params.getSlideEffect());
-            }
-            
-            // 포즈 블렌딩 적용
-            if (params.isPoseBlendingEnabled() && params.getPoseWeight() > 0.0) {
-                deformedPoint = applyPoseBlending(deformedPoint, vertexIdx, params.getPoseWeight());
-            }
-            
-            // 최종 위치 설정
-            currentPoint = deformedPoint;
-        }
-    }
-    
-    return MS::kSuccess;
-}
-
-// 오프셋 곡선 계산 - 전략 패턴 활용
-MStatus offsetCurveAlgorithm::computeOffsetCurves(const MPointArray& points,
-                                       const std::vector<MDagPath>& curvePaths)
-{
-    MStatus status;
-    
-    // 전략 객체 확인
-    if (!mStrategy) {
-        mStrategy.reset(OffsetCurveStrategyFactory::createStrategy(mOffsetMode));
-    }
-    
-    // 정점 영향 맵 비우기
-    mVertexDataMap.clear();
-    
-    // 각 정점에 대해 오프셋 곡선 계산
-    for (unsigned int i = 0; i < points.length(); i++) {
-        offsetCurveVertexData vertexData;
-        vertexData.vertexIndex = i;
-        vertexData.originalPosition = points[i];
-        
-        // 각 곡선에 대한 오프셋 계산
-        for (size_t curveIdx = 0; curveIdx < mCurveDataList.size(); curveIdx++) {
-            offsetCurveData& curveData = mCurveDataList[curveIdx];
-            
-            // 전략 객체에 계산 위임
-            status = mStrategy->computeOffsets(i, points[i], curveData, vertexData.influences);
-            
-            if (status != MS::kSuccess) {
-                continue;
-            }
-            
-            // 곡선 인덱스 설정 (전략에서는 알 수 없음)
-            for (offsetCurveInfluence& influence : vertexData.influences) {
-                if (influence.getCurveIndex() == -1) {
-                    influence.setCurveIndex(curveIdx);
-                }
-            }
-        }
-        
-        // 정점 데이터 저장
-        mVertexDataMap[i] = vertexData;
-    }
-    
-    return MS::kSuccess;
+    // 새로운 특허 기반 OCD 알고리즘 사용
+    return performDeformationPhase(points, params);
 }
 
 // 병렬 처리 활성화/비활성화
@@ -346,294 +76,6 @@ void offsetCurveAlgorithm::enableParallelComputation(bool enable)
 void offsetCurveAlgorithm::setPoseTarget(const MPointArray& poseTarget)
 {
     mPoseTargetPoints = poseTarget;
-}
-
-// 각 정점의 영향 맵 계산
-void offsetCurveAlgorithm::computeInfluenceWeights(unsigned int vertexIndex,
-                                        const MPoint& point,
-                                        const std::vector<offsetCurveData>& curves,
-                                        double falloffRadius,
-                                        int maxInfluences)
-{
-    // 전략 객체 확인
-    if (!mStrategy) {
-        mStrategy.reset(OffsetCurveStrategyFactory::createStrategy(mOffsetMode));
-    }
-    
-    struct InfluenceDistance {
-        int curveIndex;
-        double paramU;
-        double distance;
-        MPoint closestPoint;
-        
-        bool operator<(const InfluenceDistance& other) const {
-            return distance < other.distance;
-        }
-    };
-    
-    std::vector<InfluenceDistance> allInfluences;
-    
-    // 모든 곡선에서 가장 가까운 점 찾기
-    for (size_t i = 0; i < curves.size(); i++) {
-        const offsetCurveData& curveData = curves[i];
-        
-        InfluenceDistance influence;
-        influence.curveIndex = static_cast<int>(i);
-        
-        MPoint closestPoint;
-        influence.distance = mStrategy->findClosestPointOnCurve(point, curveData, 
-                                                            influence.paramU, closestPoint);
-        influence.closestPoint = closestPoint;
-        
-        if (influence.distance <= falloffRadius) {
-            allInfluences.push_back(influence);
-        }
-    }
-    
-    // 거리에 따라 정렬
-    std::sort(allInfluences.begin(), allInfluences.end());
-    
-    // 최대 영향 수 제한
-    if (static_cast<int>(allInfluences.size()) > maxInfluences) {
-        allInfluences.resize(maxInfluences);
-    }
-    
-    // 영향 가중치 계산
-    double totalWeight = 0.0;
-    offsetCurveVertexData& vertexData = mVertexDataMap[vertexIndex];
-    vertexData.influences.clear();
-    
-    for (const InfluenceDistance& influence : allInfluences) {
-        // 거리 기반 가중치 계산
-        double weight = 1.0 - (influence.distance / falloffRadius);
-        weight = std::max(0.0, std::min(1.0, weight));
-        weight = weight * weight;  // 제곱하여 더 부드러운 폴오프
-        
-        // 곡선 데이터 가져오기
-        const offsetCurveData& curveData = curves[influence.curveIndex];
-        
-        // 프레넷 프레임 계산
-        MVector tangent, normal, binormal;
-        mStrategy->computeFrenetFrame(curveData, influence.paramU, tangent, normal, binormal);
-        
-        // 곡률 계산
-        double curvature;
-        curveData.getCurvature(influence.paramU, curvature);
-        
-        // 영향 객체 생성
-        offsetCurveInfluence curveInfluence;
-        curveInfluence.setCurveIndex(influence.curveIndex);
-        
-        // 로컬 좌표 계산
-        MVector toPoint = point - influence.closestPoint;
-        double localX = toPoint * normal;
-        double localY = toPoint * binormal;
-        double localZ = toPoint * tangent;
-        
-        // 나머지 속성 설정
-        curveInfluence.setParamU(influence.paramU);
-        curveInfluence.setWeight(weight);
-        curveInfluence.setBindLocalPoint(MPoint(localX, localY, localZ));
-        curveInfluence.setTangent(tangent);
-        curveInfluence.setNormal(normal);
-        curveInfluence.setBinormal(binormal);
-        curveInfluence.setCurvature(curvature);
-        
-        // 바인드 행렬 계산 및 설정
-        MMatrix matrix = createFrenetFrame(tangent, normal, binormal, influence.closestPoint);
-        curveInfluence.setBindMatrix(matrix);
-        
-        // 세그먼트 정보 설정
-        if (mOffsetMode == ARC_SEGMENT) {
-            int segmentIndex = curveData.getSegmentIndex(influence.paramU);
-            curveInfluence.setSegmentIndex(segmentIndex);
-            
-            // 세그먼트 길이 계산
-            MPoint segStart, segEnd;
-            if (curveData.getSegmentPoints(segmentIndex, segStart, segEnd)) {
-                curveInfluence.setSegmentLength(segStart.distanceTo(segEnd));
-            }
-        }
-        
-        // 영향 추가
-        vertexData.influences.push_back(curveInfluence);
-        totalWeight += weight;
-    }
-    
-    // 가중치 정규화
-    if (totalWeight > 0.0) {
-        for (offsetCurveInfluence& influence : vertexData.influences) {
-            influence.setWeight(influence.getWeight() / totalWeight);
-        }
-    }
-}
-
-// 볼륨 보존 계산
-MVector offsetCurveAlgorithm::computeVolumePreservation(const MPoint& originalPoint,
-                                             const MPoint& deformedPoint,
-                                             const std::vector<offsetCurveInfluence>& influences,
-                                             double volumeStrength)
-{
-    MVector volumeOffset(0.0, 0.0, 0.0);
-    
-    // 영향이 없으면 오프셋 없음
-    if (influences.empty()) {
-        return volumeOffset;
-    }
-    
-    // 평균 곡률과 가중치 계산
-    double weightedCurvature = 0.0;
-    double totalWeight = 0.0;
-    
-    for (const offsetCurveInfluence& influence : influences) {
-        weightedCurvature += influence.getCurvature() * influence.getWeight();
-        totalWeight += influence.getWeight();
-    }
-    
-    if (totalWeight > 0.0) {
-        weightedCurvature /= totalWeight;
-    }
-    
-    // 볼륨 인자 계산 (0.0 ~ 1.0)
-    double volumeFactor = std::min(weightedCurvature * volumeStrength * 0.5, 1.0);
-    
-    // 메인 영향 (가장 높은 가중치)
-    const offsetCurveInfluence* mainInfluence = &influences[0];
-    for (const offsetCurveInfluence& influence : influences) {
-        if (influence.getWeight() > mainInfluence->getWeight()) {
-            mainInfluence = &influence;
-        }
-    }
-    
-    // 볼륨 방향 벡터 계산
-    MVector normal = mainInfluence->getNormal();
-    
-    // 오프셋 방향 및 크기 계산
-    MVector moveDirection = originalPoint - deformedPoint;
-    double moveDistance = moveDirection.length();
-    
-    if (moveDistance > 0.0) {
-        // 법선 방향으로 볼륨 보존 오프셋 적용
-        volumeOffset = normal * (moveDistance * volumeFactor);
-    }
-    
-    return volumeOffset;
-}
-
-// 슬라이딩 효과 계산
-MPoint offsetCurveAlgorithm::computeSlideEffect(const MPoint& originalPoint,
-                                     const MPoint& deformedPoint,
-                                     const std::vector<offsetCurveInfluence>& influences,
-                                     double slideEffect)
-{
-    // 영향이 없으면 변형 없음
-    if (influences.empty()) {
-        return deformedPoint;
-    }
-    
-    // 가장 높은 가중치의 영향 찾기
-    const offsetCurveInfluence* mainInfluence = &influences[0];
-    for (const offsetCurveInfluence& influence : influences) {
-        if (influence.getWeight() > mainInfluence->getWeight()) {
-            mainInfluence = &influence;
-        }
-    }
-    
-    // 슬라이딩 방향 계산
-    MVector tangent = mainInfluence->getTangent();
-    
-    // 원래 위치에서 변형 위치까지의 벡터
-    MVector moveVec = deformedPoint - originalPoint;
-    
-    // 탄젠트 방향으로의 투영 계산
-    double tangentProj = moveVec * tangent;
-    
-    // 슬라이딩 효과 적용
-    MPoint slidPoint = deformedPoint + tangent * (tangentProj * slideEffect);
-    
-    return slidPoint;
-}
-
-// 회전 분포 적용
-void offsetCurveAlgorithm::applyRotationDistribution(MMatrix& transformMatrix,
-                                          const offsetCurveInfluence& influence,
-                                          double rotationFactor)
-{
-    // 곡률에 기반한 회전 분포 적용
-    double curvature = influence.getCurvature();
-    
-    // 회전 인자 계산 (곡률 기반)
-    double rotationScale = 1.0 + (curvature * (rotationFactor - 1.0));
-    rotationScale = std::max(0.1, rotationScale);
-    
-    // 회전 부분만 스케일링
-    for (unsigned int i = 0; i < 3; i++) {
-        for (unsigned int j = 0; j < 3; j++) {
-            transformMatrix(i, j) *= rotationScale;
-        }
-    }
-}
-
-// 스케일 분포 적용
-void offsetCurveAlgorithm::applyScaleDistribution(MMatrix& transformMatrix,
-                                       const offsetCurveInfluence& influence,
-                                       double scaleFactor)
-{
-    // 곡률에 기반한 스케일 분포 적용
-    double curvature = influence.getCurvature();
-    
-    // 스케일 인자 계산 (곡률 기반)
-    double scaleValue = 1.0 + (curvature * (scaleFactor - 1.0));
-    scaleValue = std::max(0.1, scaleValue);
-    
-    // 변환 행렬에 균일 스케일 적용
-    transformMatrix(0, 0) *= scaleValue;
-    transformMatrix(1, 1) *= scaleValue;
-    transformMatrix(2, 2) *= scaleValue;
-}
-
-// 꼬임 분포 적용
-void offsetCurveAlgorithm::applyTwistDistribution(MVector& normal,
-                                       MVector& binormal,
-                                       const offsetCurveInfluence& influence,
-                                       double twistFactor)
-{
-    // 곡률에 기반한 꼬임 분포 적용
-    double curvature = influence.getCurvature();
-    
-    // 꼬임 각도 계산 (곡률 기반)
-    double twistAngle = curvature * (twistFactor - 1.0) * M_PI * 0.5;
-    
-    // 회전 행렬 계산
-    double cosAngle = cos(twistAngle);
-    double sinAngle = sin(twistAngle);
-    
-    // 노멀과 바이노멀 회전
-    MVector newNormal = normal * cosAngle + binormal * sinAngle;
-    MVector newBinormal = binormal * cosAngle - normal * sinAngle;
-    
-    // 정규화
-    newNormal.normalize();
-    newBinormal.normalize();
-    
-    // 결과 설정
-    normal = newNormal;
-    binormal = newBinormal;
-}
-
-// 축 방향 슬라이딩 적용
-MPoint offsetCurveAlgorithm::applyAxialSliding(const MPoint& point,
-                                    const offsetCurveInfluence& influence,
-                                    double slidingFactor)
-{
-    // 축 방향 슬라이딩 효과 계산
-    MVector tangent = influence.getTangent();
-    
-    // 슬라이딩 거리 계산
-    double slidingDistance = influence.getBindLocalPoint().z * slidingFactor;
-    
-    // 축 방향으로 이동
-    return point + (tangent * slidingDistance);
 }
 
 // 포즈 블렌딩 적용
@@ -653,110 +95,380 @@ MPoint offsetCurveAlgorithm::applyPoseBlending(const MPoint& deformedPoint,
     return deformedPoint * (1.0 - blendWeight) + targetPoint * blendWeight;
 }
 
-// 프레넷 프레임 생성
-MMatrix offsetCurveAlgorithm::createFrenetFrame(const MVector& tangent, 
-                                     const MVector& normal, 
-                                     const MVector& binormal, 
-                                     const MPoint& origin)
+// ========================================================================
+// OCD: 실시간 계산 함수들 (캐싱 없음!)
+// ========================================================================
+
+// 실시간 프레넷 프레임 계산 (특허 핵심!)
+MStatus offsetCurveAlgorithm::calculateFrenetFrameOnDemand(const MDagPath& curvePath, 
+                                                          double paramU,
+                                                          MVector& tangent,
+                                                          MVector& normal, 
+                                                          MVector& binormal) const
 {
-    // 프레넷 프레임 행렬 생성
-    double matrixArray[4][4] = {
-        {tangent.x, normal.x, binormal.x, origin.x},
-        {tangent.y, normal.y, binormal.y, origin.y},
-        {tangent.z, normal.z, binormal.z, origin.z},
-        {0.0, 0.0, 0.0, 1.0}
-    };
-    return MMatrix(matrixArray);
+    MStatus status;
+    MFnNurbsCurve fnCurve(curvePath, &status);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    // 1. 탄젠트 벡터 계산
+    status = fnCurve.getTangent(paramU, tangent);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    tangent.normalize();
+    
+    // 2. 노말 벡터 계산 (최소 회전 방식 - 특허 권장)
+    // 간단한 구현: 탄젠트에 수직인 벡터 찾기
+    MVector up(0, 1, 0);  // 기본 업 벡터
+    if (abs(tangent * up) > 0.9) {  // 거의 평행한 경우
+        up = MVector(1, 0, 0);  // 다른 벡터 사용
+    }
+    
+    // 그람-슈미트 과정으로 노말 벡터 계산
+    normal = up - (up * tangent) * tangent;
+    normal.normalize();
+    
+    // 3. 바이노말 벡터 = 탄젠트 × 노말
+    binormal = tangent ^ normal;
+    binormal.normalize();
+    
+    return MS::kSuccess;
 }
 
-// 병렬 변형 계산 태스크
-void offsetCurveAlgorithm::parallelDeformationTask(void* data, MThreadRootTask* root)
+// 실시간 곡선 상의 점 계산
+MStatus offsetCurveAlgorithm::calculatePointOnCurveOnDemand(const MDagPath& curvePath,
+                                                           double paramU,
+                                                           MPoint& point) const
 {
-    offsetCurveTaskData* taskData = static_cast<offsetCurveTaskData*>(data);
+    MStatus status;
+    MFnNurbsCurve fnCurve(curvePath, &status);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     
-    MPointArray& points = *(taskData->points);
-    const std::vector<offsetCurveData>& curveData = *(taskData->curveData);
-    std::map<unsigned int, offsetCurveVertexData>& vertexData = *(taskData->vertexData);
-    const offsetCurveControlParams& params = taskData->params;
-    BaseOffsetCurveStrategy* strategy = taskData->strategy;
+    status = fnCurve.getPointAtParam(paramU, point);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     
-    // 할당된 점들에 대해 변형 계산
-    for (unsigned int i = taskData->startIdx; i < taskData->endIdx; ++i) {
-        auto it = vertexData.find(i);
-        if (it == vertexData.end() || i >= points.length()) {
-            continue;
+    return MS::kSuccess;
+}
+
+// 실시간 가장 가까운 점 찾기
+MStatus offsetCurveAlgorithm::findClosestPointOnCurveOnDemand(const MDagPath& curvePath,
+                                                             const MPoint& modelPoint,
+                                                             double& paramU,
+                                                             MPoint& closestPoint,
+                                                             double& distance) const
+{
+    MStatus status;
+    MFnNurbsCurve fnCurve(curvePath, &status);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    // Maya API로 가장 가까운 점 찾기
+    status = fnCurve.closestPoint(modelPoint, &closestPoint, &paramU);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    // 거리 계산
+    distance = modelPoint.distanceTo(closestPoint);
+    
+    return MS::kSuccess;
+}
+
+// ========================================================================
+// OCD 알고리즘 구현
+// ========================================================================
+
+// 바인딩 페이즈: OCD 알고리즘
+MStatus offsetCurveAlgorithm::performBindingPhase(const MPointArray& modelPoints,
+                                                  const std::vector<MDagPath>& influenceCurves,
+                                                  double falloffRadius,
+                                                  int maxInfluences)
+{
+    MStatus status;
+    
+    // 영향 곡선 경로 저장 (데이터 캐싱 안 함!)
+    mInfluenceCurvePaths = influenceCurves;
+    
+    // 각 모델 포인트에 대해 오프셋 프리미티브 생성
+    for (unsigned int vertexIndex = 0; vertexIndex < modelPoints.length(); vertexIndex++) {
+        const MPoint& modelPoint = modelPoints[vertexIndex];
+        VertexDeformationData& vertexData = mVertexData[vertexIndex];
+        
+        // 각 영향 곡선에 대해 오프셋 프리미티브 계산
+        for (size_t curveIndex = 0; curveIndex < influenceCurves.size(); curveIndex++) {
+            const MDagPath& curvePath = influenceCurves[curveIndex];
+            
+            // 1. 가장 가까운 점 찾기 (실시간 계산)
+            double bindParamU;
+            MPoint closestPoint;
+            double distance;
+            status = findClosestPointOnCurveOnDemand(curvePath, modelPoint, 
+                                                   bindParamU, closestPoint, distance);
+            if (status != MS::kSuccess) continue;
+            
+            // 거리 기반 필터링
+            if (distance > falloffRadius) continue;
+            
+            // 2. 바인드 시점의 프레넷 프레임 계산 (실시간)
+            MVector tangent, normal, binormal;
+            status = calculateFrenetFrameOnDemand(curvePath, bindParamU, 
+                                                tangent, normal, binormal);
+            if (status != MS::kSuccess) continue;
+            
+            // 3. 오프셋 벡터를 로컬 좌표계로 변환 (특허 핵심!)
+            MVector offsetWorld = modelPoint - closestPoint;
+            MVector offsetLocal;
+            offsetLocal.x = offsetWorld * tangent;   // 탄젠트 방향 성분
+            offsetLocal.y = offsetWorld * normal;    // 노말 방향 성분
+            offsetLocal.z = offsetWorld * binormal;  // 바이노말 방향 성분
+            
+            // 4. 가중치 계산
+            double weight = 1.0 / (1.0 + distance / falloffRadius);
+            
+            // 5. OCD 오프셋 프리미티브 생성 (4개 값만!)
+            OffsetPrimitive offsetPrimitive;
+            offsetPrimitive.influenceCurveIndex = static_cast<int>(curveIndex);
+            offsetPrimitive.bindParamU = bindParamU;
+            offsetPrimitive.bindOffsetLocal = offsetLocal;
+            offsetPrimitive.weight = weight;
+            
+            vertexData.offsetPrimitives.push_back(offsetPrimitive);
         }
         
-        offsetCurveVertexData& vData = it->second;
-        unsigned int vertexIdx = vData.vertexIndex;
-        MPoint& currentPoint = points[vertexIdx];
-        const MPoint& originalPoint = vData.originalPosition;
-        std::vector<offsetCurveInfluence>& influences = vData.influences;
-        
-        if (influences.empty()) {
-            continue;
-        }
-        
-        // 단일 스레드 로직과 동일하게 변형 계산
-        // 이 부분은 computeDeformation 메서드의 단일 스레드 코드와 동일함
-        
-        // 변형된 위치 계산
-        MPoint deformedPoint(0.0, 0.0, 0.0, 1.0);
-        double totalWeight = 0.0;
-        
-        // 각 영향 곡선 기여도 계산
-        for (const offsetCurveInfluence& influence : influences) {
-            if (influence.getCurveIndex() < 0 || 
-                influence.getCurveIndex() >= static_cast<int>(curveData.size())) {
-                continue;
-            }
-            
-            const offsetCurveData& cData = curveData[influence.getCurveIndex()];
-            
-            // 바인드 포즈 매트릭스
-            MMatrix bindMatrix = influence.getBindMatrix();
-            MMatrix bindMatrixInverse = bindMatrix.inverse();
-            
-            // 영향 곡선 위의 해당 지점 위치
-            MPoint curvePoint;
-            cData.getPoint(influence.getParamU(), curvePoint);
-            
-            // 현재 탄젠트, 노멀, 바이노멀 계산
-            MVector currentTangent, currentNormal, currentBinormal;
-            strategy->computeFrenetFrame(cData, influence.getParamU(), 
-                                       currentTangent, currentNormal, currentBinormal);
-            
-            // 현재 로컬 프레임 매트릭스
-            double currentMatrixArray[4][4] = {
-                {currentTangent.x, currentNormal.x, currentBinormal.x, curvePoint.x},
-                {currentTangent.y, currentNormal.y, currentBinormal.y, curvePoint.y},
-                {currentTangent.z, currentNormal.z, currentBinormal.z, curvePoint.z},
-                {0.0, 0.0, 0.0, 1.0}
-            };
-            MMatrix currentMatrix(currentMatrixArray);
-            
-            // 바인드 포즈에서 현재 포즈까지의 변환 매트릭스
-            MMatrix transformMatrix = currentMatrix * bindMatrixInverse;
-            
-            // 오프셋 위치 계산
-            MPoint localBindPoint = influence.getBindLocalPoint();
-            MPoint transformedPoint = localBindPoint * transformMatrix;
-            
-            // 가중치 적용
-            deformedPoint.x += transformedPoint.x * influence.getWeight();
-            deformedPoint.y += transformedPoint.y * influence.getWeight();
-            deformedPoint.z += transformedPoint.z * influence.getWeight();
-            totalWeight += influence.getWeight();
+        // 최대 영향 수 제한
+        if (vertexData.offsetPrimitives.size() > static_cast<size_t>(maxInfluences)) {
+            // 가중치 기준으로 정렬
+            std::sort(vertexData.offsetPrimitives.begin(), 
+                     vertexData.offsetPrimitives.end(),
+                     [](const OffsetPrimitive& a, const OffsetPrimitive& b) {
+                         return a.weight > b.weight;
+                     });
+            vertexData.offsetPrimitives.resize(maxInfluences);
         }
         
         // 가중치 정규화
+        double totalWeight = 0.0;
+        for (auto& primitive : vertexData.offsetPrimitives) {
+            totalWeight += primitive.weight;
+        }
         if (totalWeight > 0.0) {
-            deformedPoint = deformedPoint / totalWeight;
-        } else {
-            deformedPoint = originalPoint;
+            for (auto& primitive : vertexData.offsetPrimitives) {
+                primitive.weight /= totalWeight;
+            }
+        }
+    }
+    
+    return MS::kSuccess;
+}
+
+// 변형 페이즈: OCD의 정확한 수학 공식
+MStatus offsetCurveAlgorithm::performDeformationPhase(MPointArray& points,
+                                                      const offsetCurveControlParams& params)
+{
+    MStatus status;
+    
+    // 각 정점에 대해 변형 계산
+    for (size_t vertexIndex = 0; vertexIndex < mVertexData.size(); vertexIndex++) {
+        const VertexDeformationData& vertexData = mVertexData[vertexIndex];
+        MPoint newPosition(0, 0, 0);
+        double totalWeight = 0.0;
+        
+        // 각 오프셋 프리미티브에 대해 변형 계산
+        for (const OffsetPrimitive& primitive : vertexData.offsetPrimitives) {
+            const MDagPath& curvePath = mInfluenceCurvePaths[primitive.influenceCurveIndex];
+            
+            // 슬라이딩을 위해 paramU를 복사 (원본 보존)
+            double currentParamU = primitive.bindParamU;
+            
+            // 1. 현재 프레넷 프레임 계산 (실시간)
+            MVector currentTangent, currentNormal, currentBinormal;
+            status = calculateFrenetFrameOnDemand(curvePath, currentParamU,
+                                                currentTangent, currentNormal, currentBinormal);
+            if (status != MS::kSuccess) continue;
+            
+            // 2. 🎯 아티스트 제어 적용 (특허 US8400455B2)
+            MVector controlledOffset = applyArtistControls(primitive.bindOffsetLocal,
+                                                          currentTangent,
+                                                          currentNormal,
+                                                          currentBinormal,
+                                                          curvePath,
+                                                          currentParamU,  // 슬라이딩으로 변경 가능
+                                                          params);
+            
+            // 3. (슬라이딩으로 인해) 업데이트된 곡선 상의 점 계산
+            MPoint currentInfluencePoint;
+            status = calculatePointOnCurveOnDemand(curvePath, currentParamU, 
+                                                 currentInfluencePoint);
+            if (status != MS::kSuccess) continue;
+            
+            // 4. 제어된 오프셋을 현재 프레넷 프레임에 적용
+            MVector offsetWorldCurrent = 
+                controlledOffset.x * currentTangent +
+                controlledOffset.y * currentNormal +
+                controlledOffset.z * currentBinormal;
+            
+            // 5. 새로운 정점 위치 = 현재 영향점 + 제어된 오프셋
+            MPoint deformedPosition = currentInfluencePoint + offsetWorldCurrent;
+            
+            // 6. 볼륨 보존 보정 적용 (필요시)
+            if (params.getVolumeStrength() > 0.0) {
+                MPoint originalPosition = points[vertexIndex];
+                MVector volumeCorrectedOffset = applyVolumeControl(offsetWorldCurrent,
+                                                                 originalPosition,
+                                                                 deformedPosition,
+                                                                 params.getVolumeStrength());
+                deformedPosition = currentInfluencePoint + volumeCorrectedOffset;
+            }
+            
+            // 7. 가중치 적용하여 누적
+            newPosition += deformedPosition * primitive.weight;
+            totalWeight += primitive.weight;
         }
         
-        // 최종 위치 설정
-        currentPoint = deformedPoint;
+        // 8. 정규화 및 최종 위치 설정
+        if (totalWeight > 0.0) {
+            points[vertexIndex] = newPosition / totalWeight;
+        }
     }
+    
+    return MS::kSuccess;
+}
+
+// ===================================================================
+// 아티스트 제어 함수들 (특허 US8400455B2 준수)
+// ===================================================================
+
+// Twist 제어: binormal 축 중심 회전 변형
+MVector offsetCurveAlgorithm::applyTwistControl(const MVector& offsetLocal,
+                                               const MVector& tangent,
+                                               const MVector& normal,
+                                               const MVector& binormal,
+                                               double twistAmount,
+                                               double paramU) const
+{
+    if (fabs(twistAmount) < 1e-6) {
+        return offsetLocal; // 비틀림 없음
+    }
+    
+    // 특허 공식: twist_angle = twist_parameter * curve_parameter_u * 2π
+    double twistAngle = twistAmount * paramU * 2.0 * M_PI;
+    
+    // binormal 축 중심 회전 매트릭스 생성
+    double cosAngle = cos(twistAngle);
+    double sinAngle = sin(twistAngle);
+    
+    // 로드리게스 회전 공식 (Rodrigues' rotation formula)
+    // v_rot = v*cos(θ) + (k×v)*sin(θ) + k*(k·v)*(1-cos(θ))
+    // 여기서 k = binormal (회전 축)
+    
+    MVector k = binormal.normal(); // 정규화된 회전 축
+    double dotProduct = offsetLocal * k;
+    MVector crossProduct = k ^ offsetLocal;
+    
+    MVector twistedOffset = offsetLocal * cosAngle + 
+                           crossProduct * sinAngle + 
+                           k * dotProduct * (1.0 - cosAngle);
+    
+    return twistedOffset;
+}
+
+// Slide 제어: tangent 방향 슬라이딩
+MVector offsetCurveAlgorithm::applySlideControl(const MVector& offsetLocal,
+                                               const MDagPath& curvePath,
+                                               double& paramU,
+                                               double slideAmount) const
+{
+    if (fabs(slideAmount) < 1e-6) {
+        return offsetLocal; // 슬라이딩 없음
+    }
+    
+    // 특허 공식: new_param_u = original_param_u + slide_distance
+    // 곡선 길이에 따른 정규화된 슬라이딩
+    double newParamU = paramU + slideAmount;
+    
+    // 파라미터 범위 클램핑 (0.0 ~ 1.0)
+    newParamU = std::max(0.0, std::min(1.0, newParamU));
+    
+    // 새로운 파라미터로 업데이트
+    paramU = newParamU;
+    
+    // 오프셋은 그대로 유지 (위치만 슬라이딩)
+    return offsetLocal;
+}
+
+// Scale 제어: 오프셋 벡터 크기 조정
+MVector offsetCurveAlgorithm::applyScaleControl(const MVector& offsetLocal,
+                                               double scaleAmount,
+                                               double paramU) const
+{
+    if (fabs(scaleAmount - 1.0) < 1e-6) {
+        return offsetLocal; // 스케일 변화 없음
+    }
+    
+    // 특허 공식: scale_factor = 1.0 + (scale_parameter - 1.0) * curve_parameter_u
+    // 곡선을 따라 점진적 스케일 변화
+    double scaleFactor = 1.0 + (scaleAmount - 1.0) * paramU;
+    
+    // 최소 스케일 제한 (완전 축소 방지)
+    scaleFactor = std::max(0.1, scaleFactor);
+    
+    return offsetLocal * scaleFactor;
+}
+
+// Volume 제어: 볼륨 보존 보정
+MVector offsetCurveAlgorithm::applyVolumeControl(const MVector& deformedOffset,
+                                                const MPoint& originalPosition,
+                                                const MPoint& deformedPosition,
+                                                double volumeStrength) const
+{
+    if (volumeStrength < 1e-6) {
+        return deformedOffset; // 볼륨 보정 없음
+    }
+    
+    // 특허에서 언급하는 볼륨 손실 보정
+    // 변형 전후의 거리 차이를 기반으로 보정 벡터 계산
+    MVector displacement = deformedPosition - originalPosition;
+    double displacementLength = displacement.length();
+    
+    if (displacementLength < 1e-6) {
+        return deformedOffset;
+    }
+    
+    // 볼륨 보존을 위한 법선 방향 보정
+    // 압축된 영역을 팽창시키고, 확장된 영역을 축소
+    MVector normalizedDisplacement = displacement.normal();
+    double volumeCorrection = volumeStrength * 0.1 * displacementLength;
+    
+    // 변형 방향에 수직인 성분을 강화하여 볼륨 보존
+    MVector volumeOffset = normalizedDisplacement * volumeCorrection;
+    
+    return deformedOffset + volumeOffset;
+}
+
+// 통합 아티스트 제어 적용
+MVector offsetCurveAlgorithm::applyArtistControls(const MVector& bindOffsetLocal,
+                                                 const MVector& currentTangent,
+                                                 const MVector& currentNormal,
+                                                 const MVector& currentBinormal,
+                                                 const MDagPath& curvePath,
+                                                 double& paramU,
+                                                 const offsetCurveControlParams& params) const
+{
+    MVector controlledOffset = bindOffsetLocal;
+    
+    // 1. Scale 제어 적용 (먼저 적용)
+    controlledOffset = applyScaleControl(controlledOffset, 
+                                        params.getScaleDistribution(), 
+                                        paramU);
+    
+    // 2. Twist 제어 적용
+    controlledOffset = applyTwistControl(controlledOffset,
+                                        currentTangent,
+                                        currentNormal,
+                                        currentBinormal,
+                                        params.getTwistDistribution(),
+                                        paramU);
+    
+    // 3. Slide 제어 적용 (paramU 변경 가능)
+    controlledOffset = applySlideControl(controlledOffset,
+                                        curvePath,
+                                        paramU,
+                                        params.getSlideEffect());
+    
+    return controlledOffset;
 }

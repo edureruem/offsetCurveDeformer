@@ -31,7 +31,7 @@
 #include <map>
 
 #include "offsetCurveAlgorithm.h"
-#include "offsetCurveData.h"
+#include "offsetCurveControlParams.h"  // 아티스트 제어 파라미터
 
 class offsetCurveDeformerNode : public MPxDeformerNode {
 public:
@@ -55,92 +55,49 @@ public:
     // 스킨 바인딩
     MStatus bindSkin();
     
+    // 특허 기술 관련 메서드
+    MStatus applyVolumePreservationCorrection(MPointArray& points, 
+                                            const offsetCurveControlParams& params);
+    
 public:
     // 노드 속성
     static MTypeId id;
     static MString nodeName;
 
     // 기본 속성
-    static MObject aCurveData;           // 영향 곡선 정보
-    static MObject aCurveMessage;        // 곡선 메시지 연결
     static MObject aOffsetMode;          // 오프셋 모드 (아크/B-스플라인)
-    static MObject aBindPoseMatrix;      // 바인드 포즈 매트릭스
-    static MObject aBindMode;            // 바인드 모드 (자동/수동)
+    static MObject aOffsetCurves;        // 오프셋 곡선들
+    static MObject aCurvesData;          // 곡선 데이터
+    static MObject aBindPose;            // 바인드 포즈
     static MObject aMaxInfluences;       // 최대 영향 개수
     static MObject aFalloffRadius;       // 영향 반경
+    static MObject aRebindMesh;          // 메시 리바인드
+    static MObject aRebindCurves;        // 곡선 리바인드
+    static MObject aUseParallel;         // 병렬 처리
+    static MObject aDebugDisplay;        // 디버그 표시
     
-    // 볼륨 및 변형 제어 속성
-    static MObject aVolumeStrength;      // 볼륨 보존 강도
-    static MObject aSlideEffect;         // 슬라이딩 효과 조절
-    static MObject aRebind;              // 재바인딩 트리거
-    static MObject aUseParallelCompute;  // 병렬 계산 활성화
-    
-    // 고급 아티스트 제어 속성
+    // 아티스트 제어 속성
+    static MObject aVolumeStrength;         // 볼륨 보존 강도
+    static MObject aSlideEffect;            // 슬라이딩 효과 조절
     static MObject aRotationDistribution;   // 회전 분포
     static MObject aScaleDistribution;      // 스케일 분포
     static MObject aTwistDistribution;      // 꼬임 분포
     static MObject aAxialSliding;           // 축 방향 슬라이딩
-    static MObject aNormalOffsetStrength;   // 법선 오프셋 강도
     
-    // 포즈 기반 블렌딩 속성
-    static MObject aEnablePoseBlending;     // 포즈 블렌딩 활성화
+    // 포즈 타겟 속성
+    static MObject aEnablePoseBlend;        // 포즈 블렌딩 활성화
     static MObject aPoseTarget;             // 포즈 타겟
     static MObject aPoseWeight;             // 포즈 가중치
 
 private:
-    // Offset Curve 알고리즘 인스턴스
-    offsetCurveAlgorithm mOffsetCurveAlgorithm;
+    // Offset Curve 알고리즘 인스턴스 (컴포지션 패턴 사용)
+    offsetCurveAlgorithm* mAlgorithm;
     
-    // 바인딩 상태 관리
+    // 바인딩 상태 관리 (컴포지션 데이터에서 관리)
     bool mNeedsRebind;
-    bool mIsInitialBindDone;
     
-    // 작업 캐시
-    std::vector<MDagPath> mInfluenceCurves;
-    MPointArray mOriginalPoints;
+    // 레거시 호환성을 위한 캐시 (점진적으로 제거 예정)
+    std::vector<MDagPath> mCurvePaths;
 };
 
-// offsetCurveDeformerNode.h에 추가
-// 기존 include 문 아래에 배치
-
-// offsetCurveControlParams 클래스 선언
-class offsetCurveControlParams {
-public:
-    offsetCurveControlParams();
-    ~offsetCurveControlParams();
-
-    void setVolumeStrength(double strength);
-    void setSlideEffect(double effect);
-    void setRotationDistribution(double distribution);
-    void setScaleDistribution(double distribution);
-    void setTwistDistribution(double distribution);
-    void setAxialSliding(double sliding);
-    void setNormalOffset(double offset);
-    void setEnablePoseBlending(bool enable);
-    void setPoseWeight(double weight);
-
-    double getVolumeStrength() const;
-    double getSlideEffect() const;
-    double getRotationDistribution() const;
-    double getScaleDistribution() const;
-    double getTwistDistribution() const;
-    double getAxialSliding() const;
-    double getNormalOffset() const;
-    bool isPoseBlendingEnabled() const;
-    double getPoseWeight() const;
-
-    void resetToDefaults();
-
-private:
-    double mVolumeStrength;
-    double mSlideEffect;
-    double mRotationDistribution;
-    double mScaleDistribution;
-    double mTwistDistribution;
-    double mAxialSliding;
-    double mNormalOffset;
-    bool mEnablePoseBlending;
-    double mPoseWeight;
-};
-
-// offsetCurveDeformerNode 클래스 선언 계속...
+// offsetCurveControlParams는 offsetCurveAlgorithm.h에서 정의됨
