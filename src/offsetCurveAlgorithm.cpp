@@ -154,9 +154,9 @@ MStatus offsetCurveAlgorithm::calculateFrenetFrameArcSegment(
         if (fabs(tangent * up) > 0.9) up = MVector(1, 0, 0);
         normal = (up - (up * tangent) * tangent).normal();
         binormal = tangent ^ normal;
-        return MS::kSuccess;
-    }
-    
+    return MS::kSuccess;
+}
+
     double radius = (d1 * d2 * (endPoint - startPoint).length()) / (2.0 * cross);
     
     // 4. ⚡ 고속 원형 호 계산 (삼각함수 직접 사용)
@@ -271,7 +271,8 @@ MStatus offsetCurveAlgorithm::performBindingPhase(const MPointArray& modelPoints
         const MPoint& modelPoint = modelPoints[vertexIndex];
         VertexDeformationData& vertexData = mVertexData[vertexIndex];
         
-        // 각 영향 곡선에 대해 오프셋 프리미티브 계산
+                // ✅ 특허 준수: 각 영향 곡선에 대해 "가상 오프셋 커브" 계산
+        // 여러 곡선 허용 - 각각에 대해 오프셋 프리미티브 생성
         for (size_t curveIndex = 0; curveIndex < influenceCurves.size(); curveIndex++) {
             const MDagPath& curvePath = influenceCurves[curveIndex];
             
@@ -309,7 +310,7 @@ MStatus offsetCurveAlgorithm::performBindingPhase(const MPointArray& modelPoints
             // 4. 가중치 계산
             double weight = 1.0 / (1.0 + distance / falloffRadius);
             
-            // 5. OCD 오프셋 프리미티브 생성 (4개 값만!)
+            // 5. ✅ 특허 준수: 오프셋 프리미티브 생성 (실제 오프셋 커브 저장 안 함!)
             OffsetPrimitive offsetPrimitive;
             offsetPrimitive.influenceCurveIndex = static_cast<int>(curveIndex);
             offsetPrimitive.bindParamU = bindParamU;
@@ -376,7 +377,7 @@ MStatus offsetCurveAlgorithm::performDeformationPhase(MPointArray& points,
         MPoint newPosition(0, 0, 0);
         double totalWeight = 0.0;
         
-        // 각 오프셋 프리미티브에 대해 변형 계산
+        // ✅ 특허 준수: 여러 오프셋 프리미티브의 가중치 합으로 계산
         for (const OffsetPrimitive& primitive : vertexData.offsetPrimitives) {
             const MDagPath& curvePath = mInfluenceCurvePaths[primitive.influenceCurveIndex];
             
@@ -391,8 +392,8 @@ MStatus offsetCurveAlgorithm::performDeformationPhase(MPointArray& points,
                                                        currentTangent, currentNormal, currentBinormal);
             } else {
                 // B-Spline 모드: 정확하지만 느린 계산
-                status = calculateFrenetFrameOnDemand(curvePath, currentParamU,
-                                                     currentTangent, currentNormal, currentBinormal);
+            status = calculateFrenetFrameOnDemand(curvePath, currentParamU,
+                                                currentTangent, currentNormal, currentBinormal);
             }
             if (status != MS::kSuccess) continue;
             
@@ -455,7 +456,7 @@ void offsetCurveAlgorithm::processVertexDeformation(int vertexIndex,
     MPoint newPosition(0, 0, 0);
     double totalWeight = 0.0;
     
-    // 각 오프셋 프리미티브에 대해 변형 계산 (스레드 안전)
+    // ✅ 특허 준수: 여러 오프셋 프리미티브의 가중치 합으로 계산 (스레드 안전)
     for (const OffsetPrimitive& primitive : vertexData.offsetPrimitives) {
         const MDagPath& curvePath = mInfluenceCurvePaths[primitive.influenceCurveIndex];
         
