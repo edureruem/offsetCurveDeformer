@@ -19,6 +19,7 @@
 #include <maya/MFnMesh.h>
 #include <maya/MItGeometry.h>
 #include <maya/MFnNurbsCurve.h>
+#include <maya/MFnDependencyNode.h>
 #include <maya/MDagPath.h>
 #include <maya/MDagPathArray.h>
 #include <maya/MFnCompoundAttribute.h>
@@ -51,10 +52,10 @@ public:
     // 추가 메서드 선언 (Maya 2020 호환성)
     virtual MStatus compute(const MPlug& plug, MDataBlock& dataBlock);
     MStatus updateParameters(MDataBlock& dataBlock);
-    MStatus rebindDeformer(MDataBlock& dataBlock);
+    MStatus rebindDeformer(MDataBlock& dataBlock, MItGeometry& iter);
     MStatus getCurvesFromInputs(MDataBlock& dataBlock, std::vector<MDagPath>& curves);
     MStatus getPoseTargetMesh(MDataBlock& dataBlock, MPointArray& points);
-    MStatus initializeBinding(MDataBlock& dataBlock);
+    MStatus initializeBinding(MDataBlock& dataBlock, MItGeometry& iter);
     
     // 다른 메서드
     virtual MStatus connectionMade(const MPlug& plug, const MPlug& otherPlug, bool asSrc);
