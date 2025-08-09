@@ -71,7 +71,7 @@ public:
 public:
     // 노드 속성
     static MTypeId id;
-    static MString nodeName;
+    static const MString nodeName;
 
     // 기본 속성
     static MObject aOffsetMode;          // 오프셋 모드 (아크/B-스플라인) - 사용자 직접 제어

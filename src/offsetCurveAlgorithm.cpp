@@ -116,9 +116,10 @@ MStatus offsetCurveAlgorithm::calculateFrenetFrameArcSegment(
     
     // 1. 곡선의 시작/끝 점과 중간점 (3점으로 원 계산)
     MPoint startPoint, midPoint, endPoint;
-    fnCurve.getPointAtParam(0.0, startPoint);
-    fnCurve.getPointAtParam(0.5, midPoint);  
-    fnCurve.getPointAtParam(1.0, endPoint);
+    // Maya 2020 호환성: getPointAtParam 올바른 매개변수 순서
+    fnCurve.getPointAtParam(0.0, startPoint, MSpace::kWorld);
+    fnCurve.getPointAtParam(0.5, midPoint, MSpace::kWorld);  
+    fnCurve.getPointAtParam(1.0, endPoint, MSpace::kWorld);
     
     // 2. 원의 중심과 반지름 계산 (기하학적 방법)
     MVector v1 = midPoint - startPoint;
@@ -225,7 +226,8 @@ MStatus offsetCurveAlgorithm::calculatePointOnCurveOnDemand(const MDagPath& curv
     MFnNurbsCurve fnCurve(curvePath, &status);
     CHECK_MSTATUS_AND_RETURN_IT(status);
     
-    status = fnCurve.getPointAtParam(paramU, point);
+    // Maya 2020 호환성: getPointAtParam 올바른 매개변수 순서
+    status = fnCurve.getPointAtParam(paramU, point, MSpace::kWorld);
     CHECK_MSTATUS_AND_RETURN_IT(status);
     
     return MS::kSuccess;
@@ -243,6 +245,7 @@ MStatus offsetCurveAlgorithm::findClosestPointOnCurveOnDemand(const MDagPath& cu
     CHECK_MSTATUS_AND_RETURN_IT(status);
     
     // Maya 2020 호환성: closestPoint 매개변수 순서 수정
+    // Maya 2020 호환성: closestPoint와 getPointAtParam 올바른 호출
     status = fnCurve.closestPoint(modelPoint, &paramU, false, MSpace::kWorld);
     if (status == MS::kSuccess) {
         status = fnCurve.getPointAtParam(paramU, closestPoint, MSpace::kWorld);
@@ -609,15 +612,17 @@ std::vector<ArcSegment> offsetCurveAlgorithm::subdivideByKappa(const MDagPath& c
             // 호의 길이로부터 각도 계산
             MFnNurbsCurve fnCurve(curvePath);
             MPoint startPoint, endPoint;
-            fnCurve.getPointAtParam(paramU, startPoint);
-            fnCurve.getPointAtParam(nextParamU, endPoint);
+            // Maya 2020 호환성: getPointAtParam 올바른 매개변수 순서
+            fnCurve.getPointAtParam(paramU, startPoint, MSpace::kWorld);
+            fnCurve.getPointAtParam(nextParamU, endPoint, MSpace::kWorld);
             
             double chordLength = startPoint.distanceTo(endPoint);
             segment.totalAngle = 2.0 * asin(chordLength / (2.0 * segment.radius));
             
             // 원의 중심 계산 (근사)
             MPoint midPoint;
-            fnCurve.getPointAtParam((paramU + nextParamU) * 0.5, midPoint);
+            // Maya 2020 호환성: getPointAtParam 올바른 매개변수 순서
+            fnCurve.getPointAtParam((paramU + nextParamU) * 0.5, midPoint, MSpace::kWorld);
             
             MVector toMid = midPoint - startPoint;
             MVector perpendicular = toMid ^ curvature.normal();
