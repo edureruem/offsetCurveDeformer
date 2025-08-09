@@ -24,7 +24,7 @@
 
 // 노드 ID 및 이름
 MTypeId offsetCurveDeformerNode::id(0x00134); // 임시 ID - 실제 등록 ID로 변경 필요
-const char* offsetCurveDeformerNode::nodeName = "offsetCurveDeformer";
+ㅛconst MString offsetCurveDeformerNode::nodeName = "offsetCurveDeformer";
 
 // 노드 속성 초기화
 MObject offsetCurveDeformerNode::aOffsetMode;
@@ -452,7 +452,7 @@ MStatus offsetCurveDeformerNode::getCurvesFromInputs(MDataBlock& block, std::vec
         }
         else {
             // 메시지 커넥션으로부터 곡선 찾기
-            MPlug curvePlug(thisMObject(), aOffsetCurves);
+            MPlug curvePlug(thisNode(), aOffsetCurves);
             curvePlug.selectAncestorLogicalIndex(i);
             
             MPlugArray connections;
@@ -484,7 +484,7 @@ MStatus offsetCurveDeformerNode::getPoseTargetMesh(MDataBlock& block, MPointArra
     
     if (poseObj.isNull()) {
         // 메시지 커넥션으로부터 메쉬 찾기
-        MPlug posePlug(thisMObject(), aPoseTarget);
+        MPlug posePlug(thisNode(), aPoseTarget);
         
         MPlugArray connections;
         posePlug.connectedTo(connections, true, false);

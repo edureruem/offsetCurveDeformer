@@ -193,7 +193,8 @@ MStatus offsetCurveAlgorithm::calculateFrenetFrameOnDemand(const MDagPath& curve
     CHECK_MSTATUS_AND_RETURN_IT(status);
     
     // 1. 탄젠트 벡터 계산
-    status = fnCurve.getTangent(paramU, tangent);
+    // Maya 2020 호환성: getTangent 대신 tangent 사용
+    status = fnCurve.tangent(paramU, tangent);
     CHECK_MSTATUS_AND_RETURN_IT(status);
     tangent.normalize();
     
@@ -241,8 +242,11 @@ MStatus offsetCurveAlgorithm::findClosestPointOnCurveOnDemand(const MDagPath& cu
     MFnNurbsCurve fnCurve(curvePath, &status);
     CHECK_MSTATUS_AND_RETURN_IT(status);
     
-    // Maya API로 가장 가까운 점 찾기
-    status = fnCurve.closestPoint(modelPoint, &closestPoint, &paramU);
+    // Maya 2020 호환성: closestPoint 매개변수 순서 수정
+    status = fnCurve.closestPoint(modelPoint, &paramU, false, MSpace::kWorld);
+    if (status == MS::kSuccess) {
+        status = fnCurve.getPointAtParam(paramU, closestPoint, MSpace::kWorld);
+    }
     CHECK_MSTATUS_AND_RETURN_IT(status);
     
     // 거리 계산
@@ -295,8 +299,8 @@ MStatus offsetCurveAlgorithm::performBindingPhase(const MPointArray& modelPoints
                                                        tangent, normal, binormal);
             } else {
                 // B-Spline 모드: 정확하지만 느린 계산
-                status = calculateFrenetFrameOnDemand(curvePath, bindParamU, 
-                                                     tangent, normal, binormal);
+            status = calculateFrenetFrameOnDemand(curvePath, bindParamU, 
+                                                tangent, normal, binormal);
             }
             if (status != MS::kSuccess) continue;
             
@@ -533,7 +537,8 @@ MStatus offsetCurveAlgorithm::calculateCurvatureVector(const MDagPath& curvePath
     
     // 1차 미분 (속도 벡터)
     MVector firstDerivative;
-    status = fnCurve.getTangent(paramU, firstDerivative, MSpace::kWorld);
+    // Maya 2020 호환성: getTangent 대신 tangent 사용
+    status = fnCurve.tangent(paramU, firstDerivative, MSpace::kWorld);
     if (status != MS::kSuccess) return status;
     
     // 2차 미분 (가속도 벡터) - 수치적 계산
@@ -543,8 +548,9 @@ MStatus offsetCurveAlgorithm::calculateCurvatureVector(const MDagPath& curvePath
     double paramUPlus = std::min(1.0, paramU + delta);
     double paramUMinus = std::max(0.0, paramU - delta);
     
-    fnCurve.getTangent(paramUPlus, tangentPlus, MSpace::kWorld);
-    fnCurve.getTangent(paramUMinus, tangentMinus, MSpace::kWorld);
+    // Maya 2020 호환성: getTangent 대신 tangent 사용
+    fnCurve.tangent(paramUPlus, tangentPlus, MSpace::kWorld);
+    fnCurve.tangent(paramUMinus, tangentMinus, MSpace::kWorld);
     
     MVector secondDerivative = (tangentPlus - tangentMinus) / (2.0 * delta);
     

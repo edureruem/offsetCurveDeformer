@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\pluginMain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\offsetCurveAlgorithm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\offsetCurveControlParams.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\offsetCurveDeformerNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\offsetCurveAlgorithm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\offsetCurveControlParams.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\offsetCurveDeformerNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{684DD431-C084-37B0-8784-89DF147B5C2C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{53A0ECC4-3C3E-3EE3-9505-BBD0123FAE7A}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

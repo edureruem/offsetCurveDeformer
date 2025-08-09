@@ -41,6 +41,11 @@ endif()
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 
+# UTF-8 인코딩 설정 (Windows 한글 경고 해결)
+if(MSVC)
+    target_compile_options(${PROJECT_NAME} PRIVATE /utf-8)
+endif()
+
 target_link_libraries(${PROJECT_NAME} PRIVATE Maya::Maya)
 
 # OpenMP 링크 (병렬 처리)

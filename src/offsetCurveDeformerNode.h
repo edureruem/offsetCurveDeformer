@@ -48,6 +48,14 @@ public:
                          const MMatrix& matrix,
                          unsigned int multiIndex);
     
+    // 추가 메서드 선언 (Maya 2020 호환성)
+    virtual MStatus compute(const MPlug& plug, MDataBlock& dataBlock);
+    MStatus updateParameters(MDataBlock& dataBlock);
+    MStatus rebindDeformer(MDataBlock& dataBlock);
+    MStatus getCurvesFromInputs(MDataBlock& dataBlock, std::vector<MDagPath>& curves);
+    MStatus getPoseTargetMesh(MDataBlock& dataBlock, MPointArray& points);
+    MStatus initializeBinding(MDataBlock& dataBlock);
+    
     // 다른 메서드
     virtual MStatus connectionMade(const MPlug& plug, const MPlug& otherPlug, bool asSrc);
     virtual MStatus connectionBroken(const MPlug& plug, const MPlug& otherPlug, bool asSrc);
@@ -95,6 +103,11 @@ private:
     
     // 바인딩 상태 관리 (컴포지션 데이터에서 관리)
     bool mNeedsRebind;
+    
+    // Maya 2020 호환성을 위한 데이터 멤버
+    MPointArray mOriginalPoints;
+    MPointArray mPoseTargetPoints;
+    bool mBindingInitialized;
     
     // 레거시 호환성을 위한 캐시 (점진적으로 제거 예정)
     std::vector<MDagPath> mCurvePaths;
