@@ -41,6 +41,21 @@ struct OffsetPrimitive {
         influenceCurveIndex(-1), bindParamU(0.0), weight(0.0) {}
 };
 
+// 🎯 적응형 Arc Segment 구조체
+struct ArcSegment {
+    double startParamU;                  // 세그먼트 시작 파라미터
+    double endParamU;                    // 세그먼트 끝 파라미터
+    MPoint center;                       // 원의 중심 (직선인 경우 무시)
+    double radius;                       // 원의 반지름 (직선인 경우 0)
+    double totalAngle;                   // 총 호의 각도 (직선인 경우 0)
+    bool isLinear;                       // 직선 세그먼트 여부
+    double curvatureMagnitude;           // 곡률의 크기
+    
+    ArcSegment() : 
+        startParamU(0.0), endParamU(1.0), radius(0.0), 
+        totalAngle(0.0), isLinear(true), curvatureMagnitude(0.0) {}
+};
+
 // 정점 변형 데이터 (단순화)
 struct VertexDeformationData {
     unsigned int vertexIndex;                    // 정점 인덱스
@@ -111,10 +126,34 @@ private:
                                           MVector& normal,
                                           MVector& binormal) const;
     
+    // 🔬 고차 미분을 이용한 정확한 곡률 계산
+    MStatus calculateCurvatureVector(const MDagPath& curvePath,
+                                    double paramU,
+                                    MVector& curvature,
+                                    double& curvatureMagnitude) const;
+    
+    // 🎯 적응형 Arc Segment 세분화
+    std::vector<ArcSegment> subdivideByKappa(const MDagPath& curvePath,
+                                            double maxCurvatureError = 0.01) const;
+    
     // 🚀 병렬 처리용 헬퍼 함수
     void processVertexDeformation(int vertexIndex, 
                                  MPointArray& points,
                                  const offsetCurveControlParams& params) const;
+    
+    // 제거됨: 적응형 변형 처리 (일관된 결과를 위해 제거)
+    
+    // 헬퍼 함수들
+    void mergeAdjacentSegments(std::vector<ArcSegment>& segments,
+                              double maxCurvatureError) const;
+    
+    // 🔥 GPU 가속 지원 (CUDA/OpenCL)
+    #ifdef CUDA_ENABLED
+    void processVertexDeformationGPU(MPointArray& points,
+                                    const offsetCurveControlParams& params) const;
+    #endif
+    
+    // 제거됨: 적응형 세밀도 조절 (예측 불가능한 결과 방지)
     
     MStatus calculatePointOnCurveOnDemand(const MDagPath& curvePath,
                                          double paramU,

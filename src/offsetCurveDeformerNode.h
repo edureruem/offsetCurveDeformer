@@ -65,7 +65,7 @@ public:
     static MString nodeName;
 
     // 기본 속성
-    static MObject aOffsetMode;          // 오프셋 모드 (아크/B-스플라인)
+    static MObject aOffsetMode;          // 오프셋 모드 (아크/B-스플라인) - 사용자 직접 제어
     static MObject aOffsetCurves;        // 오프셋 곡선들
     static MObject aCurvesData;          // 곡선 데이터
     static MObject aBindPose;            // 바인드 포즈

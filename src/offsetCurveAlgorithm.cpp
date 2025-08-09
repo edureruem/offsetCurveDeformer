@@ -351,6 +351,14 @@ MStatus offsetCurveAlgorithm::performDeformationPhase(MPointArray& points,
 {
     MStatus status;
     
+    // 🔥 GPU 가속 우선 시도
+    #ifdef CUDA_ENABLED
+    if (mUseParallelComputation && mVertexData.size() > 1000) {
+        processVertexDeformationGPU(points, params);
+        return MS::kSuccess;
+    }
+    #endif
+    
     // 🚀 병렬 처리 활성화 시 OpenMP 사용
     #ifdef _OPENMP
     if (mUseParallelComputation) {
@@ -511,6 +519,193 @@ void offsetCurveAlgorithm::processVertexDeformation(int vertexIndex,
         }
     }
 }
+
+// 🔬 고차 미분을 이용한 정확한 곡률 계산
+MStatus offsetCurveAlgorithm::calculateCurvatureVector(const MDagPath& curvePath,
+                                                      double paramU,
+                                                      MVector& curvature,
+                                                      double& curvatureMagnitude) const
+{
+    MStatus status;
+    MFnNurbsCurve fnCurve(curvePath, &status);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    // 1차 미분 (속도 벡터)
+    MVector firstDerivative;
+    status = fnCurve.getTangent(paramU, firstDerivative, MSpace::kWorld);
+    if (status != MS::kSuccess) return status;
+    
+    // 2차 미분 (가속도 벡터) - 수치적 계산
+    double delta = 1e-6;
+    MVector tangentPlus, tangentMinus;
+    
+    double paramUPlus = std::min(1.0, paramU + delta);
+    double paramUMinus = std::max(0.0, paramU - delta);
+    
+    fnCurve.getTangent(paramUPlus, tangentPlus, MSpace::kWorld);
+    fnCurve.getTangent(paramUMinus, tangentMinus, MSpace::kWorld);
+    
+    MVector secondDerivative = (tangentPlus - tangentMinus) / (2.0 * delta);
+    
+    // 곡률 벡터 계산: κ = (r' × r'') / |r'|³
+    MVector crossProduct = firstDerivative ^ secondDerivative;
+    double speedCubed = pow(firstDerivative.length(), 3.0);
+    
+    if (speedCubed < 1e-12) {
+        // 거의 정지 상태 (특이점)
+        curvature = MVector::zero;
+        curvatureMagnitude = 0.0;
+        return MS::kSuccess;
+    }
+    
+    curvature = crossProduct / speedCubed;
+    curvatureMagnitude = curvature.length();
+    
+    return MS::kSuccess;
+}
+
+// 🎯 적응형 Arc Segment 세분화
+std::vector<ArcSegment> offsetCurveAlgorithm::subdivideByKappa(const MDagPath& curvePath,
+                                                              double maxCurvatureError) const
+{
+    std::vector<ArcSegment> segments;
+    const int numSamples = 20;  // 곡선을 20개 구간으로 나누어 분석
+    
+    double paramStep = 1.0 / numSamples;
+    double currentStart = 0.0;
+    
+    for (int i = 0; i < numSamples; i++) {
+        double paramU = i * paramStep;
+        double nextParamU = (i + 1) * paramStep;
+        
+        // 현재 구간의 곡률 분석
+        MVector curvature;
+        double curvatureMagnitude;
+        calculateCurvatureVector(curvePath, paramU, curvature, curvatureMagnitude);
+        
+        ArcSegment segment;
+        segment.startParamU = paramU;
+        segment.endParamU = nextParamU;
+        segment.curvatureMagnitude = curvatureMagnitude;
+        
+        // 곡률 기반 분류
+        if (curvatureMagnitude < maxCurvatureError) {
+            // 직선 세그먼트
+            segment.isLinear = true;
+            segment.radius = 0.0;
+            segment.totalAngle = 0.0;
+        } else {
+            // 곡선 세그먼트 - 원형 호로 근사
+            segment.isLinear = false;
+            segment.radius = 1.0 / curvatureMagnitude;  // 곡률 반지름
+            
+            // 호의 길이로부터 각도 계산
+            MFnNurbsCurve fnCurve(curvePath);
+            MPoint startPoint, endPoint;
+            fnCurve.getPointAtParam(paramU, startPoint);
+            fnCurve.getPointAtParam(nextParamU, endPoint);
+            
+            double chordLength = startPoint.distanceTo(endPoint);
+            segment.totalAngle = 2.0 * asin(chordLength / (2.0 * segment.radius));
+            
+            // 원의 중심 계산 (근사)
+            MPoint midPoint;
+            fnCurve.getPointAtParam((paramU + nextParamU) * 0.5, midPoint);
+            
+            MVector toMid = midPoint - startPoint;
+            MVector perpendicular = toMid ^ curvature.normal();
+            segment.center = midPoint + perpendicular * segment.radius;
+        }
+        
+        segments.push_back(segment);
+    }
+    
+    // 인접한 유사 세그먼트 병합
+    mergeAdjacentSegments(segments, maxCurvatureError);
+    
+    return segments;
+}
+
+// 인접한 유사 세그먼트 병합 (헬퍼 함수)
+void offsetCurveAlgorithm::mergeAdjacentSegments(std::vector<ArcSegment>& segments,
+                                                double maxCurvatureError) const
+{
+    for (size_t i = 0; i < segments.size() - 1; ) {
+        ArcSegment& current = segments[i];
+        ArcSegment& next = segments[i + 1];
+        
+        // 두 세그먼트가 모두 직선이거나 곡률이 유사한 경우 병합
+        bool canMerge = false;
+        
+        if (current.isLinear && next.isLinear) {
+            canMerge = true;
+        } else if (!current.isLinear && !next.isLinear) {
+            double curvatureDiff = fabs(current.curvatureMagnitude - next.curvatureMagnitude);
+            if (curvatureDiff < maxCurvatureError) {
+                canMerge = true;
+            }
+        }
+        
+        if (canMerge) {
+            // 세그먼트 병합
+            current.endParamU = next.endParamU;
+            if (!current.isLinear) {
+                // 평균 곡률로 업데이트
+                current.curvatureMagnitude = (current.curvatureMagnitude + next.curvatureMagnitude) * 0.5;
+                current.radius = 1.0 / current.curvatureMagnitude;
+            }
+            
+            segments.erase(segments.begin() + i + 1);
+        } else {
+            i++;
+        }
+    }
+}
+
+// 제거됨: 적응형 품질 조절 함수들
+// 이유: 예측 불가능한 결과를 방지하고 일관된 변형 보장
+
+#ifdef CUDA_ENABLED
+// 🔥 GPU 가속 변형 처리 (CUDA 구현)
+void offsetCurveAlgorithm::processVertexDeformationGPU(MPointArray& points,
+                                                       const offsetCurveControlParams& params) const
+{
+    // CUDA 메모리 할당
+    size_t numVertices = mVertexData.size();
+    size_t pointsSize = numVertices * sizeof(float3);
+    
+    float3* d_points;
+    cudaMalloc(&d_points, pointsSize);
+    
+    // 호스트에서 디바이스로 데이터 복사
+    std::vector<float3> hostPoints(numVertices);
+    for (size_t i = 0; i < numVertices; i++) {
+        hostPoints[i] = make_float3(points[i].x, points[i].y, points[i].z);
+    }
+    cudaMemcpy(d_points, hostPoints.data(), pointsSize, cudaMemcpyHostToDevice);
+    
+    // GPU 커널 실행
+    dim3 blockSize(256);
+    dim3 gridSize((numVertices + blockSize.x - 1) / blockSize.x);
+    
+    calculateDeformationKernel<<<gridSize, blockSize>>>(
+        d_points, 
+        numVertices,
+        params.getVolumeStrength(),
+        params.getSlideEffect()
+    );
+    
+    // 결과를 호스트로 복사
+    cudaMemcpy(hostPoints.data(), d_points, pointsSize, cudaMemcpyDeviceToHost);
+    
+    for (size_t i = 0; i < numVertices; i++) {
+        points[i] = MPoint(hostPoints[i].x, hostPoints[i].y, hostPoints[i].z);
+    }
+    
+    // 메모리 해제
+    cudaFree(d_points);
+}
+#endif
 
 // ===================================================================
 // 아티스트 제어 함수들 (특허 US8400455B2 준수)
