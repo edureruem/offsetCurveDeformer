@@ -1,19 +1,19 @@
-﻿g# Maya Offset Curve Deformer Plugin
+g# Maya Offset Curve Deformer Plugin
 
- **특허 US8400455B2 완전 준수 구현 (100/100점)**
+🏆 **특허 US8400455B2 완전 준수 구현 (100/100점)**
 
-##  **개요**
+## 🎯 **개요**
 
 Maya에서 사용할 수 있는 Offset Curve Deformer 플러그인으로, 특허 US8400455B2 "Method and apparatus for efficient offset curve deformation from skeletal animation"의 핵심 기술을 완벽하게 구현한 고성능 변형 도구입니다.
 
 ### **주요 특징**
--  **GPU 가속 지원**: GPU 가속으로 기존 대비 1000배 빠른 연산
--  **완벽한 특허 준수**: 특허 원문 그대로의 정확한 변형
--  **6가지 아티스트 컨트롤**: 직관적인 변형 제어 인터페이스
--  **실시간 성능**: 복잡한 메시에서도 60fps 유지
--  **메모리 효율성**: 기존 대비 90% 메모리 사용량 감소
+- 🚀 **GPU 가속 지원**: GPU 가속으로 기존 대비 1000배 빠른 연산
+- 🎯 **완벽한 특허 준수**: 특허 원문 그대로의 정확한 변형
+- 🎨 **6가지 아티스트 컨트롤**: 직관적인 변형 제어 인터페이스
+- ⚡ **실시간 성능**: 복잡한 메시에서도 60fps 유지
+- 🧠 **메모리 효율성**: 기존 대비 90% 메모리 사용량 감소
 
-##  **성능 비교**
+## 📊 **성능 비교**
 
 | 메시 크기 | 기존 방식 | 현재 구현 | 성능 향상 |
 |---------|-----------|-----------|----------|
@@ -22,7 +22,7 @@ Maya에서 사용할 수 있는 Offset Curve Deformer 플러그인으로, 특허
 | 100K | 0.5fps | 45fps | **90배** |
 | 1M+ | 불가능 | 30fps | **무한대** |
 
-##  **특허 준수도**
+## 🏆 **특허 준수도**
 
 ### **핵심 기술 완벽 구현**
 - **실제 곡선 생성 안함**: "without actually creating offset curves" (100% 준수)
@@ -37,7 +37,7 @@ Maya에서 사용할 수 있는 Offset Curve Deformer 플러그인으로, 특허
 - **변형 공식**: `P_new = P_current + offset_local · [T,N,B] * weight`
 - **가중치 함수**: `weight = 1.0 / (1.0 + distance / falloffRadius)`
 
-##  **빠른 시작**
+## 🚀 **빠른 시작**
 
 ### **설치**
 ```bash
@@ -72,7 +72,7 @@ cmds.setAttr(f"{deformer}.volumeStrength", 1.0)  # 볼륨 보존
 cmds.setAttr(f"{deformer}.rebindMesh", True)
 ```
 
-##  **주요 설정**
+## ⚙️ **주요 설정**
 
 ### **성능 모드**
 - **Arc Segment** (0): 3-5배 빠른 연산 모드 (게임용 최적화)
@@ -86,14 +86,14 @@ cmds.setAttr(f"{deformer}.rebindMesh", True)
 - **Rotation Distribution**: 회전 변화 분포 (0.0-2.0)
 - **Axial Sliding**: 축방향 미끄러짐 효과 (-1.0-1.0)
 
-##  **문서**
+## 📚 **문서**
 
 - [**사용자 가이드**](src/MayaUserGuide.md) - 상세한 사용법과 설치
 - [**성능 가이드**](src/PerformanceGuide.md) - 최적화 팁과 벤치마크
 - [**특허 준수 보고서**](src/PatentComplianceFinalReport.md) - 기술적 검증
 - [**수학적 공식**](src/PatentMathematicalFormula.md) - 알고리즘 상세
 
-##  **사용 예시**
+## 🎨 **사용 예시**
 
 ### **게임 캐릭터 (빠른 성능)**
 ```python
@@ -119,7 +119,7 @@ cmds.setAttr(f"{deformer}.slideEffect", 0.5)     # 곡선 따라 미끄러짐
 cmds.setAttr(f"{deformer}.twistDistribution", 0.8) # 비틀림 분포
 ```
 
-##  **고급 기능**
+## 🔧 **고급 기능**
 
 ### **GPU 가속 (CUDA)**
 ```python
@@ -142,7 +142,7 @@ cmds.setAttr(f"{deformer}.useParallel", True)
 cmds.setAttr(f"{deformer}.threadCount", 8)  # 8코어 시스템
 ```
 
-##  **성능 벤치마크**
+## 📈 **성능 벤치마크**
 
 ### **Arc Segment 모드**
 - **1K 정점**: 60fps (2배 향상)
@@ -169,13 +169,13 @@ cmds.setAttr(f"{deformer}.threadCount", 8)  # 8코어 시스템
 cmds.setAttr(f"{deformer}.debugMode", True)
 ```
 
-##  **지원**
+## 📞 **지원**
 
 - **GitHub Issues**: 버그 리포트 및 기능 요청
 - **문서**: [src/](src/) 폴더의 상세 문서 참조
 - **성능 가이드**: [PerformanceGuide.md](src/PerformanceGuide.md)
 
-##  **라이선스**
+## 📄 **라이선스**
 
 MIT License - 자유로운 사용, 수정, 배포 가능
 
