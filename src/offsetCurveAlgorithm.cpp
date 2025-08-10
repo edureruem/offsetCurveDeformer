@@ -227,7 +227,7 @@ MStatus offsetCurveAlgorithm::calculatePointOnCurveOnDemand(const MDagPath& curv
     CHECK_MSTATUS_AND_RETURN_IT(status);
     
     // Maya 2020 호환성: getPointAtParam 올바른 매개변수 순서
-    status = fnCurve.getPointAtParam(paramU, point, MSpace::kWorld);
+    fnCurve.getPointAtParam(paramU, point, MSpace::kWorld);
     CHECK_MSTATUS_AND_RETURN_IT(status);
     
     return MS::kSuccess;
@@ -246,9 +246,9 @@ MStatus offsetCurveAlgorithm::findClosestPointOnCurveOnDemand(const MDagPath& cu
     
     // Maya 2020 호환성: closestPoint 매개변수 순서 수정
     // Maya 2020 호환성: closestPoint와 getPointAtParam 올바른 호출
-    status = fnCurve.closestPoint(modelPoint, &paramU, false, MSpace::kWorld);
-    if (status == MS::kSuccess) {
-        status = fnCurve.getPointAtParam(paramU, closestPoint, MSpace::kWorld);
+    MPoint tempClosestPoint = fnCurve.closestPoint(modelPoint, &paramU, false, MSpace::kWorld);
+    if (tempClosestPoint != MPoint::origin) {
+        fnCurve.getPointAtParam(paramU, closestPoint, MSpace::kWorld);
     }
     CHECK_MSTATUS_AND_RETURN_IT(status);
     

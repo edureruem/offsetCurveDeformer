@@ -594,29 +594,24 @@ MStatus offsetCurveDeformerNode::applyVolumePreservationCorrection(MPointArray& 
     return MS::kSuccess;
 }
 
-// 누락된 메서드들 구현 (Maya 2020 호환성)
-MStatus offsetCurveDeformerNode::compute(const MPlug& plug, MDataBlock& dataBlock)
+// 연결 생성 시 호출되는 함수
+MStatus offsetCurveDeformerNode::connectionMade(const MPlug& plug, const MPlug& otherPlug, bool asSrc)
 {
-    // 기본적으로 deform 메서드로 위임
+    // 연결이 생성되었을 때 필요한 처리를 수행
+    if (plug.attribute() == aOffsetCurves) {
+        // 오프셋 곡선이 연결되었을 때 리바인딩 필요
+        mNeedsRebind = true;
+    }
     return MS::kSuccess;
 }
 
-MStatus offsetCurveDeformerNode::updateParameters(MDataBlock& dataBlock)
+// 연결 해제 시 호출되는 함수
+MStatus offsetCurveDeformerNode::connectionBroken(const MPlug& plug, const MPlug& otherPlug, bool asSrc)
 {
-    // 파라미터 업데이트 로직
-    return MS::kSuccess;
-}
-
-MStatus offsetCurveDeformerNode::rebindDeformer(MDataBlock& dataBlock, MItGeometry& iter)
-{
-    // 리바인딩 로직
-    mNeedsRebind = true;
-    return MS::kSuccess;
-}
-
-MStatus offsetCurveDeformerNode::initializeBinding(MDataBlock& dataBlock, MItGeometry& iter)
-{
-    // 바인딩 초기화 로직
-    mBindingInitialized = true;
+    // 연결이 해제되었을 때 필요한 처리를 수행
+    if (plug.attribute() == aOffsetCurves) {
+        // 오프셋 곡선이 해제되었을 때 리바인딩 필요
+        mNeedsRebind = true;
+    }
     return MS::kSuccess;
 }
