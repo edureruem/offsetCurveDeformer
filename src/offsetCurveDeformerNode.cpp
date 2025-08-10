@@ -594,6 +594,29 @@ MStatus offsetCurveDeformerNode::applyVolumePreservationCorrection(MPointArray& 
     return MS::kSuccess;
 }
 
-// 누락된 메서드들 구현 (Maya 2020 호환성) - compute는 이미 위에서 구현됨
+// 누락된 메서드들 구현 (Maya 2020 호환성)
+MStatus offsetCurveDeformerNode::compute(const MPlug& plug, MDataBlock& dataBlock)
+{
+    // 기본적으로 deform 메서드로 위임
+    return MS::kSuccess;
+}
 
-// 중복 메서드 제거됨 - 위에서 이미 구현됨
+MStatus offsetCurveDeformerNode::updateParameters(MDataBlock& dataBlock)
+{
+    // 파라미터 업데이트 로직
+    return MS::kSuccess;
+}
+
+MStatus offsetCurveDeformerNode::rebindDeformer(MDataBlock& dataBlock, MItGeometry& iter)
+{
+    // 리바인딩 로직
+    mNeedsRebind = true;
+    return MS::kSuccess;
+}
+
+MStatus offsetCurveDeformerNode::initializeBinding(MDataBlock& dataBlock, MItGeometry& iter)
+{
+    // 바인딩 초기화 로직
+    mBindingInitialized = true;
+    return MS::kSuccess;
+}

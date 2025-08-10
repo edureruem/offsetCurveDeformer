@@ -1,0 +1,10 @@
+^C:\USERS\EDURM\DIVKITBASE\PLUG-INS\PLUG-INS\OFFSETCURVEDEFORMER-1\BUILD.2020\CMAKEFILES\9EFE274D48903E77040AF526E36D66F4\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1 -BC:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.2020 --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.2020/offsetCurveDeformer.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

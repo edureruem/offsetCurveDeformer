@@ -1,29 +1,29 @@
-# Maya Offset Curve Deformer - 사용자 가이드
+﻿# Maya Offset Curve Deformer - ?ъ슜??媛?대뱶
 
-## 🎯 **플러그인 개요**
+## ?렞 **?뚮윭洹몄씤 媛쒖슂**
 
-Maya용 고성능 Offset Curve Deformer 플러그인으로, 특허 US8400455B2 기술을 기반으로 한 혁신적인 변형 도구입니다.
+Maya??怨좎꽦??Offset Curve Deformer ?뚮윭洹몄씤?쇰줈, ?뱁뿀 US8400455B2 湲곗닠??湲곕컲?쇰줈 ???곸떊?곸씤 蹂???꾧뎄?낅땲??
 
-### **주요 특징**
-- ⚡ **초고속 성능**: GPU 가속으로 1000배 빠른 계산
-- 🎨 **완벽한 품질**: 특허 기반 정확한 변형
-- 🔧 **직관적 제어**: 6개 아티스트 제어 파라미터
-- 🚀 **실시간 피드백**: 60fps 유지
+### **二쇱슂 ?뱀쭠**
+- ??**珥덇퀬???깅뒫**: GPU 媛?띿쑝濡?1000諛?鍮좊Ⅸ 怨꾩궛
+- ?렓 **?꾨꼍???덉쭏**: ?뱁뿀 湲곕컲 ?뺥솗??蹂??
+- ?뵩 **吏곴????쒖뼱**: 6媛??꾪떚?ㅽ듃 ?쒖뼱 ?뚮씪誘명꽣
+- ?? **?ㅼ떆媛??쇰뱶諛?*: 60fps ?좎?
 
 ---
 
-## 📦 **설치 방법**
+## ?벀 **?ㅼ튂 諛⑸쾿**
 
-### **시스템 요구사항**
-- **Maya**: 2020, 2022, 2023, 2024 지원
+### **?쒖뒪???붽뎄?ы빆**
+- **Maya**: 2020, 2022, 2023, 2024 吏??
 - **OS**: Windows 10/11, macOS 10.15+, Linux Ubuntu 18.04+
-- **CPU**: Intel i5 이상 또는 AMD Ryzen 5 이상
-- **GPU**: CUDA 지원 GPU (선택사항, 성능 향상용)
-- **RAM**: 8GB 이상 권장
+- **CPU**: Intel i5 ?댁긽 ?먮뒗 AMD Ryzen 5 ?댁긽
+- **GPU**: CUDA 吏??GPU (?좏깮?ы빆, ?깅뒫 ?μ긽??
+- **RAM**: 8GB ?댁긽 沅뚯옣
 
-### **설치 단계**
+### **?ㅼ튂 ?④퀎**
 
-#### **1. 플러그인 파일 복사**
+#### **1. ?뚮윭洹몄씤 ?뚯씪 蹂듭궗**
 ```bash
 # Windows
 copy offsetCurveDeformer.mll "%MAYA_APP_DIR%/plug-ins/"
@@ -35,368 +35,368 @@ cp offsetCurveDeformer.bundle ~/Library/Preferences/Autodesk/maya/plug-ins/
 cp offsetCurveDeformer.so ~/maya/plug-ins/
 ```
 
-#### **2. Maya에서 플러그인 로드**
+#### **2. Maya?먯꽌 ?뚮윭洹몄씤 濡쒕뱶**
 ```python
-# Python 스크립트
+# Python ?ㅽ겕由쏀듃
 import maya.cmds as cmds
 cmds.loadPlugin("offsetCurveDeformer")
 ```
 
-또는 **Window → Settings/Preferences → Plug-in Manager**에서 수동 로드
+?먮뒗 **Window ??Settings/Preferences ??Plug-in Manager**?먯꽌 ?섎룞 濡쒕뱶
 
-#### **3. 설치 확인**
+#### **3. ?ㅼ튂 ?뺤씤**
 ```python
-# 노드 타입 확인
+# ?몃뱶 ????뺤씤
 cmds.nodeType("offsetCurveDeformerNode", isTypeName=True)
-# True가 반환되면 설치 성공
+# True媛 諛섑솚?섎㈃ ?ㅼ튂 ?깃났
 ```
 
 ---
 
-## 🚀 **기본 사용법**
+## ?? **湲곕낯 ?ъ슜踰?*
 
-### **1. 디포머 생성**
+### **1. ?뷀룷癒??앹꽦**
 
-#### **메뉴 방식**
-1. 변형할 메시 선택
-2. **Create → Deformers → Offset Curve Deformer**
+#### **硫붾돱 諛⑹떇**
+1. 蹂?뺥븷 硫붿떆 ?좏깮
+2. **Create ??Deformers ??Offset Curve Deformer**
 
-#### **스크립트 방식**
+#### **?ㅽ겕由쏀듃 諛⑹떇**
 ```python
 import maya.cmds as cmds
 
-# 메시 선택
+# 硫붿떆 ?좏깮
 cmds.select("pSphere1")
 
-# 디포머 생성
+# ?뷀룷癒??앹꽦
 deformer = cmds.deformer(type="offsetCurveDeformerNode")[0]
-print(f"디포머 생성됨: {deformer}")
+print(f"?뷀룷癒??앹꽦?? {deformer}")
 ```
 
-### **2. 영향 곡선 연결**
+### **2. ?곹뼢 怨≪꽑 ?곌껐**
 
-#### **UI 방식**
-1. 영향을 줄 곡선들 생성 (NURBS Curve)
-2. **Attribute Editor**에서 디포머 선택
-3. **Offset Curves** 섹션에서 곡선들 연결
+#### **UI 諛⑹떇**
+1. ?곹뼢??以?怨≪꽑???앹꽦 (NURBS Curve)
+2. **Attribute Editor**?먯꽌 ?뷀룷癒??좏깮
+3. **Offset Curves** ?뱀뀡?먯꽌 怨≪꽑???곌껐
 
-#### **스크립트 방식**
+#### **?ㅽ겕由쏀듃 諛⑹떇**
 ```python
-# 곡선 생성
+# 怨≪꽑 ?앹꽦
 curve1 = cmds.curve(p=[(0,0,0), (0,5,0), (0,10,0)], d=2)
 curve2 = cmds.curve(p=[(5,0,0), (5,5,0), (5,10,0)], d=2)
 
-# 디포머에 곡선 연결
+# ?뷀룷癒몄뿉 怨≪꽑 ?곌껐
 cmds.connectAttr(f"{curve1}.worldSpace[0]", f"{deformer}.offsetCurves[0]")
 cmds.connectAttr(f"{curve2}.worldSpace[0]", f"{deformer}.offsetCurves[1]")
 ```
 
-### **3. 바인딩 수행**
+### **3. 諛붿씤???섑뻾**
 ```python
-# 메시와 곡선 바인딩
+# 硫붿떆? 怨≪꽑 諛붿씤??
 cmds.setAttr(f"{deformer}.rebindMesh", True)
 cmds.setAttr(f"{deformer}.rebindCurves", True)
 ```
 
 ---
 
-## 🎛️ **속성 제어**
+## ?럾截?**?띿꽦 ?쒖뼱**
 
-### **기본 속성**
+### **湲곕낯 ?띿꽦**
 
-#### **Offset Mode (오프셋 모드)**
+#### **Offset Mode (?ㅽ봽??紐⑤뱶)**
 ```python
-# Arc Segment 모드 (고성능)
+# Arc Segment 紐⑤뱶 (怨좎꽦??
 cmds.setAttr(f"{deformer}.offsetMode", 0)
 
-# B-Spline 모드 (고품질)  
+# B-Spline 紐⑤뱶 (怨좏뭹吏?  
 cmds.setAttr(f"{deformer}.offsetMode", 1)
 ```
 
-#### **Falloff Radius (영향 반경)**
+#### **Falloff Radius (?곹뼢 諛섍꼍)**
 ```python
-# 영향 반경 설정 (단위: Maya 유닛)
+# ?곹뼢 諛섍꼍 ?ㅼ젙 (?⑥쐞: Maya ?좊떅)
 cmds.setAttr(f"{deformer}.falloffRadius", 10.0)
 ```
 
-#### **Max Influences (최대 영향 개수)**
+#### **Max Influences (理쒕? ?곹뼢 媛쒖닔)**
 ```python
-# 정점당 최대 영향 곡선 수
+# ?뺤젏??理쒕? ?곹뼢 怨≪꽑 ??
 cmds.setAttr(f"{deformer}.maxInfluences", 3)
 ```
 
-### **성능 속성**
+### **?깅뒫 ?띿꽦**
 
-#### **병렬 처리**
+#### **蹂묐젹 泥섎━**
 ```python
-# CPU 멀티스레딩 활성화
+# CPU 硫?곗뒪?덈뵫 ?쒖꽦??
 cmds.setAttr(f"{deformer}.useParallel", True)
 ```
 
-#### **GPU 가속**
+#### **GPU 媛??*
 ```python
-# CUDA GPU 가속 (1000+ 정점에서 자동 활성화)
-# 별도 설정 불필요 - 자동으로 최적화됨
+# CUDA GPU 媛??(1000+ ?뺤젏?먯꽌 ?먮룞 ?쒖꽦??
+# 蹂꾨룄 ?ㅼ젙 遺덊븘??- ?먮룞?쇰줈 理쒖쟻?붾맖
 ```
 
-### **아티스트 제어 속성**
+### **?꾪떚?ㅽ듃 ?쒖뼱 ?띿꽦**
 
-#### **Volume Strength (볼륨 보존)**
+#### **Volume Strength (蹂쇰ⅷ 蹂댁〈)**
 ```python
-# 볼륨 보존 강도 (0.0 ~ 2.0)
+# 蹂쇰ⅷ 蹂댁〈 媛뺣룄 (0.0 ~ 2.0)
 cmds.setAttr(f"{deformer}.volumeStrength", 1.0)
 ```
 
-#### **Slide Effect (슬라이딩)**
+#### **Slide Effect (?щ씪?대뵫)**
 ```python
-# 곡선을 따라 슬라이딩 (-1.0 ~ 1.0)
+# 怨≪꽑???곕씪 ?щ씪?대뵫 (-1.0 ~ 1.0)
 cmds.setAttr(f"{deformer}.slideEffect", 0.2)
 ```
 
-#### **Twist Distribution (비틀림)**
+#### **Twist Distribution (鍮꾪?由?**
 ```python
-# 비틀림 효과 (-∞ ~ +∞)
+# 鍮꾪?由??④낵 (-??~ +??
 cmds.setAttr(f"{deformer}.twistDistribution", 0.5)
 ```
 
-#### **Scale Distribution (크기 변화)**
+#### **Scale Distribution (?ш린 蹂??**
 ```python
-# 점진적 크기 변화 (0.1 ~ 5.0)
+# ?먯쭊???ш린 蹂??(0.1 ~ 5.0)
 cmds.setAttr(f"{deformer}.scaleDistribution", 1.2)
 ```
 
-#### **Rotation Distribution (회전 분포)**
+#### **Rotation Distribution (?뚯쟾 遺꾪룷)**
 ```python
-# 곡률 기반 회전 (0.0 ~ 2.0)
+# 怨〓쪧 湲곕컲 ?뚯쟾 (0.0 ~ 2.0)
 cmds.setAttr(f"{deformer}.rotationDistribution", 0.8)
 ```
 
-#### **Axial Sliding (축 방향 슬라이딩)**
+#### **Axial Sliding (異?諛⑺뼢 ?щ씪?대뵫)**
 ```python
-# 축 방향 추가 슬라이딩 (-1.0 ~ 1.0)
+# 異?諛⑺뼢 異붽? ?щ씪?대뵫 (-1.0 ~ 1.0)
 cmds.setAttr(f"{deformer}.axialSliding", 0.1)
 ```
 
 ---
 
-## 🎨 **실전 사용 예제**
+## ?렓 **?ㅼ쟾 ?ъ슜 ?덉젣**
 
-### **예제 1: 팔 굽힘 변형**
+### **?덉젣 1: ??援쏀옒 蹂??*
 ```python
 import maya.cmds as cmds
 
-# 1. 팔 메시와 곡선 생성
+# 1. ??硫붿떆? 怨≪꽑 ?앹꽦
 arm_mesh = cmds.polyCylinder(r=1, h=10, name="arm")[0]
 elbow_curve = cmds.curve(p=[(0,0,0), (0,3,0), (2,5,0), (0,8,0)], d=3, name="elbowCurve")
 
-# 2. 디포머 생성 및 설정
+# 2. ?뷀룷癒??앹꽦 諛??ㅼ젙
 cmds.select(arm_mesh)
 deformer = cmds.deformer(type="offsetCurveDeformerNode")[0]
 
-# 3. 곡선 연결
+# 3. 怨≪꽑 ?곌껐
 cmds.connectAttr(f"{elbow_curve}.worldSpace[0]", f"{deformer}.offsetCurves[0]")
 
-# 4. 팔 굽힘 최적화 설정
-cmds.setAttr(f"{deformer}.offsetMode", 0)           # Arc Segment (팔꿈치 최적화)
-cmds.setAttr(f"{deformer}.falloffRadius", 8.0)      # 적절한 영향 반경
-cmds.setAttr(f"{deformer}.volumeStrength", 1.2)     # 강한 볼륨 보존
-cmds.setAttr(f"{deformer}.twistDistribution", 0.3)  # 자연스러운 비틀림
-cmds.setAttr(f"{deformer}.useParallel", True)       # 병렬 처리
+# 4. ??援쏀옒 理쒖쟻???ㅼ젙
+cmds.setAttr(f"{deformer}.offsetMode", 0)           # Arc Segment (?붽퓞移?理쒖쟻??
+cmds.setAttr(f"{deformer}.falloffRadius", 8.0)      # ?곸젅???곹뼢 諛섍꼍
+cmds.setAttr(f"{deformer}.volumeStrength", 1.2)     # 媛뺥븳 蹂쇰ⅷ 蹂댁〈
+cmds.setAttr(f"{deformer}.twistDistribution", 0.3)  # ?먯뿰?ㅻ윭??鍮꾪?由?
+cmds.setAttr(f"{deformer}.useParallel", True)       # 蹂묐젹 泥섎━
 
-# 5. 바인딩
+# 5. 諛붿씤??
 cmds.setAttr(f"{deformer}.rebindMesh", True)
 ```
 
-### **예제 2: 꼬리 변형**
+### **?덉젣 2: 瑗щ━ 蹂??*
 ```python
-# 1. 꼬리 메시와 곡선
+# 1. 瑗щ━ 硫붿떆? 怨≪꽑
 tail_mesh = cmds.polyCylinder(r=0.5, h=15, sx=8, sy=20, name="tail")[0]
 tail_curve = cmds.curve(p=[(0,0,0), (2,3,0), (0,6,0), (-2,9,0), (0,12,0)], d=3)
 
-# 2. 디포머 설정
+# 2. ?뷀룷癒??ㅼ젙
 cmds.select(tail_mesh)
 deformer = cmds.deformer(type="offsetCurveDeformerNode")[0]
 cmds.connectAttr(f"{tail_curve}.worldSpace[0]", f"{deformer}.offsetCurves[0]")
 
-# 3. 꼬리 특화 설정
-cmds.setAttr(f"{deformer}.offsetMode", 1)           # B-Spline (고품질)
-cmds.setAttr(f"{deformer}.volumeStrength", 0.8)     # 유연한 볼륨
-cmds.setAttr(f"{deformer}.slideEffect", 0.4)        # 슬라이딩 효과
-cmds.setAttr(f"{deformer}.twistDistribution", 1.5)  # 강한 비틀림
-cmds.setAttr(f"{deformer}.scaleDistribution", 0.7)  # 끝으로 갈수록 가늘어짐
+# 3. 瑗щ━ ?뱁솕 ?ㅼ젙
+cmds.setAttr(f"{deformer}.offsetMode", 1)           # B-Spline (怨좏뭹吏?
+cmds.setAttr(f"{deformer}.volumeStrength", 0.8)     # ?좎뿰??蹂쇰ⅷ
+cmds.setAttr(f"{deformer}.slideEffect", 0.4)        # ?щ씪?대뵫 ?④낵
+cmds.setAttr(f"{deformer}.twistDistribution", 1.5)  # 媛뺥븳 鍮꾪?由?
+cmds.setAttr(f"{deformer}.scaleDistribution", 0.7)  # ?앹쑝濡?媛덉닔濡?媛?섏뼱吏?
 
-# 4. 바인딩
+# 4. 諛붿씤??
 cmds.setAttr(f"{deformer}.rebindMesh", True)
 ```
 
-### **예제 3: 고해상도 얼굴 변형**
+### **?덉젣 3: 怨좏빐?곷룄 ?쇨뎬 蹂??*
 ```python
-# 고해상도 메시 (50K+ 정점)
+# 怨좏빐?곷룄 硫붿떆 (50K+ ?뺤젏)
 face_mesh = "highResFace"
 facial_curves = ["jawCurve", "cheekCurve", "eyebrowCurve"]
 
-# 디포머 생성
+# ?뷀룷癒??앹꽦
 cmds.select(face_mesh)
 deformer = cmds.deformer(type="offsetCurveDeformerNode")[0]
 
-# 곡선들 연결
+# 怨≪꽑???곌껐
 for i, curve in enumerate(facial_curves):
     cmds.connectAttr(f"{curve}.worldSpace[0]", f"{deformer}.offsetCurves[{i}]")
 
-# 고해상도 최적화 설정
-cmds.setAttr(f"{deformer}.offsetMode", 1)           # B-Spline (최고 품질)
-cmds.setAttr(f"{deformer}.falloffRadius", 3.0)      # 정밀한 영향 반경
-cmds.setAttr(f"{deformer}.maxInfluences", 2)        # 영향 개수 제한 (성능)
-cmds.setAttr(f"{deformer}.volumeStrength", 1.5)     # 강한 볼륨 보존
-cmds.setAttr(f"{deformer}.useParallel", True)       # 필수: 병렬 처리
-# GPU 가속 자동 활성화 (50K+ 정점)
+# 怨좏빐?곷룄 理쒖쟻???ㅼ젙
+cmds.setAttr(f"{deformer}.offsetMode", 1)           # B-Spline (理쒓퀬 ?덉쭏)
+cmds.setAttr(f"{deformer}.falloffRadius", 3.0)      # ?뺣????곹뼢 諛섍꼍
+cmds.setAttr(f"{deformer}.maxInfluences", 2)        # ?곹뼢 媛쒖닔 ?쒗븳 (?깅뒫)
+cmds.setAttr(f"{deformer}.volumeStrength", 1.5)     # 媛뺥븳 蹂쇰ⅷ 蹂댁〈
+cmds.setAttr(f"{deformer}.useParallel", True)       # ?꾩닔: 蹂묐젹 泥섎━
+# GPU 媛???먮룞 ?쒖꽦??(50K+ ?뺤젏)
 
 cmds.setAttr(f"{deformer}.rebindMesh", True)
 ```
 
 ---
 
-## ⚡ **성능 최적화 가이드**
+## ??**?깅뒫 理쒖쟻??媛?대뱶**
 
-### **설정별 성능 비교**
+### **?ㅼ젙蹂??깅뒫 鍮꾧탳**
 
-| 정점 수 | Arc Segment | B-Spline | GPU 가속 | 권장 설정 |
+| ?뺤젏 ??| Arc Segment | B-Spline | GPU 媛??| 沅뚯옣 ?ㅼ젙 |
 |---------|-------------|----------|----------|----------|
 | **< 1K** | 60fps | 45fps | 60fps | Arc Segment |
-| **1K-10K** | 30fps | 15fps | 60fps | Arc + 병렬 |
-| **10K-100K** | 8fps | 3fps | 50fps | GPU 가속 |
+| **1K-10K** | 30fps | 15fps | 60fps | Arc + 蹂묐젹 |
+| **10K-100K** | 8fps | 3fps | 50fps | GPU 媛??|
 | **100K+** | 1fps | 0.3fps | 30fps | GPU + Arc |
 
-### **워크플로우별 권장 설정**
+### **?뚰겕?뚮줈?곕퀎 沅뚯옣 ?ㅼ젙**
 
-#### **리깅 단계**
+#### **由ш퉭 ?④퀎**
 ```python
-# 빠른 피드백 우선
+# 鍮좊Ⅸ ?쇰뱶諛??곗꽑
 cmds.setAttr(f"{deformer}.offsetMode", 0)        # Arc Segment
-cmds.setAttr(f"{deformer}.useParallel", True)    # 병렬 처리
-cmds.setAttr(f"{deformer}.falloffRadius", 10.0)  # 넓은 영향 반경
-cmds.setAttr(f"{deformer}.maxInfluences", 2)     # 적은 영향 수
+cmds.setAttr(f"{deformer}.useParallel", True)    # 蹂묐젹 泥섎━
+cmds.setAttr(f"{deformer}.falloffRadius", 10.0)  # ?볦? ?곹뼢 諛섍꼍
+cmds.setAttr(f"{deformer}.maxInfluences", 2)     # ?곸? ?곹뼢 ??
 ```
 
-#### **애니메이션 단계**
+#### **?좊땲硫붿씠???④퀎**
 ```python
-# 실시간 성능 + 적당한 품질
+# ?ㅼ떆媛??깅뒫 + ?곷떦???덉쭏
 cmds.setAttr(f"{deformer}.offsetMode", 0)        # Arc Segment
-cmds.setAttr(f"{deformer}.useParallel", True)    # 병렬 처리
-cmds.setAttr(f"{deformer}.volumeStrength", 1.0)  # 볼륨 보존
+cmds.setAttr(f"{deformer}.useParallel", True)    # 蹂묐젹 泥섎━
+cmds.setAttr(f"{deformer}.volumeStrength", 1.0)  # 蹂쇰ⅷ 蹂댁〈
 ```
 
-#### **최종 렌더링**
+#### **理쒖쥌 ?뚮뜑留?*
 ```python
-# 최고 품질 우선
+# 理쒓퀬 ?덉쭏 ?곗꽑
 cmds.setAttr(f"{deformer}.offsetMode", 1)        # B-Spline
-cmds.setAttr(f"{deformer}.useParallel", True)    # 병렬 처리
-cmds.setAttr(f"{deformer}.volumeStrength", 1.2)  # 강한 볼륨 보존
-cmds.setAttr(f"{deformer}.maxInfluences", 4)     # 많은 영향 수
+cmds.setAttr(f"{deformer}.useParallel", True)    # 蹂묐젹 泥섎━
+cmds.setAttr(f"{deformer}.volumeStrength", 1.2)  # 媛뺥븳 蹂쇰ⅷ 蹂댁〈
+cmds.setAttr(f"{deformer}.maxInfluences", 4)     # 留롮? ?곹뼢 ??
 ```
 
 ---
 
-## 🔧 **문제 해결**
+## ?뵩 **臾몄젣 ?닿껐**
 
-### **일반적인 문제들**
+### **?쇰컲?곸씤 臾몄젣??*
 
-#### **1. 디포머가 작동하지 않음**
+#### **1. ?뷀룷癒멸? ?묐룞?섏? ?딆쓬**
 ```python
-# 해결책: 바인딩 상태 확인
-cmds.getAttr(f"{deformer}.rebindMesh")  # False면 바인딩 필요
+# ?닿껐梨? 諛붿씤???곹깭 ?뺤씤
+cmds.getAttr(f"{deformer}.rebindMesh")  # False硫?諛붿씤???꾩슂
 cmds.setAttr(f"{deformer}.rebindMesh", True)
 ```
 
-#### **2. 성능이 느림**
+#### **2. ?깅뒫???먮┝**
 ```python
-# 해결책: 설정 최적화
-cmds.setAttr(f"{deformer}.offsetMode", 0)        # Arc Segment 모드
-cmds.setAttr(f"{deformer}.maxInfluences", 2)     # 영향 수 줄이기
-cmds.setAttr(f"{deformer}.falloffRadius", 5.0)   # 영향 반경 줄이기
-cmds.setAttr(f"{deformer}.useParallel", True)    # 병렬 처리 활성화
+# ?닿껐梨? ?ㅼ젙 理쒖쟻??
+cmds.setAttr(f"{deformer}.offsetMode", 0)        # Arc Segment 紐⑤뱶
+cmds.setAttr(f"{deformer}.maxInfluences", 2)     # ?곹뼢 ??以꾩씠湲?
+cmds.setAttr(f"{deformer}.falloffRadius", 5.0)   # ?곹뼢 諛섍꼍 以꾩씠湲?
+cmds.setAttr(f"{deformer}.useParallel", True)    # 蹂묐젹 泥섎━ ?쒖꽦??
 ```
 
-#### **3. 변형이 부자연스러움**
+#### **3. 蹂?뺤씠 遺?먯뿰?ㅻ윭?**
 ```python
-# 해결책: 품질 설정 조정
-cmds.setAttr(f"{deformer}.offsetMode", 1)        # B-Spline 모드
-cmds.setAttr(f"{deformer}.volumeStrength", 1.2)  # 볼륨 보존 강화
-cmds.setAttr(f"{deformer}.falloffRadius", 8.0)   # 영향 반경 확대
+# ?닿껐梨? ?덉쭏 ?ㅼ젙 議곗젙
+cmds.setAttr(f"{deformer}.offsetMode", 1)        # B-Spline 紐⑤뱶
+cmds.setAttr(f"{deformer}.volumeStrength", 1.2)  # 蹂쇰ⅷ 蹂댁〈 媛뺥솕
+cmds.setAttr(f"{deformer}.falloffRadius", 8.0)   # ?곹뼢 諛섍꼍 ?뺣?
 ```
 
-#### **4. GPU 가속이 작동하지 않음**
-- **CUDA 드라이버** 최신 버전 설치 확인
-- **GPU 메모리** 부족 시 정점 수 줄이기
-- **1000개 이상 정점**에서만 자동 활성화됨
+#### **4. GPU 媛?띿씠 ?묐룞?섏? ?딆쓬**
+- **CUDA ?쒕씪?대쾭** 理쒖떊 踰꾩쟾 ?ㅼ튂 ?뺤씤
+- **GPU 硫붾え由?* 遺議????뺤젏 ??以꾩씠湲?
+- **1000媛??댁긽 ?뺤젏**?먯꽌留??먮룞 ?쒖꽦?붾맖
 
-### **디버그 정보 확인**
+### **?붾쾭洹??뺣낫 ?뺤씤**
 ```python
-# 디포머 상태 정보
+# ?뷀룷癒??곹깭 ?뺣낫
 print(f"Offset Mode: {cmds.getAttr(f'{deformer}.offsetMode')}")
 print(f"Use Parallel: {cmds.getAttr(f'{deformer}.useParallel')}")
 print(f"Falloff Radius: {cmds.getAttr(f'{deformer}.falloffRadius')}")
 print(f"Max Influences: {cmds.getAttr(f'{deformer}.maxInfluences')}")
 
-# 연결된 곡선 수 확인
+# ?곌껐??怨≪꽑 ???뺤씤
 curves = cmds.listConnections(f"{deformer}.offsetCurves", source=True)
 print(f"Connected Curves: {len(curves) if curves else 0}")
 ```
 
 ---
 
-## 📋 **배포 시 주의사항**
+## ?뱥 **諛고룷 ??二쇱쓽?ы빆**
 
-### **사용자가 알아야 할 점들**
+### **?ъ슜?먭? ?뚯븘?????먮뱾**
 
-#### **1. 라이선스**
-- ✅ **특허 만료**: US8400455B2는 2025년 3월 만료됨
-- ✅ **자유 사용**: 특허 침해 우려 없음
-- ✅ **오픈소스**: MIT 라이선스 적용
+#### **1. ?쇱씠?좎뒪**
+- ??**?뱁뿀 留뚮즺**: US8400455B2??2025??3??留뚮즺??
+- ??**?먯쑀 ?ъ슜**: ?뱁뿀 移⑦빐 ?곕젮 ?놁쓬
+- ??**?ㅽ뵂?뚯뒪**: MIT ?쇱씠?좎뒪 ?곸슜
 
-#### **2. 시스템 호환성**
-- **Maya 버전**: 2020 이상 필요
-- **CUDA**: 선택사항 (성능 향상용)
-- **OpenMP**: 자동 지원 (CPU 병렬 처리)
+#### **2. ?쒖뒪???명솚??*
+- **Maya 踰꾩쟾**: 2020 ?댁긽 ?꾩슂
+- **CUDA**: ?좏깮?ы빆 (?깅뒫 ?μ긽??
+- **OpenMP**: ?먮룞 吏??(CPU 蹂묐젹 泥섎━)
 
-#### **3. 성능 가이드라인**
-- **1000개 미만 정점**: CPU 처리 권장
-- **1000개 이상 정점**: GPU 가속 자동 활성화
-- **실시간 작업**: Arc Segment 모드 권장
-- **최종 렌더링**: B-Spline 모드 권장
+#### **3. ?깅뒫 媛?대뱶?쇱씤**
+- **1000媛?誘몃쭔 ?뺤젏**: CPU 泥섎━ 沅뚯옣
+- **1000媛??댁긽 ?뺤젏**: GPU 媛???먮룞 ?쒖꽦??
+- **?ㅼ떆媛??묒뾽**: Arc Segment 紐⑤뱶 沅뚯옣
+- **理쒖쥌 ?뚮뜑留?*: B-Spline 紐⑤뱶 沅뚯옣
 
-#### **4. 메모리 사용량**
-- **기본**: 정점당 44 bytes (매우 효율적)
-- **대용량 메시**: 시스템 RAM 고려
-- **GPU 메모리**: CUDA 사용 시 GPU VRAM 고려
+#### **4. 硫붾え由??ъ슜??*
+- **湲곕낯**: ?뺤젏??44 bytes (留ㅼ슦 ?⑥쑉??
+- **??⑸웾 硫붿떆**: ?쒖뒪??RAM 怨좊젮
+- **GPU 硫붾え由?*: CUDA ?ъ슜 ??GPU VRAM 怨좊젮
 
-### **배포 패키지 구성**
+### **諛고룷 ?⑦궎吏 援ъ꽦**
 ```
 offsetCurveDeformer/
-├── plug-ins/
-│   ├── offsetCurveDeformer.mll     # Windows
-│   ├── offsetCurveDeformer.bundle  # macOS
-│   └── offsetCurveDeformer.so      # Linux
-├── docs/
-│   ├── MayaUserGuide.md           # 사용자 가이드
-│   ├── PerformanceGuide.md        # 성능 가이드
-│   └── PatentComplianceFinalReport.md  # 특허 준수 보고서
-├── examples/
-│   ├── arm_deformation.ma         # 팔 변형 예제
-│   ├── tail_animation.ma          # 꼬리 애니메이션 예제
-│   └── facial_rigging.ma          # 얼굴 리깅 예제
-└── README.md                      # 설치 및 기본 사용법
+?쒋?? plug-ins/
+??  ?쒋?? offsetCurveDeformer.mll     # Windows
+??  ?쒋?? offsetCurveDeformer.bundle  # macOS
+??  ?붴?? offsetCurveDeformer.so      # Linux
+?쒋?? docs/
+??  ?쒋?? MayaUserGuide.md           # ?ъ슜??媛?대뱶
+??  ?쒋?? PerformanceGuide.md        # ?깅뒫 媛?대뱶
+??  ?붴?? PatentComplianceFinalReport.md  # ?뱁뿀 以??蹂닿퀬??
+?쒋?? examples/
+??  ?쒋?? arm_deformation.ma         # ??蹂???덉젣
+??  ?쒋?? tail_animation.ma          # 瑗щ━ ?좊땲硫붿씠???덉젣
+??  ?붴?? facial_rigging.ma          # ?쇨뎬 由ш퉭 ?덉젣
+?붴?? README.md                      # ?ㅼ튂 諛?湲곕낯 ?ъ슜踰?
 ```
 
 ---
 
-## 🎉 **결론**
+## ?럦 **寃곕줎**
 
-**Maya Offset Curve Deformer**는 특허 기반의 혁신적인 기술로 다음을 제공합니다:
+**Maya Offset Curve Deformer**???뱁뿀 湲곕컲???곸떊?곸씤 湲곗닠濡??ㅼ쓬???쒓났?⑸땲??
 
-- 🚀 **혁신적 성능**: GPU 가속으로 기존 대비 1000배 빠름
-- 🎨 **완벽한 품질**: 특허 수학 공식 기반 정확한 변형
-- 🔧 **직관적 사용**: Maya 네이티브 통합
-- 💎 **상용 품질**: 영화/게임 제작 수준
+- ?? **?곸떊???깅뒫**: GPU 媛?띿쑝濡?湲곗〈 ?鍮?1000諛?鍮좊쫫
+- ?렓 **?꾨꼍???덉쭏**: ?뱁뿀 ?섑븰 怨듭떇 湲곕컲 ?뺥솗??蹂??
+- ?뵩 **吏곴????ъ슜**: Maya ?ㅼ씠?곕툕 ?듯빀
+- ?뭿 **?곸슜 ?덉쭏**: ?곹솕/寃뚯엫 ?쒖옉 ?섏?
 
-이제 **Maya에서 가장 강력하고 빠른 변형 도구**를 경험해보세요! ✨
+?댁젣 **Maya?먯꽌 媛??媛뺣젰?섍퀬 鍮좊Ⅸ 蹂???꾧뎄**瑜?寃쏀뿕?대낫?몄슂! ??

@@ -1,59 +1,59 @@
-# Offset Curve Deformer 코드 명세서
+﻿# Offset Curve Deformer 肄붾뱶 紐낆꽭??
 
-## 📋 **프로젝트 개요**
+## ?뱥 **?꾨줈?앺듃 媛쒖슂**
 
-### **프로젝트명**: offsetCurveDeformer-1
-### **버전**: 1.0.0
-### **플랫폼**: Autodesk Maya Plugin (Windows/Linux/macOS)
-### **언어**: C++ (Maya API 2024+)
-### **특허 기반**: US8400455B2 "Method and apparatus for efficient offset curve deformation"
+### **?꾨줈?앺듃紐?*: offsetCurveDeformer-1
+### **踰꾩쟾**: 1.0.0
+### **?뚮옯??*: Autodesk Maya Plugin (Windows/Linux/macOS)
+### **?몄뼱**: C++ (Maya API 2024+)
+### **?뱁뿀 湲곕컲**: US8400455B2 "Method and apparatus for efficient offset curve deformation"
 
 ---
 
-## 🏗️ **아키텍처 개요**
+## ?룛截?**?꾪궎?띿쿂 媛쒖슂**
 
-### **디자인 패턴**
-- **Composition Pattern**: `offsetCurveDeformerNode` → `offsetCurveAlgorithm`
-- **Value Object Pattern**: `offsetCurveControlParams` (아티스트 제어 파라미터)
-- **Container-based Data Management**: `std::vector` 기반 데이터 관리
-- **Template Method + Strategy Hybrid**: Arc Segment vs B-Spline 모드 전환
+### **?붿옄???⑦꽩**
+- **Composition Pattern**: `offsetCurveDeformerNode` ??`offsetCurveAlgorithm`
+- **Value Object Pattern**: `offsetCurveControlParams` (?꾪떚?ㅽ듃 ?쒖뼱 ?뚮씪誘명꽣)
+- **Container-based Data Management**: `std::vector` 湲곕컲 ?곗씠??愿由?
+- **Template Method + Strategy Hybrid**: Arc Segment vs B-Spline 紐⑤뱶 ?꾪솚
 
-### **핵심 컴포넌트**
+### **?듭떖 而댄룷?뚰듃**
 ```
 offsetCurveDeformerNode (Maya Node)
-├── offsetCurveAlgorithm (Core Algorithm)
-│   ├── VertexDeformationData (Per-vertex data)
-│   │   └── std::vector<OffsetPrimitive> (Minimal primitives)
-│   └── offsetCurveControlParams (Artist controls)
-└── GPU/OpenMP Acceleration (Performance)
+?쒋?? offsetCurveAlgorithm (Core Algorithm)
+??  ?쒋?? VertexDeformationData (Per-vertex data)
+??  ??  ?붴?? std::vector<OffsetPrimitive> (Minimal primitives)
+??  ?붴?? offsetCurveControlParams (Artist controls)
+?붴?? GPU/OpenMP Acceleration (Performance)
 ```
 
 ---
 
-## 📁 **파일 구조**
+## ?뱚 **?뚯씪 援ъ“**
 
-### **핵심 소스 파일**
+### **?듭떖 ?뚯뒪 ?뚯씪**
 
-| 파일명 | 역할 | 라인 수 | 주요 기능 |
+| ?뚯씪紐?| ??븷 | ?쇱씤 ??| 二쇱슂 湲곕뒫 |
 |--------|------|---------|-----------|
-| `offsetCurveDeformerNode.h/.cpp` | Maya 디포머 노드 | ~200 | Maya 통합, 속성 관리 |
-| `offsetCurveAlgorithm.h/.cpp` | 핵심 알고리즘 | ~600 | OCD 바인딩/변형 알고리즘 |
-| `offsetCurveControlParams.h/.cpp` | 아티스트 제어 | ~150 | 트위스트, 슬라이드, 스케일 등 |
-| `offsetCurveKernel.cu` | GPU 가속 | ~100 | CUDA 커널 (옵션) |
-| `pluginMain.cpp` | 플러그인 진입점 | ~50 | Maya 플러그인 등록 |
+| `offsetCurveDeformerNode.h/.cpp` | Maya ?뷀룷癒??몃뱶 | ~200 | Maya ?듯빀, ?띿꽦 愿由?|
+| `offsetCurveAlgorithm.h/.cpp` | ?듭떖 ?뚭퀬由ъ쬁 | ~600 | OCD 諛붿씤??蹂???뚭퀬由ъ쬁 |
+| `offsetCurveControlParams.h/.cpp` | ?꾪떚?ㅽ듃 ?쒖뼱 | ~150 | ?몄쐞?ㅽ듃, ?щ씪?대뱶, ?ㅼ?????|
+| `offsetCurveKernel.cu` | GPU 媛??| ~100 | CUDA 而ㅻ꼸 (?듭뀡) |
+| `pluginMain.cpp` | ?뚮윭洹몄씤 吏꾩엯??| ~50 | Maya ?뚮윭洹몄씤 ?깅줉 |
 
-### **문서 파일**
+### **臾몄꽌 ?뚯씪**
 
-| 파일명 | 목적 | 대상 |
+| ?뚯씪紐?| 紐⑹쟻 | ???|
 |--------|------|------|
-| `PatentMathematicalFormula.md` | 수학적 공식 | 개발자 |
-| `PatentComplianceFinalReport.md` | 특허 준수도 | 법무팀 |
-| `MayaUserGuide.md` | 사용법 가이드 | 아티스트 |
-| `PerformanceGuide.md` | 성능 최적화 | 테크니컬 아티스트 |
+| `PatentMathematicalFormula.md` | ?섑븰??怨듭떇 | 媛쒕컻??|
+| `PatentComplianceFinalReport.md` | ?뱁뿀 以?섎룄 | 踰뺣Т? |
+| `MayaUserGuide.md` | ?ъ슜踰?媛?대뱶 | ?꾪떚?ㅽ듃 |
+| `PerformanceGuide.md` | ?깅뒫 理쒖쟻??| ?뚰겕?덉뺄 ?꾪떚?ㅽ듃 |
 
 ---
 
-## 🧮 **핵심 클래스 명세**
+## ?㎜ **?듭떖 ?대옒??紐낆꽭**
 
 ### **1. offsetCurveDeformerNode**
 
@@ -61,28 +61,28 @@ offsetCurveDeformerNode (Maya Node)
 class offsetCurveDeformerNode : public MPxDeformerNode
 ```
 
-**목적**: Maya의 디포머 시스템과 통합하는 메인 노드
+**紐⑹쟻**: Maya???뷀룷癒??쒖뒪?쒓낵 ?듯빀?섎뒗 硫붿씤 ?몃뱶
 
-#### **주요 속성 (Maya Attributes)**
+#### **二쇱슂 ?띿꽦 (Maya Attributes)**
 
-| 속성명 | 타입 | 기본값 | 설명 |
+| ?띿꽦紐?| ???| 湲곕낯媛?| ?ㅻ챸 |
 |--------|------|--------|------|
 | `aOffsetMode` | enum | B_SPLINE | Arc Segment(0) vs B-Spline(1) |
-| `aOffsetCurves` | compound | - | 영향 곡선들 |
-| `aMaxInfluences` | int | 3 | 정점당 최대 영향 곡선 수 |
-| `aFalloffRadius` | double | 5.0 | 영향 반경 |
-| `aUseParallel` | bool | true | OpenMP 병렬 처리 |
+| `aOffsetCurves` | compound | - | ?곹뼢 怨≪꽑??|
+| `aMaxInfluences` | int | 3 | ?뺤젏??理쒕? ?곹뼢 怨≪꽑 ??|
+| `aFalloffRadius` | double | 5.0 | ?곹뼢 諛섍꼍 |
+| `aUseParallel` | bool | true | OpenMP 蹂묐젹 泥섎━ |
 
-#### **핵심 메서드**
+#### **?듭떖 硫붿꽌??*
 
 ```cpp
-// Maya 디포머 메인 함수
+// Maya ?뷀룷癒?硫붿씤 ?⑥닔
 virtual MStatus deform(MDataBlock& block,
                       MItGeometry& iter,
                       const MMatrix& mat,
                       unsigned int multiIndex) override;
 
-// 노드 초기화
+// ?몃뱶 珥덇린??
 static MStatus initialize();
 ```
 
@@ -94,30 +94,30 @@ static MStatus initialize();
 class offsetCurveAlgorithm
 ```
 
-**목적**: 특허 US8400455B2의 OCD 알고리즘 구현
+**紐⑹쟻**: ?뱁뿀 US8400455B2??OCD ?뚭퀬由ъ쬁 援ы쁽
 
-#### **핵심 데이터 구조**
+#### **?듭떖 ?곗씠??援ъ“**
 
 ```cpp
-// 최소한의 오프셋 프리미티브 (특허 준수)
+// 理쒖냼?쒖쓽 ?ㅽ봽???꾨━誘명떚釉?(?뱁뿀 以??
 struct OffsetPrimitive {
-    int influenceCurveIndex;        // 영향 곡선 인덱스 (4 bytes)
-    double bindParamU;              // 바인드 파라미터 (8 bytes)
-    MVector bindOffsetLocal;        // 로컬 오프셋 벡터 (24 bytes)
-    double weight;                  // 영향 가중치 (8 bytes)
-    // 총 44 bytes (이전 400+ bytes에서 90% 감소)
+    int influenceCurveIndex;        // ?곹뼢 怨≪꽑 ?몃뜳??(4 bytes)
+    double bindParamU;              // 諛붿씤???뚮씪誘명꽣 (8 bytes)
+    MVector bindOffsetLocal;        // 濡쒖뺄 ?ㅽ봽??踰≫꽣 (24 bytes)
+    double weight;                  // ?곹뼢 媛以묒튂 (8 bytes)
+    // 珥?44 bytes (?댁쟾 400+ bytes?먯꽌 90% 媛먯냼)
 };
 
-// 정점별 변형 데이터
+// ?뺤젏蹂?蹂???곗씠??
 struct VertexDeformationData {
     std::vector<OffsetPrimitive> offsetPrimitives;
-    // 평균 2-3개 프리미티브 per vertex
+    // ?됯퇏 2-3媛??꾨━誘명떚釉?per vertex
 };
 ```
 
-#### **핵심 알고리즘 메서드**
+#### **?듭떖 ?뚭퀬由ъ쬁 硫붿꽌??*
 
-##### **Phase 1: 바인딩 페이즈**
+##### **Phase 1: 諛붿씤???섏씠利?*
 ```cpp
 MStatus performBindingPhase(const MPointArray& modelPoints,
                            const std::vector<MDagPath>& influenceCurves,
@@ -125,32 +125,32 @@ MStatus performBindingPhase(const MPointArray& modelPoints,
                            int maxInfluences);
 ```
 
-**알고리즘 복잡도**: O(V × C) - V: 정점 수, C: 곡선 수
+**?뚭퀬由ъ쬁 蹂듭옟??*: O(V 횞 C) - V: ?뺤젏 ?? C: 怨≪꽑 ??
 
-**처리 과정**:
-1. 각 정점에 대해 모든 영향 곡선과의 거리 계산
-2. 거리 기반 필터링 (falloffRadius)
-3. 프레넷 프레임 계산 (Tangent, Normal, Binormal)
-4. 로컬 좌표계 변환
-5. 오프셋 프리미티브 생성 및 저장
+**泥섎━ 怨쇱젙**:
+1. 媛??뺤젏?????紐⑤뱺 ?곹뼢 怨≪꽑怨쇱쓽 嫄곕━ 怨꾩궛
+2. 嫄곕━ 湲곕컲 ?꾪꽣留?(falloffRadius)
+3. ?꾨젅???꾨젅??怨꾩궛 (Tangent, Normal, Binormal)
+4. 濡쒖뺄 醫뚰몴怨?蹂??
+5. ?ㅽ봽???꾨━誘명떚釉??앹꽦 諛????
 
-##### **Phase 2: 변형 페이즈**
+##### **Phase 2: 蹂???섏씠利?*
 ```cpp
 MStatus performDeformationPhase(MPointArray& points,
                                const offsetCurveControlParams& params);
 ```
 
-**알고리즘 복잡도**: O(V × P) - P: 평균 프리미티브 수 per vertex
+**?뚭퀬由ъ쬁 蹂듭옟??*: O(V 횞 P) - P: ?됯퇏 ?꾨━誘명떚釉???per vertex
 
-**처리 과정**:
-1. GPU 가속 우선 선택 (대용량 메시)
-2. OpenMP 병렬 처리 (중간 크기 메시)
-3. 순차 처리 (소규모 메시)
+**泥섎━ 怨쇱젙**:
+1. GPU 媛???곗꽑 ?좏깮 (??⑸웾 硫붿떆)
+2. OpenMP 蹂묐젹 泥섎━ (以묎컙 ?ш린 硫붿떆)
+3. ?쒖감 泥섎━ (?뚭퇋紐?硫붿떆)
 
-#### **실시간 계산 메서드**
+#### **?ㅼ떆媛?怨꾩궛 硫붿꽌??*
 
 ```cpp
-// 프레넷 프레임 계산 (모드별 분기)
+// ?꾨젅???꾨젅??怨꾩궛 (紐⑤뱶蹂?遺꾧린)
 MStatus calculateFrenetFrameOnDemand(const MDagPath& curvePath,
                                    double paramU,
                                    MVector& tangent,
@@ -164,9 +164,9 @@ MStatus calculateFrenetFrameArcSegment(const MDagPath& curvePath,
                                      MVector& binormal) const;
 ```
 
-**성능 차이**:
-- B-Spline 모드: 정확하지만 느림 (Maya API 호출)
-- Arc Segment 모드: 3-5배 빠름 (기하학적 계산)
+**?깅뒫 李⑥씠**:
+- B-Spline 紐⑤뱶: ?뺥솗?섏?留??먮┝ (Maya API ?몄텧)
+- Arc Segment 紐⑤뱶: 3-5諛?鍮좊쫫 (湲고븯?숈쟻 怨꾩궛)
 
 ---
 
@@ -176,19 +176,19 @@ MStatus calculateFrenetFrameArcSegment(const MDagPath& curvePath,
 class offsetCurveControlParams
 ```
 
-**목적**: 아티스트 제어 파라미터 캡슐화
+**紐⑹쟻**: ?꾪떚?ㅽ듃 ?쒖뼱 ?뚮씪誘명꽣 罹≪뒓??
 
-#### **제어 파라미터**
+#### **?쒖뼱 ?뚮씪誘명꽣**
 
-| 제어명 | 범위 | 기본값 | 수학적 공식 |
+| ?쒖뼱紐?| 踰붿쐞 | 湲곕낯媛?| ?섑븰??怨듭떇 |
 |--------|------|--------|-------------|
-| Twist | -360° ~ +360° | 0° | `angle = twist × paramU × 2π` |
-| Slide | -100 ~ +100 | 0 | `paramU += slide × 0.01` |
-| Scale | 0.1 ~ 10.0 | 1.0 | `offset *= scale × (1 + paramU × distribution)` |
+| Twist | -360째 ~ +360째 | 0째 | `angle = twist 횞 paramU 횞 2?` |
+| Slide | -100 ~ +100 | 0 | `paramU += slide 횞 0.01` |
+| Scale | 0.1 ~ 10.0 | 1.0 | `offset *= scale 횞 (1 + paramU 횞 distribution)` |
 | Volume | 0.0 ~ 1.0 | 0.0 | Volume preservation correction |
 | Axial Sliding | -10 ~ +10 | 0 | Tangent direction sliding |
 
-#### **수학적 적용**
+#### **?섑븰???곸슜**
 
 ```cpp
 MVector applyArtistControls(const MVector& baseOffset,
@@ -202,9 +202,9 @@ MVector applyArtistControls(const MVector& baseOffset,
 
 ---
 
-## ⚡ **성능 최적화 기능**
+## ??**?깅뒫 理쒖쟻??湲곕뒫**
 
-### **1. GPU 가속 (CUDA)**
+### **1. GPU 媛??(CUDA)**
 
 ```cpp
 #ifdef CUDA_ENABLED
@@ -214,10 +214,10 @@ void processVertexDeformationGPU(const std::vector<int>& vertexIndices,
 #endif
 ```
 
-**적용 조건**: 정점 수 > 10,000개
-**성능 향상**: 5-50배 (GPU 종류에 따라)
+**?곸슜 議곌굔**: ?뺤젏 ??> 10,000媛?
+**?깅뒫 ?μ긽**: 5-50諛?(GPU 醫낅쪟???곕씪)
 
-### **2. CPU 병렬 처리 (OpenMP)**
+### **2. CPU 蹂묐젹 泥섎━ (OpenMP)**
 
 ```cpp
 #ifdef OPENMP_ENABLED
@@ -228,54 +228,54 @@ for (int i = 0; i < vertexCount; i++) {
 #endif
 ```
 
-**적용 조건**: 정점 수 > 1,000개
-**성능 향상**: 2-8배 (CPU 코어 수에 따라)
+**?곸슜 議곌굔**: ?뺤젏 ??> 1,000媛?
+**?깅뒫 ?μ긽**: 2-8諛?(CPU 肄붿뼱 ?섏뿉 ?곕씪)
 
-### **3. Arc Segment 모드**
+### **3. Arc Segment 紐⑤뱶**
 
-**기하학적 계산 방식**:
-- 직선 구간: 선형 보간
-- 호 구간: 원호 계산
-- Maya API 호출 최소화
+**湲고븯?숈쟻 怨꾩궛 諛⑹떇**:
+- 吏곸꽑 援ш컙: ?좏삎 蹂닿컙
+- ??援ш컙: ?먰샇 怨꾩궛
+- Maya API ?몄텧 理쒖냼??
 
-**성능 향상**: 3-5배 (B-Spline 대비)
+**?깅뒫 ?μ긽**: 3-5諛?(B-Spline ?鍮?
 
 ---
 
-## 🧪 **메모리 사용량 분석**
+## ?㎦ **硫붾え由??ъ슜??遺꾩꽍**
 
-### **정점당 메모리 사용량**
+### **?뺤젏??硫붾え由??ъ슜??*
 
-| 컴포넌트 | 이전 구현 | 현재 구현 | 감소율 |
+| 而댄룷?뚰듃 | ?댁쟾 援ы쁽 | ?꾩옱 援ы쁽 | 媛먯냼??|
 |----------|-----------|-----------|--------|
-| 곡선 데이터 캐싱 | ~300 bytes | 0 bytes | 100% |
-| 프레넷 프레임 캐싱 | ~72 bytes | 0 bytes | 100% |
-| 오프셋 프리미티브 | ~400 bytes | ~44 bytes | 89% |
-| **총계** | **~772 bytes** | **~44 bytes** | **94%** |
+| 怨≪꽑 ?곗씠??罹먯떛 | ~300 bytes | 0 bytes | 100% |
+| ?꾨젅???꾨젅??罹먯떛 | ~72 bytes | 0 bytes | 100% |
+| ?ㅽ봽???꾨━誘명떚釉?| ~400 bytes | ~44 bytes | 89% |
+| **珥앷퀎** | **~772 bytes** | **~44 bytes** | **94%** |
 
-### **10만 정점 메시 기준**
+### **10留??뺤젏 硫붿떆 湲곗?**
 
-- **이전**: 77.2 MB
-- **현재**: 4.4 MB
-- **메모리 절약**: 72.8 MB (94% 감소)
+- **?댁쟾**: 77.2 MB
+- **?꾩옱**: 4.4 MB
+- **硫붾え由??덉빟**: 72.8 MB (94% 媛먯냼)
 
 ---
 
-## 🔧 **빌드 시스템 (CMake)**
+## ?뵩 **鍮뚮뱶 ?쒖뒪??(CMake)**
 
-### **필수 의존성**
+### **?꾩닔 ?섏〈??*
 
 ```cmake
 # Maya SDK
 find_package(Maya REQUIRED)
 
-# OpenMP (선택)
+# OpenMP (?좏깮)
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
     target_compile_definitions(${PROJECT_NAME} PRIVATE OPENMP_ENABLED)
 endif()
 
-# CUDA (선택)
+# CUDA (?좏깮)
 find_package(CUDA QUIET)
 if(CUDA_FOUND)
     enable_language(CUDA)
@@ -283,53 +283,53 @@ if(CUDA_FOUND)
 endif()
 ```
 
-### **컴파일 플래그**
+### **而댄뙆???뚮옒洹?*
 
 ```cmake
-# 최적화 플래그
+# 理쒖쟻???뚮옒洹?
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
-# Maya 호환성
+# Maya ?명솚??
 set(CMAKE_CXX_STANDARD 17)
 add_definitions(-DREQUIRE_IOSTREAM -D_BOOL)
 ```
 
 ---
 
-## 🧮 **수학적 공식 요약**
+## ?㎜ **?섑븰??怨듭떇 ?붿빟**
 
-### **바인딩 페이즈**
+### **諛붿씤???섏씠利?*
 
-1. **최근접점 찾기**: `min |P_model - C(u)|²`
-2. **프레넷 프레임**: `T = C'(u)`, `N = computed`, `B = T × N`
-3. **로컬 변환**: `offset_local = offset_world · [T,N,B]`
-4. **가중치**: `w = 1.0 / (1.0 + distance / radius)`
+1. **理쒓렐?묒젏 李얘린**: `min |P_model - C(u)|짼`
+2. **?꾨젅???꾨젅??*: `T = C'(u)`, `N = computed`, `B = T 횞 N`
+3. **濡쒖뺄 蹂??*: `offset_local = offset_world 쨌 [T,N,B]`
+4. **媛以묒튂**: `w = 1.0 / (1.0 + distance / radius)`
 
-### **변형 페이즈**
+### **蹂???섏씠利?*
 
-1. **현재 프레넷 프레임**: 실시간 계산
-2. **아티스트 제어 적용**: 트위스트, 슬라이드, 스케일 등
-3. **월드 변환**: `offset_world = offset_local · [T',N',B']`
-4. **최종 위치**: `P_new = P_curve + offset_world`
+1. **?꾩옱 ?꾨젅???꾨젅??*: ?ㅼ떆媛?怨꾩궛
+2. **?꾪떚?ㅽ듃 ?쒖뼱 ?곸슜**: ?몄쐞?ㅽ듃, ?щ씪?대뱶, ?ㅼ?????
+3. **?붾뱶 蹂??*: `offset_world = offset_local 쨌 [T',N',B']`
+4. **理쒖쥌 ?꾩튂**: `P_new = P_curve + offset_world`
 
 ---
 
-## 🔍 **디버깅 및 프로파일링**
+## ?뵇 **?붾쾭源?諛??꾨줈?뚯씪留?*
 
-### **디버그 출력**
+### **?붾쾭洹?異쒕젰**
 
 ```cpp
-// 디버그 모드에서 상세 정보 출력
+// ?붾쾭洹?紐⑤뱶?먯꽌 ?곸꽭 ?뺣낫 異쒕젰
 #ifdef _DEBUG
     MGlobal::displayInfo(MString("Vertex ") + vertexIndex + 
                         " primitives: " + primitiveCount);
 #endif
 ```
 
-### **성능 측정**
+### **?깅뒫 痢≪젙**
 
 ```cpp
-// 처리 시간 측정
+// 泥섎━ ?쒓컙 痢≪젙
 auto start = std::chrono::high_resolution_clock::now();
 performDeformationPhase(points, params);
 auto end = std::chrono::high_resolution_clock::now();
@@ -338,16 +338,16 @@ auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - star
 
 ---
 
-## 📊 **성능 벤치마크**
+## ?뱤 **?깅뒫 踰ㅼ튂留덊겕**
 
-### **테스트 환경**
+### **?뚯뒪???섍꼍**
 - **CPU**: Intel i7-12700K (16 threads)
 - **GPU**: NVIDIA RTX 4080 (CUDA 12.0)
 - **RAM**: 32GB DDR4-3200
 
-### **성능 결과**
+### **?깅뒫 寃곌낵**
 
-| 정점 수 | B-Spline | Arc Segment | OpenMP | GPU (CUDA) |
+| ?뺤젏 ??| B-Spline | Arc Segment | OpenMP | GPU (CUDA) |
 |---------|----------|-------------|---------|------------|
 | 1,000 | 5ms | 1ms | 1ms | 2ms |
 | 10,000 | 50ms | 15ms | 8ms | 3ms |
@@ -356,44 +356,44 @@ auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - star
 
 ---
 
-## 🔧 **확장성 및 유지보수**
+## ?뵩 **?뺤옣??諛??좎?蹂댁닔**
 
-### **새로운 아티스트 제어 추가**
+### **?덈줈???꾪떚?ㅽ듃 ?쒖뼱 異붽?**
 
-1. `offsetCurveControlParams`에 파라미터 추가
-2. `applyArtistControls()` 함수에 로직 추가
-3. Maya 속성 추가 (`offsetCurveDeformerNode`)
+1. `offsetCurveControlParams`???뚮씪誘명꽣 異붽?
+2. `applyArtistControls()` ?⑥닔??濡쒖쭅 異붽?
+3. Maya ?띿꽦 異붽? (`offsetCurveDeformerNode`)
 
-### **새로운 곡선 타입 지원**
+### **?덈줈??怨≪꽑 ???吏??*
 
-1. `calculateFrenetFrame*()` 함수 확장
-2. 새로운 모드 enum 추가
-3. 모드별 분기 로직 업데이트
+1. `calculateFrenetFrame*()` ?⑥닔 ?뺤옣
+2. ?덈줈??紐⑤뱶 enum 異붽?
+3. 紐⑤뱶蹂?遺꾧린 濡쒖쭅 ?낅뜲?댄듃
 
-### **성능 최적화 확장**
+### **?깅뒫 理쒖쟻???뺤옣**
 
-1. 새로운 CUDA 커널 추가
-2. OpenMP 스케줄링 최적화
-3. SIMD 벡터화 (AVX2/AVX-512)
+1. ?덈줈??CUDA 而ㅻ꼸 異붽?
+2. OpenMP ?ㅼ?以꾨쭅 理쒖쟻??
+3. SIMD 踰≫꽣??(AVX2/AVX-512)
 
 ---
 
-## 📝 **코딩 컨벤션**
+## ?뱷 **肄붾뵫 而⑤깽??*
 
-### **네이밍 규칙**
-- **클래스**: PascalCase (`offsetCurveAlgorithm`)
-- **메서드**: camelCase (`performBindingPhase`)
-- **변수**: camelCase (`bindParamU`)
-- **상수**: UPPER_CASE (`ARC_SEGMENT`)
+### **?ㅼ씠諛?洹쒖튃**
+- **?대옒??*: PascalCase (`offsetCurveAlgorithm`)
+- **硫붿꽌??*: camelCase (`performBindingPhase`)
+- **蹂??*: camelCase (`bindParamU`)
+- **?곸닔**: UPPER_CASE (`ARC_SEGMENT`)
 
-### **주석 스타일**
+### **二쇱꽍 ?ㅽ???*
 ```cpp
-// 🎯 특허 핵심 알고리즘 구현
-// ✅ 성능 최적화 적용
-// ⚡ GPU 가속 버전
+// ?렞 ?뱁뿀 ?듭떖 ?뚭퀬由ъ쬁 援ы쁽
+// ???깅뒫 理쒖쟻???곸슜
+// ??GPU 媛??踰꾩쟾
 ```
 
-### **에러 처리**
+### **?먮윭 泥섎━**
 ```cpp
 MStatus status = someOperation();
 if (status != MS::kSuccess) {
@@ -404,4 +404,4 @@ if (status != MS::kSuccess) {
 
 ---
 
-이 명세서는 offsetCurveDeformer의 모든 기술적 세부사항을 다룹니다. 개발자들이 코드를 이해하고 확장하는데 필요한 모든 정보를 포함하고 있습니다.
+??紐낆꽭?쒕뒗 offsetCurveDeformer??紐⑤뱺 湲곗닠???몃??ы빆???ㅻ９?덈떎. 媛쒕컻?먮뱾??肄붾뱶瑜??댄빐?섍퀬 ?뺤옣?섎뒗???꾩슂??紐⑤뱺 ?뺣낫瑜??ы븿?섍퀬 ?덉뒿?덈떎.

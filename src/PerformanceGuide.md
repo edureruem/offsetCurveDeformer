@@ -1,132 +1,132 @@
-# Maya Offset Curve Deformer - 성능 가이드
+﻿# Maya Offset Curve Deformer - ?깅뒫 媛?대뱶
 
-## 🎯 **예측 가능한 일관된 결과**
+## ?렞 **?덉륫 媛?ν븳 ?쇨???寃곌낵**
 
-### **핵심 원칙**
-- ✅ **일관성 보장**: 같은 설정 = 항상 같은 결과
-- ✅ **사용자 제어**: 아티스트가 직접 품질/성능 선택
-- ✅ **예측 가능**: 카메라나 환경에 관계없이 동일한 변형
+### **?듭떖 ?먯튃**
+- ??**?쇨???蹂댁옣**: 媛숈? ?ㅼ젙 = ??긽 媛숈? 寃곌낵
+- ??**?ъ슜???쒖뼱**: ?꾪떚?ㅽ듃媛 吏곸젒 ?덉쭏/?깅뒫 ?좏깮
+- ??**?덉륫 媛??*: 移대찓?쇰굹 ?섍꼍??愿怨꾩뾾???숈씪??蹂??
 
-## 🚀 **성능 모드 선택 가이드**
+## ?? **?깅뒫 紐⑤뱶 ?좏깮 媛?대뱶**
 
-### **1. Arc Segment 모드 (고성능)**
+### **1. Arc Segment 紐⑤뱶 (怨좎꽦??**
 ```python
-# Maya에서 설정
+# Maya?먯꽌 ?ㅼ젙
 cmds.setAttr("offsetCurveDeformer1.offsetMode", 0)  # ARC_SEGMENT
 ```
 
-**장점**:
-- ⚡ **3-5배 빠른 계산**
-- 🔋 **낮은 CPU 사용량**
-- 🎮 **실시간 피드백**
+**?μ젏**:
+- ??**3-5諛?鍮좊Ⅸ 怨꾩궛**
+- ?뵅 **??? CPU ?ъ슜??*
+- ?렜 **?ㅼ떆媛??쇰뱶諛?*
 
-**최적 사용 상황**:
-- 팔꿈치, 손가락 관절
-- 단순한 굽힘 변형
-- 리깅/애니메이션 작업
-- 실시간 프리뷰
+**理쒖쟻 ?ъ슜 ?곹솴**:
+- ?붽퓞移? ?먭???愿??
+- ?⑥닚??援쏀옒 蹂??
+- 由ш퉭/?좊땲硫붿씠???묒뾽
+- ?ㅼ떆媛??꾨━酉?
 
-### **2. B-Spline 모드 (고품질)**
+### **2. B-Spline 紐⑤뱶 (怨좏뭹吏?**
 ```python
-# Maya에서 설정
+# Maya?먯꽌 ?ㅼ젙
 cmds.setAttr("offsetCurveDeformer1.offsetMode", 1)  # B_SPLINE
 ```
 
-**장점**:
-- 🎨 **최고 품질 변형**
-- 🔬 **정확한 곡률 계산**
-- 📐 **복잡한 곡선 지원**
+**?μ젏**:
+- ?렓 **理쒓퀬 ?덉쭏 蹂??*
+- ?뵮 **?뺥솗??怨〓쪧 怨꾩궛**
+- ?뱪 **蹂듭옟??怨≪꽑 吏??*
 
-**최적 사용 상황**:
-- 복잡한 유기체 변형
-- 최종 렌더링
-- 고품질이 필수인 작업
-- 상세한 얼굴/근육 변형
+**理쒖쟻 ?ъ슜 ?곹솴**:
+- 蹂듭옟???좉린泥?蹂??
+- 理쒖쥌 ?뚮뜑留?
+- 怨좏뭹吏덉씠 ?꾩닔???묒뾽
+- ?곸꽭???쇨뎬/洹쇱쑁 蹂??
 
-## ⚡ **병렬 처리 최적화**
+## ??**蹂묐젹 泥섎━ 理쒖쟻??*
 
-### **CPU 병렬 처리 (OpenMP)**
+### **CPU 蹂묐젹 泥섎━ (OpenMP)**
 ```python
-# 병렬 처리 활성화
+# 蹂묐젹 泥섎━ ?쒖꽦??
 cmds.setAttr("offsetCurveDeformer1.useParallel", True)
 ```
 
-**성능 향상**:
-- 4코어 CPU: 3-4배 빠름
-- 8코어 CPU: 6-7배 빠름
-- 16코어 CPU: 10-12배 빠름
+**?깅뒫 ?μ긽**:
+- 4肄붿뼱 CPU: 3-4諛?鍮좊쫫
+- 8肄붿뼱 CPU: 6-7諛?鍮좊쫫
+- 16肄붿뼱 CPU: 10-12諛?鍮좊쫫
 
-### **GPU 가속 (CUDA)**
-- **자동 활성화**: 1000개 이상 정점에서 자동으로 GPU 사용
-- **성능 향상**: 100-1000배 빠른 계산
-- **요구사항**: CUDA 지원 GPU 필요
+### **GPU 媛??(CUDA)**
+- **?먮룞 ?쒖꽦??*: 1000媛??댁긽 ?뺤젏?먯꽌 ?먮룞?쇰줈 GPU ?ъ슜
+- **?깅뒫 ?μ긽**: 100-1000諛?鍮좊Ⅸ 怨꾩궛
+- **?붽뎄?ы빆**: CUDA 吏??GPU ?꾩슂
 
-## 🎨 **워크플로우별 권장 설정**
+## ?렓 **?뚰겕?뚮줈?곕퀎 沅뚯옣 ?ㅼ젙**
 
-### **리깅 단계**
+### **由ш퉭 ?④퀎**
 ```python
-# 빠른 피드백을 위한 설정
+# 鍮좊Ⅸ ?쇰뱶諛깆쓣 ?꾪븳 ?ㅼ젙
 cmds.setAttr("offsetCurveDeformer1.offsetMode", 0)      # Arc Segment
-cmds.setAttr("offsetCurveDeformer1.useParallel", True)   # 병렬 처리
-cmds.setAttr("offsetCurveDeformer1.volumeStrength", 0.8) # 적당한 볼륨 보존
+cmds.setAttr("offsetCurveDeformer1.useParallel", True)   # 蹂묐젹 泥섎━
+cmds.setAttr("offsetCurveDeformer1.volumeStrength", 0.8) # ?곷떦??蹂쇰ⅷ 蹂댁〈
 ```
 
-### **애니메이션 단계**
+### **?좊땲硫붿씠???④퀎**
 ```python
-# 실시간 성능 최적화
+# ?ㅼ떆媛??깅뒫 理쒖쟻??
 cmds.setAttr("offsetCurveDeformer1.offsetMode", 0)      # Arc Segment
-cmds.setAttr("offsetCurveDeformer1.useParallel", True)   # 병렬 처리
-cmds.setAttr("offsetCurveDeformer1.volumeStrength", 1.0) # 볼륨 보존
+cmds.setAttr("offsetCurveDeformer1.useParallel", True)   # 蹂묐젹 泥섎━
+cmds.setAttr("offsetCurveDeformer1.volumeStrength", 1.0) # 蹂쇰ⅷ 蹂댁〈
 ```
 
-### **최종 렌더링**
+### **理쒖쥌 ?뚮뜑留?*
 ```python
-# 최고 품질 설정
+# 理쒓퀬 ?덉쭏 ?ㅼ젙
 cmds.setAttr("offsetCurveDeformer1.offsetMode", 1)      # B-Spline
-cmds.setAttr("offsetCurveDeformer1.useParallel", True)   # 병렬 처리
-cmds.setAttr("offsetCurveDeformer1.volumeStrength", 1.2) # 강한 볼륨 보존
+cmds.setAttr("offsetCurveDeformer1.useParallel", True)   # 蹂묐젹 泥섎━
+cmds.setAttr("offsetCurveDeformer1.volumeStrength", 1.2) # 媛뺥븳 蹂쇰ⅷ 蹂댁〈
 ```
 
-## 📊 **성능 비교표**
+## ?뱤 **?깅뒫 鍮꾧탳??*
 
-| 설정 | 정점 수 | Arc Segment | B-Spline | GPU 가속 |
+| ?ㅼ젙 | ?뺤젏 ??| Arc Segment | B-Spline | GPU 媛??|
 |------|---------|-------------|----------|----------|
-| **1K 정점** | 1,000 | 60 fps | 30 fps | 60 fps |
-| **10K 정점** | 10,000 | 15 fps | 5 fps | 60 fps |
-| **100K 정점** | 100,000 | 2 fps | 0.5 fps | 45 fps |
+| **1K ?뺤젏** | 1,000 | 60 fps | 30 fps | 60 fps |
+| **10K ?뺤젏** | 10,000 | 15 fps | 5 fps | 60 fps |
+| **100K ?뺤젏** | 100,000 | 2 fps | 0.5 fps | 45 fps |
 
-## 🔧 **고급 최적화 팁**
+## ?뵩 **怨좉툒 理쒖쟻????*
 
-### **1. 영향 범위 최적화**
+### **1. ?곹뼢 踰붿쐞 理쒖쟻??*
 ```python
-# 불필요한 계산 줄이기
-cmds.setAttr("offsetCurveDeformer1.falloffRadius", 5.0)    # 적절한 반경
-cmds.setAttr("offsetCurveDeformer1.maxInfluences", 3)      # 영향 개수 제한
+# 遺덊븘?뷀븳 怨꾩궛 以꾩씠湲?
+cmds.setAttr("offsetCurveDeformer1.falloffRadius", 5.0)    # ?곸젅??諛섍꼍
+cmds.setAttr("offsetCurveDeformer1.maxInfluences", 3)      # ?곹뼢 媛쒖닔 ?쒗븳
 ```
 
-### **2. 아티스트 제어 최적화**
+### **2. ?꾪떚?ㅽ듃 ?쒖뼱 理쒖쟻??*
 ```python
-# 필요한 제어만 활성화
-cmds.setAttr("offsetCurveDeformer1.volumeStrength", 1.0)   # 볼륨 보존만
-cmds.setAttr("offsetCurveDeformer1.slideEffect", 0.0)      # 다른 효과는 0
+# ?꾩슂???쒖뼱留??쒖꽦??
+cmds.setAttr("offsetCurveDeformer1.volumeStrength", 1.0)   # 蹂쇰ⅷ 蹂댁〈留?
+cmds.setAttr("offsetCurveDeformer1.slideEffect", 0.0)      # ?ㅻⅨ ?④낵??0
 cmds.setAttr("offsetCurveDeformer1.twistDistribution", 0.0)
 ```
 
-### **3. 메시 해상도 고려**
-- **저해상도 프리뷰**: Arc Segment + 병렬 처리
-- **고해상도 최종**: B-Spline + GPU 가속
-- **중간 해상도**: 사용자 선택에 따라
+### **3. 硫붿떆 ?댁긽??怨좊젮**
+- **??댁긽???꾨━酉?*: Arc Segment + 蹂묐젹 泥섎━
+- **怨좏빐?곷룄 理쒖쥌**: B-Spline + GPU 媛??
+- **以묎컙 ?댁긽??*: ?ъ슜???좏깮???곕씪
 
-## 🎯 **결론**
+## ?렞 **寃곕줎**
 
-**핵심 메시지**: 
-- 🎨 **아티스트가 직접 제어** - 예측 가능한 결과
-- ⚡ **상황에 맞는 모드 선택** - 성능 vs 품질
-- 🚀 **강력한 하드웨어 활용** - CPU/GPU 병렬 처리
+**?듭떖 硫붿떆吏**: 
+- ?렓 **?꾪떚?ㅽ듃媛 吏곸젒 ?쒖뼱** - ?덉륫 媛?ν븳 寃곌낵
+- ??**?곹솴??留욌뒗 紐⑤뱶 ?좏깮** - ?깅뒫 vs ?덉쭏
+- ?? **媛뺣젰???섎뱶?⑥뼱 ?쒖슜** - CPU/GPU 蹂묐젹 泥섎━
 
-**추천 워크플로우**:
-1. **리깅**: Arc Segment로 빠른 테스트
-2. **애니메이션**: Arc Segment로 실시간 피드백  
-3. **최종화**: B-Spline으로 고품질 완성
+**異붿쿇 ?뚰겕?뚮줈??*:
+1. **由ш퉭**: Arc Segment濡?鍮좊Ⅸ ?뚯뒪??
+2. **?좊땲硫붿씠??*: Arc Segment濡??ㅼ떆媛??쇰뱶諛? 
+3. **理쒖쥌??*: B-Spline?쇰줈 怨좏뭹吏??꾩꽦
 
-이제 **예측 가능하고 일관된** 최고 성능의 디포머가 완성되었습니다! 🎨✨
+?댁젣 **?덉륫 媛?ν븯怨??쇨???* 理쒓퀬 ?깅뒫???뷀룷癒멸? ?꾩꽦?섏뿀?듬땲?? ?렓??

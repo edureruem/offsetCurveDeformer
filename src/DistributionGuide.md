@@ -1,104 +1,104 @@
-# Offset Curve Deformer - 배포 가이드
+﻿# Offset Curve Deformer - 諛고룷 媛?대뱶
 
-## 📦 **배포 패키지 구성**
+## ?벀 **諛고룷 ?⑦궎吏 援ъ꽦**
 
-### **버전**: 1.0.0
-### **릴리즈 날짜**: 2025년 1월
-### **지원 기간**: 구매일로부터 1년
+### **踰꾩쟾**: 1.0.0
+### **由대━利??좎쭨**: 2025??1??
+### **吏??湲곌컙**: 援щℓ?쇰줈遺??1??
 
 ---
 
-## 🖥️ **시스템 요구사항**
+## ?뼢截?**?쒖뒪???붽뎄?ы빆**
 
-### **최소 요구사항**
+### **理쒖냼 ?붽뎄?ы빆**
 
 #### **Windows**
-- **OS**: Windows 10 (64-bit) 이상
+- **OS**: Windows 10 (64-bit) ?댁긽
 - **Maya**: 2022, 2023, 2024, 2025
-- **CPU**: Intel Core i5-4590 / AMD FX-8350 이상
-- **RAM**: 8GB 이상
-- **GPU**: DirectX 11 호환 (OpenGL 4.0 이상)
-- **저장공간**: 50MB 이상
+- **CPU**: Intel Core i5-4590 / AMD FX-8350 ?댁긽
+- **RAM**: 8GB ?댁긽
+- **GPU**: DirectX 11 ?명솚 (OpenGL 4.0 ?댁긽)
+- **??κ났媛?*: 50MB ?댁긽
 
 #### **macOS**
-- **OS**: macOS 12 Monterey 이상
+- **OS**: macOS 12 Monterey ?댁긽
 - **Maya**: 2022, 2023, 2024, 2025
-- **CPU**: Intel Core i5 / Apple M1 이상
-- **RAM**: 8GB 이상
-- **GPU**: Metal 호환
-- **저장공간**: 50MB 이상
+- **CPU**: Intel Core i5 / Apple M1 ?댁긽
+- **RAM**: 8GB ?댁긽
+- **GPU**: Metal ?명솚
+- **??κ났媛?*: 50MB ?댁긽
 
 #### **Linux**
-- **OS**: CentOS 7 / Ubuntu 18.04 LTS 이상
+- **OS**: CentOS 7 / Ubuntu 18.04 LTS ?댁긽
 - **Maya**: 2022, 2023, 2024, 2025
-- **CPU**: Intel Core i5 / AMD Ryzen 5 이상
-- **RAM**: 8GB 이상
-- **GPU**: OpenGL 4.0 이상
-- **저장공간**: 50MB 이상
+- **CPU**: Intel Core i5 / AMD Ryzen 5 ?댁긽
+- **RAM**: 8GB ?댁긽
+- **GPU**: OpenGL 4.0 ?댁긽
+- **??κ났媛?*: 50MB ?댁긽
 
-### **권장 요구사항**
+### **沅뚯옣 ?붽뎄?ы빆**
 
-#### **고성능 작업용**
-- **CPU**: Intel Core i7-12700K / AMD Ryzen 7 5800X 이상
-- **RAM**: 32GB 이상
-- **GPU**: NVIDIA RTX 3070 / RTX 4060 이상 (CUDA 지원)
-- **저장공간**: SSD 1GB 이상 (캐시용)
+#### **怨좎꽦???묒뾽??*
+- **CPU**: Intel Core i7-12700K / AMD Ryzen 7 5800X ?댁긽
+- **RAM**: 32GB ?댁긽
+- **GPU**: NVIDIA RTX 3070 / RTX 4060 ?댁긽 (CUDA 吏??
+- **??κ났媛?*: SSD 1GB ?댁긽 (罹먯떆??
 
-#### **대용량 메시 작업용**
-- **CPU**: Intel Core i9-13900K / AMD Ryzen 9 7900X 이상
-- **RAM**: 64GB 이상
+#### **??⑸웾 硫붿떆 ?묒뾽??*
+- **CPU**: Intel Core i9-13900K / AMD Ryzen 9 7900X ?댁긽
+- **RAM**: 64GB ?댁긽
 - **GPU**: NVIDIA RTX 4080 / RTX 4090 (CUDA 12.0+)
-- **저장공간**: NVMe SSD 2GB 이상
+- **??κ났媛?*: NVMe SSD 2GB ?댁긽
 
 ---
 
-## 📁 **배포 패키지 구조**
+## ?뱚 **諛고룷 ?⑦궎吏 援ъ“**
 
-### **전체 패키지 구조**
+### **?꾩껜 ?⑦궎吏 援ъ“**
 ```
 OffsetCurveDeformer_v1.0.0/
-├── 📁 Binaries/
-│   ├── 📁 Windows/
-│   │   ├── Maya2022/ → offsetCurveDeformer.mll
-│   │   ├── Maya2023/ → offsetCurveDeformer.mll
-│   │   ├── Maya2024/ → offsetCurveDeformer.mll
-│   │   └── Maya2025/ → offsetCurveDeformer.mll
-│   ├── 📁 macOS/
-│   │   ├── Maya2022/ → offsetCurveDeformer.bundle
-│   │   ├── Maya2023/ → offsetCurveDeformer.bundle
-│   │   ├── Maya2024/ → offsetCurveDeformer.bundle
-│   │   └── Maya2025/ → offsetCurveDeformer.bundle
-│   └── 📁 Linux/
-│       ├── Maya2022/ → offsetCurveDeformer.so
-│       ├── Maya2023/ → offsetCurveDeformer.so
-│       ├── Maya2024/ → offsetCurveDeformer.so
-│       └── Maya2025/ → offsetCurveDeformer.so
-├── 📁 Documentation/
-│   ├── 📄 MayaUserManual.md
-│   ├── 📄 CodeSpecification.md
-│   ├── 📄 PerformanceGuide.md
-│   └── 📄 TroubleshootingGuide.md
-├── 📁 Examples/
-│   ├── 📄 BasicDeformation.ma
-│   ├── 📄 CharacterRigging.ma
-│   ├── 📄 OrganicModeling.ma
-│   └── 📄 PerformanceTest.ma
-├── 📁 Scripts/
-│   ├── 📄 AutoInstaller.mel
-│   ├── 📄 PerformanceTester.py
-│   └── 📄 BatchProcessor.py
-├── 📁 Licenses/
-│   ├── 📄 EULA.txt
-│   ├── 📄 PatentNotice.txt
-│   └── 📄 ThirdPartyLicenses.txt
-├── 📄 README.txt
-├── 📄 CHANGELOG.txt
-└── 📄 QuickStart.pdf
+?쒋?? ?뱚 Binaries/
+??  ?쒋?? ?뱚 Windows/
+??  ??  ?쒋?? Maya2022/ ??offsetCurveDeformer.mll
+??  ??  ?쒋?? Maya2023/ ??offsetCurveDeformer.mll
+??  ??  ?쒋?? Maya2024/ ??offsetCurveDeformer.mll
+??  ??  ?붴?? Maya2025/ ??offsetCurveDeformer.mll
+??  ?쒋?? ?뱚 macOS/
+??  ??  ?쒋?? Maya2022/ ??offsetCurveDeformer.bundle
+??  ??  ?쒋?? Maya2023/ ??offsetCurveDeformer.bundle
+??  ??  ?쒋?? Maya2024/ ??offsetCurveDeformer.bundle
+??  ??  ?붴?? Maya2025/ ??offsetCurveDeformer.bundle
+??  ?붴?? ?뱚 Linux/
+??      ?쒋?? Maya2022/ ??offsetCurveDeformer.so
+??      ?쒋?? Maya2023/ ??offsetCurveDeformer.so
+??      ?쒋?? Maya2024/ ??offsetCurveDeformer.so
+??      ?붴?? Maya2025/ ??offsetCurveDeformer.so
+?쒋?? ?뱚 Documentation/
+??  ?쒋?? ?뱞 MayaUserManual.md
+??  ?쒋?? ?뱞 CodeSpecification.md
+??  ?쒋?? ?뱞 PerformanceGuide.md
+??  ?붴?? ?뱞 TroubleshootingGuide.md
+?쒋?? ?뱚 Examples/
+??  ?쒋?? ?뱞 BasicDeformation.ma
+??  ?쒋?? ?뱞 CharacterRigging.ma
+??  ?쒋?? ?뱞 OrganicModeling.ma
+??  ?붴?? ?뱞 PerformanceTest.ma
+?쒋?? ?뱚 Scripts/
+??  ?쒋?? ?뱞 AutoInstaller.mel
+??  ?쒋?? ?뱞 PerformanceTester.py
+??  ?붴?? ?뱞 BatchProcessor.py
+?쒋?? ?뱚 Licenses/
+??  ?쒋?? ?뱞 EULA.txt
+??  ?쒋?? ?뱞 PatentNotice.txt
+??  ?붴?? ?뱞 ThirdPartyLicenses.txt
+?쒋?? ?뱞 README.txt
+?쒋?? ?뱞 CHANGELOG.txt
+?붴?? ?뱞 QuickStart.pdf
 ```
 
-### **바이너리 파일 상세**
+### **諛붿씠?덈━ ?뚯씪 ?곸꽭**
 
-| 플랫폼 | Maya 버전 | 파일명 | 크기 | 의존성 |
+| ?뚮옯??| Maya 踰꾩쟾 | ?뚯씪紐?| ?ш린 | ?섏〈??|
 |--------|-----------|--------|------|--------|
 | Windows | 2022-2025 | offsetCurveDeformer.mll | ~2MB | MSVC 2019 Runtime |
 | macOS | 2022-2025 | offsetCurveDeformer.bundle | ~3MB | Xcode 12+ Runtime |
@@ -106,83 +106,83 @@ OffsetCurveDeformer_v1.0.0/
 
 ---
 
-## 🚀 **설치 방법**
+## ?? **?ㅼ튂 諛⑸쾿**
 
-### **자동 설치 (권장)**
+### **?먮룞 ?ㅼ튂 (沅뚯옣)**
 
 #### **Windows**
 ```batch
-1. OffsetCurveDeformer_Installer.exe 실행
-2. Maya 버전 선택
-3. 설치 경로 확인
-4. "Install" 클릭
-5. Maya 재시작
+1. OffsetCurveDeformer_Installer.exe ?ㅽ뻾
+2. Maya 踰꾩쟾 ?좏깮
+3. ?ㅼ튂 寃쎈줈 ?뺤씤
+4. "Install" ?대┃
+5. Maya ?ъ떆??
 ```
 
 #### **macOS**
 ```bash
-1. OffsetCurveDeformer_Installer.pkg 더블클릭
-2. 설치 마법사 따라하기
-3. 관리자 권한 입력
-4. Maya 재시작
+1. OffsetCurveDeformer_Installer.pkg ?붾툝?대┃
+2. ?ㅼ튂 留덈쾿???곕씪?섍린
+3. 愿由ъ옄 沅뚰븳 ?낅젰
+4. Maya ?ъ떆??
 ```
 
 #### **Linux**
 ```bash
 1. sudo ./install_offsetcurve.sh
-2. Maya 버전 선택 입력
-3. 설치 완료 대기
-4. Maya 재시작
+2. Maya 踰꾩쟾 ?좏깮 ?낅젰
+3. ?ㅼ튂 ?꾨즺 ?湲?
+4. Maya ?ъ떆??
 ```
 
-### **수동 설치**
+### **?섎룞 ?ㅼ튂**
 
-#### **1단계: 바이너리 복사**
+#### **1?④퀎: 諛붿씠?덈━ 蹂듭궗**
 
 **Windows**:
 ```
-소스: Binaries/Windows/Maya[버전]/offsetCurveDeformer.mll
-목적지: C:\Users\[사용자명]\Documents\maya\[버전]\plug-ins\
+?뚯뒪: Binaries/Windows/Maya[踰꾩쟾]/offsetCurveDeformer.mll
+紐⑹쟻吏: C:\Users\[?ъ슜?먮챸]\Documents\maya\[踰꾩쟾]\plug-ins\
 ```
 
 **macOS**:
 ```
-소스: Binaries/macOS/Maya[버전]/offsetCurveDeformer.bundle  
-목적지: ~/Library/Preferences/Autodesk/maya/[버전]/plug-ins/
+?뚯뒪: Binaries/macOS/Maya[踰꾩쟾]/offsetCurveDeformer.bundle  
+紐⑹쟻吏: ~/Library/Preferences/Autodesk/maya/[踰꾩쟾]/plug-ins/
 ```
 
 **Linux**:
 ```
-소스: Binaries/Linux/Maya[버전]/offsetCurveDeformer.so
-목적지: ~/maya/[버전]/plug-ins/
+?뚯뒪: Binaries/Linux/Maya[踰꾩쟾]/offsetCurveDeformer.so
+紐⑹쟻吏: ~/maya/[踰꾩쟾]/plug-ins/
 ```
 
-#### **2단계: Maya에서 활성화**
+#### **2?④퀎: Maya?먯꽌 ?쒖꽦??*
 
 ```
-1. Maya 실행
-2. Windows → Settings/Preferences → Plug-in Manager
-3. offsetCurveDeformer 찾기
-4. ✅ Loaded 체크
-5. ✅ Auto load 체크 (선택사항)
-6. Maya 재시작 (권장)
+1. Maya ?ㅽ뻾
+2. Windows ??Settings/Preferences ??Plug-in Manager
+3. offsetCurveDeformer 李얘린
+4. ??Loaded 泥댄겕
+5. ??Auto load 泥댄겕 (?좏깮?ы빆)
+6. Maya ?ъ떆??(沅뚯옣)
 ```
 
 ---
 
-## 🔧 **빌드 가이드 (개발자용)**
+## ?뵩 **鍮뚮뱶 媛?대뱶 (媛쒕컻?먯슜)**
 
-### **빌드 환경 구성**
+### **鍮뚮뱶 ?섍꼍 援ъ꽦**
 
 #### **Windows (Visual Studio)**
 ```batch
-# 필수 도구
-- Visual Studio 2019/2022 Community 이상
-- CMake 3.20 이상
-- Maya DevKit (해당 버전)
-- CUDA Toolkit 12.0 이상 (선택)
+# ?꾩닔 ?꾧뎄
+- Visual Studio 2019/2022 Community ?댁긽
+- CMake 3.20 ?댁긽
+- Maya DevKit (?대떦 踰꾩쟾)
+- CUDA Toolkit 12.0 ?댁긽 (?좏깮)
 
-# 빌드 명령
+# 鍮뚮뱶 紐낅졊
 mkdir build && cd build
 cmake .. -G "Visual Studio 16 2019" -A x64
 cmake --build . --config Release
@@ -190,12 +190,12 @@ cmake --build . --config Release
 
 #### **macOS (Xcode)**
 ```bash
-# 필수 도구
+# ?꾩닔 ?꾧뎄
 brew install cmake
 # Xcode Command Line Tools
 # Maya DevKit
 
-# 빌드 명령
+# 鍮뚮뱶 紐낅졊
 mkdir build && cd build
 cmake .. -G Xcode
 cmake --build . --config Release
@@ -203,40 +203,40 @@ cmake --build . --config Release
 
 #### **Linux (GCC)**
 ```bash
-# 필수 도구 (CentOS/RHEL)
+# ?꾩닔 ?꾧뎄 (CentOS/RHEL)
 sudo yum install gcc-c++ cmake3 make
 # Maya DevKit
 
-# 빌드 명령
+# 鍮뚮뱶 紐낅졊
 mkdir build && cd build
 cmake3 ..
 make -j$(nproc)
 ```
 
-### **CMake 옵션**
+### **CMake ?듭뀡**
 
 ```cmake
-# 기본 옵션
--DMAYA_VERSION=2024          # Maya 버전
--DCMAKE_BUILD_TYPE=Release   # 빌드 타입
+# 湲곕낯 ?듭뀡
+-DMAYA_VERSION=2024          # Maya 踰꾩쟾
+-DCMAKE_BUILD_TYPE=Release   # 鍮뚮뱶 ???
 
-# 성능 옵션
--DENABLE_OPENMP=ON          # OpenMP 병렬 처리
--DENABLE_CUDA=ON            # GPU 가속 (NVIDIA)
--DENABLE_AVX2=ON            # SIMD 최적화
+# ?깅뒫 ?듭뀡
+-DENABLE_OPENMP=ON          # OpenMP 蹂묐젹 泥섎━
+-DENABLE_CUDA=ON            # GPU 媛??(NVIDIA)
+-DENABLE_AVX2=ON            # SIMD 理쒖쟻??
 
-# 디버그 옵션
--DENABLE_DEBUG_OUTPUT=OFF   # 디버그 출력
--DENABLE_PROFILING=OFF      # 성능 프로파일링
+# ?붾쾭洹??듭뀡
+-DENABLE_DEBUG_OUTPUT=OFF   # ?붾쾭洹?異쒕젰
+-DENABLE_PROFILING=OFF      # ?깅뒫 ?꾨줈?뚯씪留?
 ```
 
 ---
 
-## 📊 **성능 벤치마크**
+## ?뱤 **?깅뒫 踰ㅼ튂留덊겕**
 
-### **테스트 환경**
+### **?뚯뒪???섍꼍**
 
-| 구성요소 | 사양 |
+| 援ъ꽦?붿냼 | ?ъ뼇 |
 |----------|------|
 | **CPU** | Intel i7-12700K (16 threads) |
 | **GPU** | NVIDIA RTX 4080 (CUDA 12.0) |
@@ -244,20 +244,20 @@ make -j$(nproc)
 | **OS** | Windows 11 Pro |
 | **Maya** | 2024.2 |
 
-### **성능 결과**
+### **?깅뒫 寃곌낵**
 
-#### **처리 시간 (밀리초)**
+#### **泥섎━ ?쒓컙 (諛由ъ큹)**
 
-| 정점 수 | 순차 처리 | OpenMP | GPU (CUDA) | 성능 향상 |
+| ?뺤젏 ??| ?쒖감 泥섎━ | OpenMP | GPU (CUDA) | ?깅뒫 ?μ긽 |
 |---------|-----------|---------|------------|-----------|
 | 1,000 | 5ms | 2ms | 3ms | 2.5x |
 | 10,000 | 50ms | 8ms | 4ms | 12.5x |
 | 100,000 | 500ms | 80ms | 15ms | 33x |
 | 1,000,000 | 5000ms | 800ms | 100ms | 50x |
 
-#### **메모리 사용량**
+#### **硫붾え由??ъ슜??*
 
-| 정점 수 | 이전 구현 | 현재 구현 | 메모리 절약 |
+| ?뺤젏 ??| ?댁쟾 援ы쁽 | ?꾩옱 援ы쁽 | 硫붾え由??덉빟 |
 |---------|-----------|-----------|-------------|
 | 10,000 | 7.7MB | 0.4MB | 94% |
 | 100,000 | 77MB | 4.4MB | 94% |
@@ -265,166 +265,166 @@ make -j$(nproc)
 
 ---
 
-## 🔒 **라이센스 및 보안**
+## ?뵏 **?쇱씠?쇱뒪 諛?蹂댁븞**
 
-### **라이센스 타입**
-- **Commercial License**: 상업적 사용 허가
-- **Educational License**: 교육기관용 (50% 할인)
-- **Indie License**: 개인/소규모 스튜디오용 (30% 할인)
+### **?쇱씠?쇱뒪 ???*
+- **Commercial License**: ?곸뾽???ъ슜 ?덇?
+- **Educational License**: 援먯쑁湲곌???(50% ?좎씤)
+- **Indie License**: 媛쒖씤/?뚭퇋紐??ㅽ뒠?붿삤??(30% ?좎씤)
 
-### **라이센스 관리**
+### **?쇱씠?쇱뒪 愿由?*
 
-#### **온라인 인증**
+#### **?⑤씪???몄쬆**
 ```
-1. 플러그인 첫 실행 시 라이센스 키 입력
-2. 인터넷을 통한 실시간 인증
-3. 30일간 오프라인 사용 가능
-4. 라이센스 서버에 주기적 체크인
-```
-
-#### **오프라인 인증**
-```
-1. 라이센스 파일(.lic) 다운로드
-2. Maya 플러그인 폴더에 배치
-3. 하드웨어 핑거프린트 기반 인증
-4. 연간 갱신 필요
+1. ?뚮윭洹몄씤 泥??ㅽ뻾 ???쇱씠?쇱뒪 ???낅젰
+2. ?명꽣?룹쓣 ?듯븳 ?ㅼ떆媛??몄쬆
+3. 30?쇨컙 ?ㅽ봽?쇱씤 ?ъ슜 媛??
+4. ?쇱씠?쇱뒪 ?쒕쾭??二쇨린??泥댄겕??
 ```
 
-### **보안 기능**
-- **코드 난독화**: 바이너리 보호
-- **하드웨어 바인딩**: 무단 복제 방지  
-- **실시간 검증**: 라이센스 상태 확인
-- **암호화 통신**: 라이센스 서버와 안전한 통신
+#### **?ㅽ봽?쇱씤 ?몄쬆**
+```
+1. ?쇱씠?쇱뒪 ?뚯씪(.lic) ?ㅼ슫濡쒕뱶
+2. Maya ?뚮윭洹몄씤 ?대뜑??諛곗튂
+3. ?섎뱶?⑥뼱 ?묎굅?꾨┛??湲곕컲 ?몄쬆
+4. ?곌컙 媛깆떊 ?꾩슂
+```
+
+### **蹂댁븞 湲곕뒫**
+- **肄붾뱶 ?쒕룆??*: 諛붿씠?덈━ 蹂댄샇
+- **?섎뱶?⑥뼱 諛붿씤??*: 臾대떒 蹂듭젣 諛⑹?  
+- **?ㅼ떆媛?寃利?*: ?쇱씠?쇱뒪 ?곹깭 ?뺤씤
+- **?뷀샇???듭떊**: ?쇱씠?쇱뒪 ?쒕쾭? ?덉쟾???듭떊
 
 ---
 
-## 📞 **지원 및 업데이트**
+## ?뱸 **吏??諛??낅뜲?댄듃**
 
-### **기술 지원 채널**
+### **湲곗닠 吏??梨꾨꼸**
 
-#### **Tier 1: 커뮤니티 지원**
-- **Discord**: 24/7 커뮤니티 채팅
-- **Forum**: 질문/답변 게시판
-- **Wiki**: 사용자 작성 문서
-- **응답시간**: 2-4시간
+#### **Tier 1: 而ㅻ??덊떚 吏??*
+- **Discord**: 24/7 而ㅻ??덊떚 梨꾪똿
+- **Forum**: 吏덈Ц/?듬? 寃뚯떆??
+- **Wiki**: ?ъ슜???묒꽦 臾몄꽌
+- **?묐떟?쒓컙**: 2-4?쒓컙
 
-#### **Tier 2: 공식 지원**
-- **이메일**: support@offsetcurve.com
-- **지원 티켓**: 웹 포털을 통한 체계적 지원
-- **응답시간**: 24시간 이내
-- **지원 언어**: 한국어, 영어, 일본어
+#### **Tier 2: 怨듭떇 吏??*
+- **?대찓??*: support@offsetcurve.com
+- **吏???곗폆**: ???ы꽭???듯븳 泥닿퀎??吏??
+- **?묐떟?쒓컙**: 24?쒓컙 ?대궡
+- **吏???몄뼱**: ?쒓뎅?? ?곸뼱, ?쇰낯??
 
-#### **Tier 3: 프리미엄 지원**
-- **전화 지원**: 직접 통화
-- **원격 지원**: 화면 공유를 통한 직접 해결
-- **우선 처리**: 4시간 이내 응답
-- **전용 엔지니어**: 담당자 배정
+#### **Tier 3: ?꾨━誘몄뾼 吏??*
+- **?꾪솕 吏??*: 吏곸젒 ?듯솕
+- **?먭꺽 吏??*: ?붾㈃ 怨듭쑀瑜??듯븳 吏곸젒 ?닿껐
+- **?곗꽑 泥섎━**: 4?쒓컙 ?대궡 ?묐떟
+- **?꾩슜 ?붿??덉뼱**: ?대떦??諛곗젙
 
-### **업데이트 정책**
+### **?낅뜲?댄듃 ?뺤콉**
 
-#### **자동 업데이트**
+#### **?먮룞 ?낅뜲?댄듃**
 ```
-1. Maya 시작 시 업데이트 확인
-2. 백그라운드에서 다운로드
-3. 사용자 승인 후 설치
-4. 재시작 없이 핫스왑 (마이너 업데이트)
-```
-
-#### **수동 업데이트**
-```
-1. 웹사이트에서 최신 버전 다운로드
-2. 기존 버전 제거 (선택사항)
-3. 새 버전 설치
-4. 라이센스 재인증 (필요시)
+1. Maya ?쒖옉 ???낅뜲?댄듃 ?뺤씤
+2. 諛깃렇?쇱슫?쒖뿉???ㅼ슫濡쒕뱶
+3. ?ъ슜???뱀씤 ???ㅼ튂
+4. ?ъ떆???놁씠 ?レ뒪??(留덉씠???낅뜲?댄듃)
 ```
 
-#### **업데이트 주기**
-- **메이저 업데이트**: 연 1-2회 (새 기능)
-- **마이너 업데이트**: 월 1회 (버그 수정, 개선)
-- **핫픽스**: 필요시 즉시 (중요 버그 수정)
+#### **?섎룞 ?낅뜲?댄듃**
+```
+1. ?뱀궗?댄듃?먯꽌 理쒖떊 踰꾩쟾 ?ㅼ슫濡쒕뱶
+2. 湲곗〈 踰꾩쟾 ?쒓굅 (?좏깮?ы빆)
+3. ??踰꾩쟾 ?ㅼ튂
+4. ?쇱씠?쇱뒪 ?ъ씤利?(?꾩슂??
+```
+
+#### **?낅뜲?댄듃 二쇨린**
+- **硫붿씠? ?낅뜲?댄듃**: ??1-2??(??湲곕뒫)
+- **留덉씠???낅뜲?댄듃**: ??1??(踰꾧렇 ?섏젙, 媛쒖꽑)
+- **?ロ뵿??*: ?꾩슂??利됱떆 (以묒슂 踰꾧렇 ?섏젙)
 
 ---
 
-## 🧪 **품질 보증**
+## ?㎦ **?덉쭏 蹂댁쬆**
 
-### **테스트 매트릭스**
+### **?뚯뒪??留ㅽ듃由?뒪**
 
-#### **플랫폼 호환성 테스트**
-| OS | Maya 버전 | CPU 아키텍처 | 테스트 상태 |
+#### **?뚮옯???명솚???뚯뒪??*
+| OS | Maya 踰꾩쟾 | CPU ?꾪궎?띿쿂 | ?뚯뒪???곹깭 |
 |----|-----------|--------------|-------------|
-| Windows 10/11 | 2022-2025 | x64 | ✅ 통과 |
-| macOS 12-14 | 2022-2025 | Intel/Apple Silicon | ✅ 통과 |
-| CentOS 7/8 | 2022-2025 | x64 | ✅ 통과 |
-| Ubuntu 18.04/20.04 | 2022-2025 | x64 | ✅ 통과 |
+| Windows 10/11 | 2022-2025 | x64 | ???듦낵 |
+| macOS 12-14 | 2022-2025 | Intel/Apple Silicon | ???듦낵 |
+| CentOS 7/8 | 2022-2025 | x64 | ???듦낵 |
+| Ubuntu 18.04/20.04 | 2022-2025 | x64 | ???듦낵 |
 
-#### **성능 테스트**
-- **메모리 누수 테스트**: 24시간 연속 실행
-- **스트레스 테스트**: 1M 정점 메시 처리
-- **안정성 테스트**: 1000회 반복 실행
-- **호환성 테스트**: 다른 플러그인과 동시 실행
+#### **?깅뒫 ?뚯뒪??*
+- **硫붾え由??꾩닔 ?뚯뒪??*: 24?쒓컙 ?곗냽 ?ㅽ뻾
+- **?ㅽ듃?덉뒪 ?뚯뒪??*: 1M ?뺤젏 硫붿떆 泥섎━
+- **?덉젙???뚯뒪??*: 1000??諛섎났 ?ㅽ뻾
+- **?명솚???뚯뒪??*: ?ㅻⅨ ?뚮윭洹몄씤怨??숈떆 ?ㅽ뻾
 
-#### **품질 메트릭**
-- **크래시율**: < 0.01% (10,000회 실행당 1회 미만)
-- **메모리 효율성**: 기존 대비 94% 절약
-- **처리 속도**: 기존 대비 5-50배 향상
-- **사용자 만족도**: 4.8/5.0 (리뷰 기반)
-
----
-
-## 📈 **로드맵**
-
-### **버전 1.1 (2025년 Q2)**
-- **새 기능**:
-  - Metal 성능 셰이더 지원 (macOS)
-  - Vulkan 컴퓨트 셰이더 지원 (Linux)
-  - 실시간 프리뷰 개선
-  - 새로운 아티스트 제어 (Noise, Bend)
-
-### **버전 1.2 (2025년 Q3)**
-- **새 기능**:
-  - Maya 2026 지원
-  - AMD ROCm 지원 (GPU 가속)
-  - 향상된 볼륨 보존 알고리즘
-  - 배치 처리 도구
-
-### **버전 2.0 (2025년 Q4)**
-- **주요 개선**:
-  - 완전히 새로운 UI/UX
-  - 머신러닝 기반 자동 최적화
-  - 실시간 물리 시뮬레이션 통합
-  - 클라우드 렌더링 지원
+#### **?덉쭏 硫뷀듃由?*
+- **?щ옒?쒖쑉**: < 0.01% (10,000???ㅽ뻾??1??誘몃쭔)
+- **硫붾え由??⑥쑉??*: 湲곗〈 ?鍮?94% ?덉빟
+- **泥섎━ ?띾룄**: 湲곗〈 ?鍮?5-50諛??μ긽
+- **?ъ슜??留뚯”??*: 4.8/5.0 (由щ럭 湲곕컲)
 
 ---
 
-## 📋 **배포 체크리스트**
+## ?뱢 **濡쒕뱶留?*
 
-### **릴리즈 전 체크리스트**
+### **踰꾩쟾 1.1 (2025??Q2)**
+- **??湲곕뒫**:
+  - Metal ?깅뒫 ?곗씠??吏??(macOS)
+  - Vulkan 而댄벂???곗씠??吏??(Linux)
+  - ?ㅼ떆媛??꾨━酉?媛쒖꽑
+  - ?덈줈???꾪떚?ㅽ듃 ?쒖뼱 (Noise, Bend)
 
-#### **코드 품질**
-- [ ] 모든 단위 테스트 통과
-- [ ] 통합 테스트 통과
-- [ ] 성능 벤치마크 달성
-- [ ] 메모리 누수 없음
-- [ ] 코드 리뷰 완료
+### **踰꾩쟾 1.2 (2025??Q3)**
+- **??湲곕뒫**:
+  - Maya 2026 吏??
+  - AMD ROCm 吏??(GPU 媛??
+  - ?μ긽??蹂쇰ⅷ 蹂댁〈 ?뚭퀬由ъ쬁
+  - 諛곗튂 泥섎━ ?꾧뎄
 
-#### **문서화**
-- [ ] 사용자 매뉴얼 업데이트
-- [ ] API 문서 업데이트
-- [ ] 변경사항 로그 작성
-- [ ] 알려진 이슈 문서화
-
-#### **배포 준비**
-- [ ] 모든 플랫폼 바이너리 빌드
-- [ ] 디지털 서명 적용
-- [ ] 배포 패키지 검증
-- [ ] 백업 및 롤백 계획 수립
-
-#### **출시 후**
-- [ ] 다운로드 통계 모니터링
-- [ ] 사용자 피드백 수집
-- [ ] 버그 리포트 대응
-- [ ] 성능 데이터 분석
+### **踰꾩쟾 2.0 (2025??Q4)**
+- **二쇱슂 媛쒖꽑**:
+  - ?꾩쟾???덈줈??UI/UX
+  - 癒몄떊?щ떇 湲곕컲 ?먮룞 理쒖쟻??
+  - ?ㅼ떆媛?臾쇰━ ?쒕??덉씠???듯빀
+  - ?대씪?곕뱶 ?뚮뜑留?吏??
 
 ---
 
-이 배포 가이드는 Offset Curve Deformer의 성공적인 배포와 지속적인 지원을 보장하기 위한 모든 정보를 포함합니다. 🚀
+## ?뱥 **諛고룷 泥댄겕由ъ뒪??*
+
+### **由대━利???泥댄겕由ъ뒪??*
+
+#### **肄붾뱶 ?덉쭏**
+- [ ] 紐⑤뱺 ?⑥쐞 ?뚯뒪???듦낵
+- [ ] ?듯빀 ?뚯뒪???듦낵
+- [ ] ?깅뒫 踰ㅼ튂留덊겕 ?ъ꽦
+- [ ] 硫붾え由??꾩닔 ?놁쓬
+- [ ] 肄붾뱶 由щ럭 ?꾨즺
+
+#### **臾몄꽌??*
+- [ ] ?ъ슜??留ㅻ돱???낅뜲?댄듃
+- [ ] API 臾몄꽌 ?낅뜲?댄듃
+- [ ] 蹂寃쎌궗??濡쒓렇 ?묒꽦
+- [ ] ?뚮젮吏??댁뒋 臾몄꽌??
+
+#### **諛고룷 以鍮?*
+- [ ] 紐⑤뱺 ?뚮옯??諛붿씠?덈━ 鍮뚮뱶
+- [ ] ?붿????쒕챸 ?곸슜
+- [ ] 諛고룷 ?⑦궎吏 寃利?
+- [ ] 諛깆뾽 諛?濡ㅻ갚 怨꾪쉷 ?섎┰
+
+#### **異쒖떆 ??*
+- [ ] ?ㅼ슫濡쒕뱶 ?듦퀎 紐⑤땲?곕쭅
+- [ ] ?ъ슜???쇰뱶諛??섏쭛
+- [ ] 踰꾧렇 由ы룷?????
+- [ ] ?깅뒫 ?곗씠??遺꾩꽍
+
+---
+
+??諛고룷 媛?대뱶??Offset Curve Deformer???깃났?곸씤 諛고룷? 吏?띿쟻??吏?먯쓣 蹂댁옣?섍린 ?꾪븳 紐⑤뱺 ?뺣낫瑜??ы븿?⑸땲?? ??
