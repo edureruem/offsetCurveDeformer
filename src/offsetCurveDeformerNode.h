@@ -68,6 +68,18 @@ public:
     MStatus applyVolumePreservationCorrection(MPointArray& points, 
                                             const offsetCurveControlParams& params);
     
+    // 🔴 추가: 에러 처리 및 검증 메서드들
+    bool validateInputData(MDataBlock& dataBlock);
+    bool checkMemoryStatus();
+    bool checkGPUStatus();
+    MStatus performDeformation(MDataBlock& block, MItGeometry& iter, 
+                              const MMatrix& matrix, unsigned int multiIndex);
+    bool validateOutputData(MItGeometry& iter);
+    
+    // 🔴 추가: 안전한 메모리 관리
+    void cleanupResources();
+    bool initializeResources();
+    
 public:
     // 노드 속성
     static MTypeId id;

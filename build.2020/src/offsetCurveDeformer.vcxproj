@@ -22,7 +22,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{71E326A6-CE48-32BE-B55A-B84ACFA6CC1F}</ProjectGuid>
+    <ProjectGuid>{2E653C55-5200-3DBD-ADB4-185E63A1BBDA}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
     <Platform>x64</Platform>
@@ -59,25 +59,25 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\src\Debug\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\src\Debug\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">offsetCurveDeformer.dir\Debug\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">offsetCurveDeformer</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.mll</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\src\Release\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\src\Release\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">offsetCurveDeformer.dir\Release\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">offsetCurveDeformer</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.mll</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\src\MinSizeRel\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\src\MinSizeRel\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">offsetCurveDeformer.dir\MinSizeRel\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">offsetCurveDeformer</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.mll</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">true</GenerateManifest>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\src\RelWithDebInfo\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\src\RelWithDebInfo\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">offsetCurveDeformer.dir\RelWithDebInfo\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">offsetCurveDeformer</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.mll</TargetExt>
@@ -87,8 +87,8 @@
   <PropertyGroup />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>%(AdditionalOptions) /external:I "D:/programsD/maya/maya2020/include" /utf-8</AdditionalOptions>
+      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "D:/programsD/maya/maya2020/include"</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -96,23 +96,22 @@
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <MinimalRebuild></MinimalRebuild>
-      <OpenMPSupport>true</OpenMPSupport>
       <Optimization>Disabled</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <SupportJustMyCode></SupportJustMyCode>
       <UseFullPaths>false</UseFullPaths>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;OPENMP_ENABLED;REQUIRE_IOSTREAM;_BOOL;NT_PLUGIN;CMAKE_INTDIR="Debug";offsetCurveDeformer_EXPORTS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;REQUIRE_IOSTREAM;_BOOL;NT_PLUGIN;CMAKE_INTDIR="Debug";offsetCurveDeformer_EXPORTS</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;OPENMP_ENABLED;REQUIRE_IOSTREAM;_BOOL;NT_PLUGIN;CMAKE_INTDIR=\"Debug\";offsetCurveDeformer_EXPORTS</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src;D:\programsD\maya\maya2020\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;REQUIRE_IOSTREAM;_BOOL;NT_PLUGIN;CMAKE_INTDIR=\"Debug\";offsetCurveDeformer_EXPORTS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src;D:\programsD\maya\maya2020\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src;D:\programsD\maya\maya2020\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src;D:\programsD\maya\maya2020\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -125,8 +124,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64 /export:initializePlugin /export:uninitializePlugin</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.2020/src/Debug/offsetCurveDeformer.lib</ImportLibrary>
-      <ProgramDataBaseFile>C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.2020/src/Debug/offsetCurveDeformer.pdb</ProgramDataBaseFile>
+      <ImportLibrary>C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.2020/src/Debug/offsetCurveDeformer.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.2020/src/Debug/offsetCurveDeformer.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -135,33 +134,32 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>%(AdditionalOptions) /external:I "D:/programsD/maya/maya2020/include" /utf-8</AdditionalOptions>
+      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "D:/programsD/maya/maya2020/include"</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <ExceptionHandling>Sync</ExceptionHandling>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <MinimalRebuild></MinimalRebuild>
-      <OpenMPSupport>true</OpenMPSupport>
       <Optimization>MaxSpeed</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <SupportJustMyCode></SupportJustMyCode>
       <UseFullPaths>false</UseFullPaths>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;OPENMP_ENABLED;REQUIRE_IOSTREAM;_BOOL;NT_PLUGIN;CMAKE_INTDIR="Release";offsetCurveDeformer_EXPORTS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;REQUIRE_IOSTREAM;_BOOL;NT_PLUGIN;CMAKE_INTDIR="Release";offsetCurveDeformer_EXPORTS</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <DebugInformationFormat>
       </DebugInformationFormat>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;OPENMP_ENABLED;REQUIRE_IOSTREAM;_BOOL;NT_PLUGIN;CMAKE_INTDIR=\"Release\";offsetCurveDeformer_EXPORTS</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src;D:\programsD\maya\maya2020\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;REQUIRE_IOSTREAM;_BOOL;NT_PLUGIN;CMAKE_INTDIR=\"Release\";offsetCurveDeformer_EXPORTS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src;D:\programsD\maya\maya2020\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src;D:\programsD\maya\maya2020\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src;D:\programsD\maya\maya2020\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -174,8 +172,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64 /export:initializePlugin /export:uninitializePlugin</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.2020/src/Release/offsetCurveDeformer.lib</ImportLibrary>
-      <ProgramDataBaseFile>C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.2020/src/Release/offsetCurveDeformer.pdb</ProgramDataBaseFile>
+      <ImportLibrary>C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.2020/src/Release/offsetCurveDeformer.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.2020/src/Release/offsetCurveDeformer.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -184,33 +182,32 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>%(AdditionalOptions) /external:I "D:/programsD/maya/maya2020/include" /utf-8</AdditionalOptions>
+      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "D:/programsD/maya/maya2020/include"</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <ExceptionHandling>Sync</ExceptionHandling>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <MinimalRebuild></MinimalRebuild>
-      <OpenMPSupport>true</OpenMPSupport>
       <Optimization>MinSpace</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <SupportJustMyCode></SupportJustMyCode>
       <UseFullPaths>false</UseFullPaths>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;OPENMP_ENABLED;REQUIRE_IOSTREAM;_BOOL;NT_PLUGIN;CMAKE_INTDIR="MinSizeRel";offsetCurveDeformer_EXPORTS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;REQUIRE_IOSTREAM;_BOOL;NT_PLUGIN;CMAKE_INTDIR="MinSizeRel";offsetCurveDeformer_EXPORTS</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <DebugInformationFormat>
       </DebugInformationFormat>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;OPENMP_ENABLED;REQUIRE_IOSTREAM;_BOOL;NT_PLUGIN;CMAKE_INTDIR=\"MinSizeRel\";offsetCurveDeformer_EXPORTS</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src;D:\programsD\maya\maya2020\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;REQUIRE_IOSTREAM;_BOOL;NT_PLUGIN;CMAKE_INTDIR=\"MinSizeRel\";offsetCurveDeformer_EXPORTS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src;D:\programsD\maya\maya2020\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src;D:\programsD\maya\maya2020\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src;D:\programsD\maya\maya2020\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -223,8 +220,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64 /export:initializePlugin /export:uninitializePlugin</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.2020/src/MinSizeRel/offsetCurveDeformer.lib</ImportLibrary>
-      <ProgramDataBaseFile>C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.2020/src/MinSizeRel/offsetCurveDeformer.pdb</ProgramDataBaseFile>
+      <ImportLibrary>C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.2020/src/MinSizeRel/offsetCurveDeformer.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.2020/src/MinSizeRel/offsetCurveDeformer.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -233,8 +230,8 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>%(AdditionalOptions) /external:I "D:/programsD/maya/maya2020/include" /utf-8</AdditionalOptions>
+      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "D:/programsD/maya/maya2020/include"</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -242,23 +239,22 @@
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <MinimalRebuild></MinimalRebuild>
-      <OpenMPSupport>true</OpenMPSupport>
       <Optimization>MaxSpeed</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <SupportJustMyCode></SupportJustMyCode>
       <UseFullPaths>false</UseFullPaths>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;OPENMP_ENABLED;REQUIRE_IOSTREAM;_BOOL;NT_PLUGIN;CMAKE_INTDIR="RelWithDebInfo";offsetCurveDeformer_EXPORTS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;REQUIRE_IOSTREAM;_BOOL;NT_PLUGIN;CMAKE_INTDIR="RelWithDebInfo";offsetCurveDeformer_EXPORTS</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;OPENMP_ENABLED;REQUIRE_IOSTREAM;_BOOL;NT_PLUGIN;CMAKE_INTDIR=\"RelWithDebInfo\";offsetCurveDeformer_EXPORTS</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src;D:\programsD\maya\maya2020\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;REQUIRE_IOSTREAM;_BOOL;NT_PLUGIN;CMAKE_INTDIR=\"RelWithDebInfo\";offsetCurveDeformer_EXPORTS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src;D:\programsD\maya\maya2020\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src;D:\programsD\maya\maya2020\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src\Maya::Maya;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\src;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src;D:\programsD\maya\maya2020\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -271,8 +267,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64 /export:initializePlugin /export:uninitializePlugin</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.2020/src/RelWithDebInfo/offsetCurveDeformer.lib</ImportLibrary>
-      <ProgramDataBaseFile>C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.2020/src/RelWithDebInfo/offsetCurveDeformer.pdb</ProgramDataBaseFile>
+      <ImportLibrary>C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.2020/src/RelWithDebInfo/offsetCurveDeformer.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.2020/src/RelWithDebInfo/offsetCurveDeformer.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -280,11 +276,11 @@
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CustomBuild Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\CMakeLists.txt">
+    <CustomBuild Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src\CMakeLists.txt">
       <UseUtf8Encoding>Always</UseUtf8Encoding>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/src/CMakeLists.txt</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/src/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1 -BC:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.2020 --check-stamp-file C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.2020/src/CMakeFiles/generate.stamp
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer -BC:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.2020 --check-stamp-file C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.2020/src/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -292,12 +288,12 @@ endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
 exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files\CMake\share\cmake-4.0\Modules\CMakeParseImplicitLinkInfo.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindCUDA.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindCUDA\select_compute_arch.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindOpenMP.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindPackageMessage.cmake;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\modules\FindMaya.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\src\CMakeFiles\generate.stamp</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files\CMake\share\cmake-4.0\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindPackageMessage.cmake;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\modules\FindMaya.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\src\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/src/CMakeLists.txt</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/src/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1 -BC:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.2020 --check-stamp-file C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.2020/src/CMakeFiles/generate.stamp
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer -BC:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.2020 --check-stamp-file C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.2020/src/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -305,12 +301,12 @@ endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
 exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files\CMake\share\cmake-4.0\Modules\CMakeParseImplicitLinkInfo.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindCUDA.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindCUDA\select_compute_arch.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindOpenMP.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindPackageMessage.cmake;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\modules\FindMaya.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\src\CMakeFiles\generate.stamp</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files\CMake\share\cmake-4.0\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindPackageMessage.cmake;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\modules\FindMaya.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\src\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
-      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/src/CMakeLists.txt</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/src/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1 -BC:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.2020 --check-stamp-file C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.2020/src/CMakeFiles/generate.stamp
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer -BC:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.2020 --check-stamp-file C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.2020/src/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -318,12 +314,12 @@ endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
 exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Program Files\CMake\share\cmake-4.0\Modules\CMakeParseImplicitLinkInfo.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindCUDA.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindCUDA\select_compute_arch.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindOpenMP.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindPackageMessage.cmake;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\modules\FindMaya.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\src\CMakeFiles\generate.stamp</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Program Files\CMake\share\cmake-4.0\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindPackageMessage.cmake;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\modules\FindMaya.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\src\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
-      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/src/CMakeLists.txt</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/src/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1 -BC:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.2020 --check-stamp-file C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.2020/src/CMakeFiles/generate.stamp
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer -BC:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.2020 --check-stamp-file C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.2020/src/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -331,24 +327,24 @@ endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
 exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Program Files\CMake\share\cmake-4.0\Modules\CMakeParseImplicitLinkInfo.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindCUDA.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindCUDA\select_compute_arch.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindOpenMP.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindPackageMessage.cmake;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\modules\FindMaya.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\src\CMakeFiles\generate.stamp</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Program Files\CMake\share\cmake-4.0\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-4.0\Modules\FindPackageMessage.cmake;C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\modules\FindMaya.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\src\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\pluginMain.cpp" />
-    <ClCompile Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\offsetCurveAlgorithm.cpp" />
-    <ClInclude Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\offsetCurveAlgorithm.h" />
-    <ClCompile Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\offsetCurveControlParams.cpp" />
-    <ClInclude Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\offsetCurveControlParams.h" />
-    <ClCompile Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\offsetCurveDeformerNode.cpp" />
-    <ClInclude Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\src\offsetCurveDeformerNode.h" />
+    <ClCompile Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src\pluginMain.cpp" />
+    <ClCompile Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src\offsetCurveAlgorithm.cpp" />
+    <ClInclude Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src\offsetCurveAlgorithm.h" />
+    <ClCompile Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src\offsetCurveControlParams.cpp" />
+    <ClInclude Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src\offsetCurveControlParams.h" />
+    <ClCompile Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src\offsetCurveDeformerNode.cpp" />
+    <ClInclude Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\src\offsetCurveDeformerNode.h" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
-    <ProjectReference Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\ZERO_CHECK.vcxproj">
-      <Project>{204828B4-CA9E-3D14-9052-8E8198809470}</Project>
+    <ProjectReference Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\ZERO_CHECK.vcxproj">
+      <Project>{CA7225BC-D9D0-3B4C-B13C-DA88890237AD}</Project>
       <Name>ZERO_CHECK</Name>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>

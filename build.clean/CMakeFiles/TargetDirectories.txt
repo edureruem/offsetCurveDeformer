@@ -1,5 +1,0 @@
-C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.clean/CMakeFiles/INSTALL.dir
-C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.clean/CMakeFiles/ALL_BUILD.dir
-C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.clean/CMakeFiles/ZERO_CHECK.dir
-C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.clean/src/CMakeFiles/offsetCurveDeformer.dir
-C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.clean/src/CMakeFiles/INSTALL.dir

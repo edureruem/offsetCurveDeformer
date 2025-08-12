@@ -249,21 +249,42 @@ MStatus offsetCurveDeformerNode::initialize()
     
     // 9. 속성 영향 설정
     status = attributeAffects(aOffsetMode, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aOffsetCurves, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aFalloffRadius, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aMaxInfluences, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aRebindMesh, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aRebindCurves, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aVolumeStrength, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aSlideEffect, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aRotationDistribution, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aScaleDistribution, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aTwistDistribution, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aAxialSliding, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aEnablePoseBlend, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aPoseTarget, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aPoseWeight, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aUseParallel, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    status = attributeAffects(aDebugDisplay, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    // 10. 초기화 완료 메시지
+    MGlobal::displayInfo("Offset Curve Deformer Node attributes initialized successfully");
     
     return status;
 }
@@ -298,91 +319,55 @@ MStatus offsetCurveDeformerNode::compute(const MPlug& plug, MDataBlock& data)
 // 디포머 메서드
 MStatus offsetCurveDeformerNode::deform(MDataBlock& block,
                                      MItGeometry& iter,
-                                     const MMatrix& mat,
+                                     const MMatrix& matrix,
                                      unsigned int multiIndex)
 {
-    MStatus status;
+    MStatus status = MS::kSuccess;
     
-    // 엔벨롭 값 확인
-    MDataHandle hEnvelope = block.inputValue(envelope, &status);
-    float envelope = hEnvelope.asFloat();
-    
-    // 엔벨롭이 0이면 변형 없음
-    if (envelope == 0.0f) {
-        return MS::kSuccess;
-    }
-    
-    // 파라미터 업데이트
-    status = updateParameters(block);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    // 리바인드 필요 여부 확인
-    MDataHandle hRebindMesh = block.inputValue(aRebindMesh);
-    MDataHandle hRebindCurves = block.inputValue(aRebindCurves);
-    
-    bool rebindMesh = hRebindMesh.asBool();
-    bool rebindCurves = hRebindCurves.asBool();
-    
-    if (rebindMesh || rebindCurves || mNeedsRebind) {
-        status = rebindDeformer(block, iter);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        
-        // 리바인드 플래그 재설정
-        block.outputValue(aRebindMesh).setBool(false);
-        block.outputValue(aRebindCurves).setBool(false);
-        mNeedsRebind = false;
-            }
-    
-    // 메쉬 포인트 가져오기
-    MPointArray points;
-    iter.allPositions(points);
-    
-    // 아티스트 제어 파라미터 가져오기
-    offsetCurveControlParams params;
-    params.setVolumeStrength(block.inputValue(aVolumeStrength).asDouble());
-    params.setSlideEffect(block.inputValue(aSlideEffect).asDouble());
-    params.setRotationDistribution(block.inputValue(aRotationDistribution).asDouble());
-    params.setScaleDistribution(block.inputValue(aScaleDistribution).asDouble());
-    params.setTwistDistribution(block.inputValue(aTwistDistribution).asDouble());
-    params.setAxialSliding(block.inputValue(aAxialSliding).asDouble());
-    
-    // 포즈 블렌딩 설정
-    params.setEnablePoseBlending(block.inputValue(aEnablePoseBlend).asBool());
-    params.setPoseWeight(block.inputValue(aPoseWeight).asDouble());
-    
-    // 포즈 블렌딩이 활성화된 경우 타겟 메쉬 가져오기
-    if (params.isPoseBlendingEnabled() && params.getPoseWeight() > 0.0) {
-        getPoseTargetMesh(block, mPoseTargetPoints);
-        mAlgorithm->setPoseTarget(mPoseTargetPoints);
-    }
-    
-    // OCD 변형 계산
-    status = mAlgorithm->performDeformationPhase(points, params);
-    if (status != MS::kSuccess) {
-        MGlobal::displayWarning("OCD deformation failed");
-        return status;
-    }
-    
-    // 추가적인 볼륨 보존 및 자기교차 방지 처리
-    if (status == MS::kSuccess && params.getVolumeStrength() > 0.0) {
-        // 특허에서 언급하는 볼륨 손실, "캔디 래퍼" 핀칭, 표면 자기교차 문제 해결
-        applyVolumePreservationCorrection(points, params);
-    }
-    
-    // 엔벨롭 적용
-    if (envelope < 1.0f) {
-        MPointArray originalPoints;
-        iter.allPositions(originalPoints);
-        
-        for (unsigned int i = 0; i < points.length(); i++) {
-            points[i] = originalPoints[i] + (points[i] - originalPoints[i]) * envelope;
+    try {
+        // 1. 입력 데이터 검증
+        if (!validateInputData(block)) {
+            MGlobal::displayError("Invalid input data in Offset Curve Deformer");
+            return MS::kFailure;
         }
+        
+        // 2. 메모리 상태 확인
+        if (!checkMemoryStatus()) {
+            MGlobal::displayError("Insufficient memory for Offset Curve Deformer operation");
+            return MS::kFailure;
+        }
+        
+        // 3. GPU 상태 확인 (CUDA 사용 시)
+        if (ENABLE_CUDA && !checkGPUStatus()) {
+            MGlobal::displayWarning("GPU acceleration disabled, falling back to CPU");
+            // CPU 폴백 모드로 전환
+        }
+        
+        // 4. 메인 변형 로직 실행
+        status = performDeformation(block, iter, matrix, multiIndex);
+        if (!status) {
+            MGlobal::displayError("Deformation failed in Offset Curve Deformer");
+            return status;
+        }
+        
+        // 5. 결과 검증
+        if (!validateOutputData(iter)) {
+            MGlobal::displayError("Invalid output data generated by Offset Curve Deformer");
+            return MS::kFailure;
+        }
+        
+        return MS::kSuccess;
+        
+    } catch (const std::bad_alloc& e) {
+        MGlobal::displayError("Memory allocation failed in Offset Curve Deformer");
+        return MS::kFailure;
+    } catch (const std::exception& e) {
+        MGlobal::displayError(MString("Unexpected error in Offset Curve Deformer: ") + e.what());
+        return MS::kFailure;
+    } catch (...) {
+        MGlobal::displayError("Unknown error occurred in Offset Curve Deformer");
+        return MS::kFailure;
     }
-    
-    // 변형된 포인트 설정
-    iter.setAllPositions(points);
-    
-    return status;
 }
 
 // 초기 바인딩 초기화
@@ -614,4 +599,237 @@ MStatus offsetCurveDeformerNode::connectionBroken(const MPlug& plug, const MPlug
         mNeedsRebind = true;
     }
     return MS::kSuccess;
+}
+
+// 🔴 추가: 에러 처리 및 검증 메서드들
+
+bool offsetCurveDeformerNode::validateInputData(MDataBlock& dataBlock)
+{
+    MStatus status;
+    
+    // 1. 엔벨롭 값 확인
+    MDataHandle hEnvelope = dataBlock.inputValue(envelope, &status);
+    if (!status || hEnvelope.asFloat() < 0.0f || hEnvelope.asFloat() > 1.0f) {
+        MGlobal::displayWarning("Invalid envelope value in Offset Curve Deformer");
+        return false;
+    }
+    
+    // 2. 입력 메시 확인
+    MDataHandle hInput = dataBlock.inputValue(input, &status);
+    if (!status) {
+        MGlobal::displayError("No input mesh connected to Offset Curve Deformer");
+        return false;
+    }
+    
+    // 3. 오프셋 곡선 확인
+    MArrayDataHandle hOffsetCurves = dataBlock.inputArrayValue(aOffsetCurves, &status);
+    if (!status || hOffsetCurves.elementCount() == 0) {
+        MGlobal::displayWarning("No offset curves connected to Offset Curve Deformer");
+        return false;
+    }
+    
+    // 4. 파라미터 범위 검증
+    MDataHandle hVolumeStrength = dataBlock.inputValue(aVolumeStrength, &status);
+    if (status && (hVolumeStrength.asDouble() < 0.0 || hVolumeStrength.asDouble() > 5.0)) {
+        MGlobal::displayWarning("Volume strength out of valid range [0.0, 5.0]");
+        return false;
+    }
+    
+    return true;
+}
+
+bool offsetCurveDeformerNode::checkMemoryStatus()
+{
+    // 시스템 메모리 상태 확인 (Windows)
+    #ifdef _WIN32
+    MEMORYSTATUSEX memInfo;
+    memInfo.dwLength = sizeof(MEMORYSTATUSEX);
+    if (GlobalMemoryStatusEx(&memInfo)) {
+        double availableMemoryGB = (double)memInfo.ullAvailPhys / (1024.0 * 1024.0 * 1024.0);
+        if (availableMemoryGB < 1.0) { // 1GB 미만이면 경고
+            MGlobal::displayWarning("Low memory warning: Available memory is less than 1GB");
+            return false;
+        }
+    }
+    #endif
+    
+    return true;
+}
+
+bool offsetCurveDeformerNode::checkGPUStatus()
+{
+    // CUDA GPU 상태 확인
+    #ifdef CUDA_ENABLED
+    int deviceCount;
+    cudaError_t error = cudaGetDeviceCount(&deviceCount);
+    if (error != cudaSuccess || deviceCount == 0) {
+        MGlobal::displayWarning("No CUDA-capable GPU found");
+        return false;
+    }
+    
+    // GPU 메모리 상태 확인
+    size_t freeMemory, totalMemory;
+    error = cudaMemGetInfo(&freeMemory, &totalMemory);
+    if (error == cudaSuccess) {
+        double freeMemoryGB = (double)freeMemory / (1024.0 * 1024.0 * 1024.0);
+        if (freeMemoryGB < 0.5) { // 500MB 미만이면 경고
+            MGlobal::displayWarning("Low GPU memory warning: Available GPU memory is less than 500MB");
+            return false;
+        }
+    }
+    #endif
+    
+    return true;
+}
+
+MStatus offsetCurveDeformerNode::performDeformation(MDataBlock& block, MItGeometry& iter, 
+                                                   const MMatrix& matrix, unsigned int multiIndex)
+{
+    MStatus status = MS::kSuccess;
+    
+    // 엔벨롭 값 확인
+    MDataHandle hEnvelope = block.inputValue(envelope, &status);
+    float envelope = hEnvelope.asFloat();
+    
+    // 엔벨롭이 0이면 변형 없음
+    if (envelope == 0.0f) {
+        return MS::kSuccess;
+    }
+    
+    // 파라미터 업데이트
+    status = updateParameters(block);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    // 리바인드 필요 여부 확인
+    MDataHandle hRebindMesh = block.inputValue(aRebindMesh);
+    MDataHandle hRebindCurves = block.inputValue(aRebindCurves);
+    
+    bool rebindMesh = hRebindMesh.asBool();
+    bool rebindCurves = hRebindCurves.asBool();
+    
+    if (rebindMesh || rebindCurves || mNeedsRebind) {
+        status = rebindDeformer(block, iter);
+        CHECK_MSTATUS_AND_RETURN_IT(status);
+        
+        // 리바인드 플래그 재설정
+        block.outputValue(aRebindMesh).setBool(false);
+        block.outputValue(aRebindCurves).setBool(false);
+        mNeedsRebind = false;
+    }
+    
+    // 메쉬 포인트 가져오기
+    MPointArray points;
+    iter.allPositions(points);
+    
+    // 아티스트 제어 파라미터 가져오기
+    offsetCurveControlParams params;
+    params.setVolumeStrength(block.inputValue(aVolumeStrength).asDouble());
+    params.setSlideEffect(block.inputValue(aSlideEffect).asDouble());
+    params.setRotationDistribution(block.inputValue(aRotationDistribution).asDouble());
+    params.setScaleDistribution(block.inputValue(aScaleDistribution).asDouble());
+    params.setTwistDistribution(block.inputValue(aTwistDistribution).asDouble());
+    params.setAxialSliding(block.inputValue(aAxialSliding).asDouble());
+    
+    // 포즈 블렌딩 설정
+    params.setEnablePoseBlending(block.inputValue(aEnablePoseBlend).asBool());
+    params.setPoseWeight(block.inputValue(aPoseWeight).asDouble());
+    
+    // 포즈 블렌딩이 활성화된 경우 타겟 메쉬 가져오기
+    if (params.isPoseBlendingEnabled() && params.getPoseWeight() > 0.0) {
+        getPoseTargetMesh(block, mPoseTargetPoints);
+        mAlgorithm->setPoseTarget(mPoseTargetPoints);
+    }
+    
+    // OCD 변형 계산
+    status = mAlgorithm->performDeformationPhase(points, params);
+    if (status != MS::kSuccess) {
+        MGlobal::displayWarning("OCD deformation failed");
+        return status;
+    }
+    
+    // 추가적인 볼륨 보존 및 자기교차 방지 처리
+    if (status == MS::kSuccess && params.getVolumeStrength() > 0.0) {
+        // 특허에서 언급하는 볼륨 손실, "캔디 래퍼" 핀칭, 표면 자기교차 문제 해결
+        applyVolumePreservationCorrection(points, params);
+    }
+    
+    // 엔벨롭 적용
+    if (envelope < 1.0f) {
+        MPointArray originalPoints;
+        iter.allPositions(originalPoints);
+        
+        for (unsigned int i = 0; i < points.length(); i++) {
+            points[i] = originalPoints[i] + (points[i] - originalPoints[i]) * envelope;
+        }
+    }
+    
+    // 변형된 포인트 설정
+    iter.setAllPositions(points);
+    
+    return status;
+}
+
+bool offsetCurveDeformerNode::validateOutputData(MItGeometry& iter)
+{
+    MStatus status;
+    MPointArray points;
+    
+    // 출력 포인트 가져오기
+    status = iter.allPositions(points);
+    if (!status || points.length() == 0) {
+        MGlobal::displayError("Failed to get output points from Offset Curve Deformer");
+        return false;
+    }
+    
+    // 포인트 유효성 검증
+    for (unsigned int i = 0; i < points.length(); i++) {
+        // NaN 또는 무한대 값 확인
+        if (!std::isfinite(points[i].x) || !std::isfinite(points[i].y) || !std::isfinite(points[i].z)) {
+            MGlobal::displayError("Invalid output point detected in Offset Curve Deformer");
+            return false;
+        }
+        
+        // 극단적인 값 확인 (예: 10000 단위 이상)
+        if (std::abs(points[i].x) > 10000.0 || std::abs(points[i].y) > 10000.0 || std::abs(points[i].z) > 10000.0) {
+            MGlobal::displayWarning("Extreme output point detected in Offset Curve Deformer");
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+void offsetCurveDeformerNode::cleanupResources()
+{
+    // 메모리 정리
+    if (mAlgorithm) {
+        mAlgorithm.reset();
+    }
+    
+    // 포인트 배열 정리
+    mPoseTargetPoints.clear();
+    
+    // 리바인드 플래그 재설정
+    mNeedsRebind = true;
+}
+
+bool offsetCurveDeformerNode::initializeResources()
+{
+    try {
+        // 알고리즘 초기화
+        if (!mAlgorithm) {
+            mAlgorithm = std::make_unique<offsetCurveAlgorithm>();
+        }
+        
+        // 포인트 배열 초기화
+        mPoseTargetPoints.clear();
+        
+        // 리바인드 플래그 설정
+        mNeedsRebind = true;
+        
+        return true;
+    } catch (const std::exception& e) {
+        MGlobal::displayError(MString("Failed to initialize resources: ") + e.what());
+        return false;
+    }
 }

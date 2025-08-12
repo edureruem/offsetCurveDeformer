@@ -1,8 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.clean/cmake_install.cmake",
-		"C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer-1/build.clean/src/cmake_install.cmake"
-	],
-	"Parallel" : false
-}

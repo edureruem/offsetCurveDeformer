@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <CustomBuild Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer-1\build.2020\CMakeFiles\f780e4a4152554e8f4fdb903a55a1391\INSTALL_force.rule">
+    <CustomBuild Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.2020\CMakeFiles\dabebe318af439b54dab6022d64ffe5b\INSTALL_force.rule">
       <Filter>CMake Rules</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="CMake Rules">
-      <UniqueIdentifier>{35D2F97D-0FE1-37BA-BBBA-2842FC658FD4}</UniqueIdentifier>
+      <UniqueIdentifier>{E6A30135-971F-379D-9B86-8771F11BF745}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

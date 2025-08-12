@@ -1,74 +1,90 @@
 /**
  * offsetCurveControlParams.cpp
- * Offset Curve Deformer의 아티스트 제어 파라미터 클래스 구현
- * 소니 특허(US8400455) 기반 구현
+ * 간단한 기본 제어 파라미터 구현
  */
 
 #include "offsetCurveControlParams.h"
 
-// 생성자
+// 기본 생성자
 offsetCurveControlParams::offsetCurveControlParams()
 {
-    // 기본값 초기화
     resetToDefaults();
 }
 
-// 소멸자
+// 기본 소멸자
 offsetCurveControlParams::~offsetCurveControlParams()
 {
-    // 필요한 정리 작업 (현재 없음)
 }
 
-// 볼륨 및 슬라이딩 설정 메서드
+// 기본값으로 초기화
+void offsetCurveControlParams::resetToDefaults()
+{
+    mVolumeStrength = 0.0;
+    mSlideEffect = 0.0;
+    mRotationDistribution = 0.0;
+    mScaleDistribution = 1.0;
+    mTwistDistribution = 0.0;
+    mAxialSliding = 0.0;
+    mNormalOffset = 0.0;
+    mEnablePoseBlending = false;
+    mPoseWeight = 0.5;
+}
+
+// 볼륨 강도 설정
 void offsetCurveControlParams::setVolumeStrength(double strength)
 {
     mVolumeStrength = strength;
 }
 
+// 슬라이드 효과 설정
 void offsetCurveControlParams::setSlideEffect(double effect)
 {
     mSlideEffect = effect;
 }
 
-// 분포 설정 메서드
+// 회전 분포 설정
 void offsetCurveControlParams::setRotationDistribution(double distribution)
 {
     mRotationDistribution = distribution;
 }
 
+// 스케일 분포 설정
 void offsetCurveControlParams::setScaleDistribution(double distribution)
 {
     mScaleDistribution = distribution;
 }
 
+// 비틀림 분포 설정
 void offsetCurveControlParams::setTwistDistribution(double distribution)
 {
     mTwistDistribution = distribution;
 }
 
-// 추가 변형 설정 메서드
+// 축방향 슬라이딩 설정
 void offsetCurveControlParams::setAxialSliding(double sliding)
 {
     mAxialSliding = sliding;
 }
 
+// 법선 오프셋 설정
 void offsetCurveControlParams::setNormalOffset(double offset)
 {
     mNormalOffset = offset;
 }
 
-// 포즈 블렌딩 설정 메서드
+// 포즈 블렌딩 활성화 설정
 void offsetCurveControlParams::setEnablePoseBlending(bool enable)
 {
     mEnablePoseBlending = enable;
 }
 
+// 포즈 가중치 설정
 void offsetCurveControlParams::setPoseWeight(double weight)
 {
-    mPoseWeight = weight;
+    mPoseWeight = std::max(0.0, std::min(1.0, weight));
 }
 
-// 값 접근자 메서드
+// 값 접근자 메서드들
 double offsetCurveControlParams::getVolumeStrength() const
 {
     return mVolumeStrength;
@@ -104,7 +120,7 @@ double offsetCurveControlParams::getNormalOffset() const
     return mNormalOffset;
 }
 
-bool offsetCurveControlParams::isPoseBlendingEnabled() const
+bool offsetCurveControlParams::getEnablePoseBlending() const
 {
     return mEnablePoseBlending;
 }
@@ -112,18 +128,4 @@ bool offsetCurveControlParams::isPoseBlendingEnabled() const
 double offsetCurveControlParams::getPoseWeight() const
 {
     return mPoseWeight;
-}
-
-// 기본값 초기화 메서드
-void offsetCurveControlParams::resetToDefaults()
-{
-    mVolumeStrength = 1.0;       // 기본 볼륨 강도 (1.0 = 100%)
-    mSlideEffect = 0.0;          // 기본 슬라이딩 없음
-    mRotationDistribution = 0.5;  // 균등 회전 분포
-    mScaleDistribution = 0.5;     // 균등 스케일 분포
-    mTwistDistribution = 0.5;     // 균등 꼬임 분포
-    mAxialSliding = 0.0;         // 기본 축 방향 슬라이딩 없음
-    mNormalOffset = 1.0;         // 기본 법선 오프셋 (1.0 = 100%)
-    mEnablePoseBlending = false;  // 기본 포즈 블렌딩 비활성화
-    mPoseWeight = 0.0;           // 기본 포즈 가중치 없음
 }
