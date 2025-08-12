@@ -98,6 +98,42 @@ public:
     static MObject aPoseTarget;             // 포즈 타겟
     static MObject aPoseWeight;             // 포즈 가중치
 
+    // ✅ 추가: 새로운 시스템들을 위한 속성들
+    
+    // Bind Remapping 속성
+    static MObject aEnableBindRemapping;    // Bind Remapping 활성화
+    static MObject aBindRemappingStrength;  // Bind Remapping 강도
+    
+    // Pose Space Deformation 속성
+    static MObject aEnablePoseSpaceDeform;  // Pose Space Deformation 활성화
+    static MObject aSkeletonJoints;         // 스켈레톤 관절들
+    static MObject aJointWeights;           // 관절별 가중치
+    
+    // Adaptive Subdivision 속성
+    static MObject aEnableAdaptiveSubdiv;   // Adaptive Subdivision 활성화
+    static MObject aCurvatureThreshold;     // 곡률 임계값
+    static MObject aMaxSegmentLength;       // 최대 세그먼트 길이
+    static MObject aMinSegmentLength;       // 최소 세그먼트 길이
+    
+    // ✅ 추가: 가중치 맵 관련 속성들
+    static MObject aEnableWeightMaps;       // 가중치 맵 시스템 활성화
+    static MObject aWeightMapStrength;      // 가중치 맵 강도
+    static MObject aWeightMapTransform;     // 가중치 맵 변환 행렬
+    static MObject aWeightMapFalloff;       // 가중치 맵 폴오프
+    
+    // ✅ 추가: 영향력 혼합 관련 속성들
+    static MObject aEnableInfluenceBlending;    // 영향력 혼합 시스템 활성화
+    static MObject aBlendingQuality;            // 혼합 품질 (0.0 ~ 1.0)
+    static MObject aConflictResolution;         // 충돌 해결 방식
+    static MObject aMaxInfluenceDistance;       // 최대 영향 거리
+    
+    // ✅ 추가: 공간적 보간 관련 속성들
+    static MObject aEnableSpatialInterpolation; // 공간적 보간 시스템 활성화
+    static MObject aInterpolationQuality;       // 보간 품질 (0.0 ~ 1.0)
+    static MObject aSmoothnessFactor;           // 부드러움 계수 (0.0 ~ 1.0)
+    static MObject aMaxInterpolationSteps;     // 최대 보간 단계 수
+    static MObject aInfluenceRadius;            // 영향 반경
+
 private:
     // Offset Curve 알고리즘 인스턴스 (컴포지션 패턴 사용)
     offsetCurveAlgorithm* mAlgorithm;
