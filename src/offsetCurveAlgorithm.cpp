@@ -17,7 +17,7 @@
 #include <limits>
 
 // ✅ 생성자 (Repository 패턴 적용)
-offsetCurveAlgorithm::offsetCurveAlgorithm() 
+offsetCurveAlgorithm::offsetCurveAlgorithm()
     : mOffsetMode(ARC_SEGMENT)
     , mUseParallelComputation(false) {
     
@@ -27,6 +27,20 @@ offsetCurveAlgorithm::offsetCurveAlgorithm()
     
     // Service Layer 초기화
     mBindingService = std::make_unique<CurveBindingService>(mCurveRepo.get(), mBindingRepo.get());
+    mDeformationService = std::make_unique<DeformationService>(mCurveRepo.get(), mBindingRepo.get());
+    
+    // ✅ 추가: DataFlowController 초기화
+    mDataFlowController = std::make_unique<DataFlowController>(
+        mCurveRepo.get(), 
+        mBindingRepo.get(), 
+        mBindingService.get(), 
+        mDeformationService.get()
+    );
+    
+    // 데이터 흐름 초기화
+    if (mDataFlowController) {
+        mDataFlowController->initializeDataFlow();
+    }
 }
 
 // ✅ 소멸자
@@ -67,8 +81,8 @@ MStatus offsetCurveAlgorithm::bindToCurves(const std::vector<MDagPath>& curvePat
         
         // Service Layer를 통한 바인딩 처리 (향후 구현)
         // mBindingService->processCurveBindings(curvePaths, falloffRadius, maxInfluences);
-        
-        return MS::kSuccess;
+    
+    return MS::kSuccess;
     } catch (...) {
         return MS::kFailure;
     }
@@ -76,8 +90,8 @@ MStatus offsetCurveAlgorithm::bindToCurves(const std::vector<MDagPath>& curvePat
 
 // ✅ 바인딩 페이즈
 MStatus offsetCurveAlgorithm::performBindingPhase(const MPointArray& modelPoints,
-                                                 const std::vector<MDagPath>& influenceCurves,
-                                                 double falloffRadius,
+                                                  const std::vector<MDagPath>& influenceCurves,
+                                                  double falloffRadius,
                                                  int maxInfluences) {
     try {
         // 바인딩 로직 구현
@@ -158,7 +172,7 @@ MStatus offsetCurveAlgorithm::applyPoseSpaceDeformation(MPointArray& points,
                                                        const MMatrix& worldMatrix) const {
     try {
         // Pose Space Deformation 적용
-        return MS::kSuccess;
+    return MS::kSuccess;
     } catch (...) {
         return MS::kFailure;
     }
@@ -243,7 +257,7 @@ MVector offsetCurveAlgorithm::applySlideControl(const MVector& offsetLocal,
         // Slide 제어 로직
         return offsetLocal;
     } catch (...) {
-        return offsetLocal;
+    return offsetLocal;
     }
 }
 
@@ -279,7 +293,7 @@ MStatus offsetCurveAlgorithm::getPointAtParamWithStrategy(const MDagPath& curveP
 MStatus offsetCurveAlgorithm::getNormalAtParamWithStrategy(const MDagPath& curvePath, double paramU, MVector& normal) const {
     try {
         // Strategy를 통한 법선 벡터 계산
-        return MS::kSuccess;
+    return MS::kSuccess;
     } catch (...) {
         return MS::kFailure;
     }
@@ -288,7 +302,7 @@ MStatus offsetCurveAlgorithm::getNormalAtParamWithStrategy(const MDagPath& curve
 MStatus offsetCurveAlgorithm::getTangentAtParamWithStrategy(const MDagPath& curvePath, double paramU, MVector& tangent) const {
     try {
         // Strategy를 통한 접선 벡터 계산
-        return MS::kSuccess;
+    return MS::kSuccess;
     } catch (...) {
         return MS::kFailure;
     }
@@ -296,7 +310,7 @@ MStatus offsetCurveAlgorithm::getTangentAtParamWithStrategy(const MDagPath& curv
 
 double offsetCurveAlgorithm::getCurvatureAtParamWithStrategy(const MDagPath& curvePath, double paramU) const {
     try {
-        return mStrategyContext.getCurvatureAtParam(curvePath, paramU);
+    return mStrategyContext.getCurvatureAtParam(curvePath, paramU);
     } catch (...) {
         return 0.0;
     }
@@ -347,7 +361,7 @@ MStatus offsetCurveAlgorithm::processWeightMap(const MObject& weightMap, const M
 
 bool offsetCurveAlgorithm::validateWeightMap(const MObject& weightMap) const {
     try {
-        return mWeightMapProcessor.isValidWeightMap(weightMap);
+    return mWeightMapProcessor.isValidWeightMap(weightMap);
     } catch (...) {
         return false;
     }
@@ -379,7 +393,7 @@ void offsetCurveAlgorithm::optimizeInfluenceBlending(std::vector<OffsetPrimitive
 
 // ✅ 공간적 보간 관련 함수들
 MPoint offsetCurveAlgorithm::applySpatialInterpolation(const MPoint& modelPoint,
-                                                       const MDagPath& curvePath,
+                                                             const MDagPath& curvePath,
                                                        double influenceRadius) const {
     try {
         // const 문제 해결: const_cast 사용
@@ -466,11 +480,82 @@ MVector offsetCurveAlgorithm::applyArtistControls(const MVector& bindOffsetLocal
                                                  const MVector& currentBinormal,
                                                  const MDagPath& curvePath,
                                                  double& paramU,
-                                                 const offsetCurveControlParams& params) const {
+                                               const offsetCurveControlParams& params) const {
     try {
         // 아티스트 제어 적용
         return bindOffsetLocal;
     } catch (...) {
         return bindOffsetLocal;
+    }
+}
+
+// ✅ 추가: 데이터 흐름 관리 메서드들
+MStatus offsetCurveAlgorithm::processDataFlow() {
+    try {
+        if (mDataFlowController) {
+            return mDataFlowController->processDataFlow();
+        }
+        return MS::kFailure;
+    } catch (...) {
+        MGlobal::displayError("offsetCurveAlgorithm::processDataFlow: Exception caught.");
+        return MS::kFailure;
+    }
+}
+
+MStatus offsetCurveAlgorithm::validateDataFlow() {
+    try {
+        if (mDataFlowController) {
+            return mDataFlowController->validateDataFlow();
+        }
+        return MS::kFailure;
+    } catch (...) {
+        MGlobal::displayError("offsetCurveAlgorithm::validateDataFlow: Exception caught.");
+        return MS::kFailure;
+    }
+}
+
+MStatus offsetCurveAlgorithm::optimizeDataFlow() {
+    try {
+        if (mDataFlowController) {
+            return mDataFlowController->optimizeDataFlow();
+        }
+        return MS::kFailure;
+    } catch (...) {
+        MGlobal::displayError("offsetCurveAlgorithm::optimizeDataFlow: Exception caught.");
+        return MS::kFailure;
+    }
+}
+
+MStatus offsetCurveAlgorithm::monitorDataFlowPerformance() {
+    try {
+        if (mDataFlowController) {
+            return mDataFlowController->monitorDataFlowPerformance();
+        }
+        return MS::kFailure;
+    } catch (...) {
+        MGlobal::displayError("offsetCurveAlgorithm::monitorDataFlowPerformance: Exception caught.");
+        return MS::kFailure;
+    }
+}
+
+bool offsetCurveAlgorithm::isDataFlowValid() const {
+    try {
+        if (mDataFlowController) {
+            return mDataFlowController->isDataFlowValid();
+        }
+        return false;
+    } catch (...) {
+        return false;
+    }
+}
+
+MStatus offsetCurveAlgorithm::getDataFlowStatus() const {
+    try {
+        if (mDataFlowController) {
+            return mDataFlowController->getDataFlowStatus();
+        }
+        return MS::kFailure;
+    } catch (...) {
+        return MS::kFailure;
     }
 }

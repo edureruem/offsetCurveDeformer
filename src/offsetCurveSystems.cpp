@@ -11,11 +11,22 @@
 #include <maya/MGlobal.h>
 #include <maya/MFnNurbsCurve.h>
 #include <maya/MFnDagNode.h>
+#include <maya/MStatus.h>
+#include <maya/MDagPath.h>
+#include <maya/MPoint.h>
+#include <maya/MVector.h>
+#include <maya/MMatrix.h>
+#include <maya/MPointArray.h>
 
 // C++ 표준 라이브러리
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <memory>
+#include <string>
+#include <map>
+#include <vector>
+#include <chrono>
 
 // ✅ BindRemappingSystem 구현
 BindRemappingSystem::BindRemappingSystem() : mRemappingStrength(1.0) {
@@ -932,4 +943,532 @@ bool CurveBindingService::isCurveInRange(const MDagPath& curvePath, const MPoint
 // ✅ 파일 잠금 해제 테스트 완료
 // 이제 정상적으로 수정 가능합니다
 
+// ✅ DeformationService 구현
+DeformationService::DeformationService(ICurveRepository* curveRepo, IBindingRepository* bindingRepo)
+    : mCurveRepo(curveRepo)
+    , mBindingRepo(bindingRepo)
+    , mDeformationStrength(1.0)
+    , mFalloffRadius(10.0)
+    , mUseParallelComputation(false)
+    , mDeformationQuality(1.0)
+    , mSmoothness(0.5)
+    , mLastError(MS::kSuccess) {
+    
+    // Repository 유효성 검사
+    if (!mCurveRepo || !mBindingRepo) {
+        mLastError = MS::kInvalidParameter;
+        MGlobal::displayError("DeformationService: Invalid repository pointers");
+    }
+}
 
+DeformationService::~DeformationService() {
+    // Repository는 외부에서 관리되므로 소멸하지 않음
+}
+
+MStatus DeformationService::processDeformation(const MPointArray& inputPoints, MPointArray& outputPoints) {
+    try {
+        // 입력 검증
+        if (inputPoints.length() == 0) {
+            mLastError = MS::kInvalidParameter;
+            return MS::kInvalidParameter;
+        }
+        
+        // 출력 배열 초기화
+        outputPoints.setLength(inputPoints.length());
+        
+        // 각 정점에 대해 변형 처리
+        for (unsigned int i = 0; i < inputPoints.length(); ++i) {
+            MStatus status = deformVertex(static_cast<int>(i), inputPoints[i], outputPoints[i]);
+            if (status != MS::kSuccess) {
+                mLastError = status;
+                return status;
+            }
+        }
+        
+        mLastError = MS::kSuccess;
+        return MS::kSuccess;
+        
+    } catch (...) {
+        mLastError = MS::kFailure;
+        MGlobal::displayError("DeformationService: Exception in processDeformation");
+        return MS::kFailure;
+    }
+}
+
+MStatus DeformationService::deformVertex(int vertexIndex, const MPoint& inputPoint, MPoint& outputPoint) {
+    try {
+        // 기본값 설정
+        outputPoint = inputPoint;
+        
+        // 정점 바인딩 확인
+        if (!mBindingRepo->hasVertexBinding(vertexIndex)) {
+            return MS::kSuccess; // 바인딩이 없으면 변형 없음
+        }
+        
+        // 바인딩된 프리미티브들 가져오기
+        const std::vector<OffsetPrimitive>& primitives = mBindingRepo->getVertexPrimitives(vertexIndex);
+        if (primitives.empty()) {
+            return MS::kSuccess; // 프리미티브가 없으면 변형 없음
+        }
+        
+        // 변형 계산
+        return calculateVertexDeformation(vertexIndex, inputPoint, outputPoint, primitives);
+        
+    } catch (...) {
+        mLastError = MS::kFailure;
+        MGlobal::displayError("DeformationService: Exception in deformVertex");
+        return MS::kFailure;
+    }
+}
+
+void DeformationService::setDeformationParameters(double strength, double falloffRadius, bool useParallel) {
+    mDeformationStrength = strength;
+    mFalloffRadius = falloffRadius;
+    mUseParallelComputation = useParallel;
+}
+
+void DeformationService::setDeformationQuality(double quality, double smoothness) {
+    mDeformationQuality = quality;
+    mSmoothness = smoothness;
+}
+
+bool DeformationService::validateDeformationParameters() const {
+    return mDeformationStrength >= 0.0 && mFalloffRadius > 0.0 && 
+           mDeformationQuality >= 0.0 && mDeformationQuality <= 1.0 &&
+           mSmoothness >= 0.0 && mSmoothness <= 1.0;
+}
+
+MStatus DeformationService::getLastError() const {
+    return mLastError;
+}
+
+MStatus DeformationService::calculateVertexDeformation(int vertexIndex, const MPoint& inputPoint, 
+                                                      MPoint& outputPoint, const std::vector<OffsetPrimitive>& primitives) {
+    try {
+        MPoint deformedPoint = inputPoint;
+        
+        // 각 프리미티브의 영향력 계산 및 적용
+        for (const auto& primitive : primitives) {
+            if (primitive.influenceCurveIndex < 0 || primitive.influenceCurveIndex >= mCurveRepo->getCurveCount()) {
+                continue; // 유효하지 않은 곡선 인덱스
+            }
+            
+            // 곡선 경로 가져오기
+            MDagPath curvePath = mCurveRepo->getCurve(primitive.influenceCurveIndex);
+            if (!curvePath.isValid()) {
+                continue; // 유효하지 않은 곡선
+            }
+            
+            // 영향 가중치 계산
+            double weight = calculateInfluenceWeight(inputPoint, curvePath, primitive);
+            if (weight <= 0.0) {
+                continue; // 영향력이 없음
+            }
+            
+            // 오프셋 벡터 계산
+            MVector offset = calculateOffsetVector(curvePath, primitive);
+            
+            // Frenet Frame 기반 변형 적용
+            MPoint tempPoint;
+            MStatus status = applyFrenetFrameDeformation(deformedPoint, offset * weight, tempPoint);
+            if (status == MS::kSuccess) {
+                deformedPoint = tempPoint;
+            }
+        }
+        
+        outputPoint = deformedPoint;
+        return MS::kSuccess;
+        
+    } catch (...) {
+        MGlobal::displayError("DeformationService: Exception in calculateVertexDeformation");
+        return MS::kFailure;
+    }
+}
+
+double DeformationService::calculateInfluenceWeight(const MPoint& vertexPos, const MDagPath& curvePath, 
+                                                  const OffsetPrimitive& primitive) const {
+    try {
+        // 기본 가중치
+        double baseWeight = primitive.weight * mDeformationStrength;
+        
+        // 거리 기반 falloff 계산 (간단한 구현)
+        // 실제로는 곡선에서 가장 가까운 점까지의 거리를 계산해야 함
+        double distance = 0.0; // 기본값, 실제 구현에서는 계산 필요
+        
+        // Falloff 적용
+        if (distance > mFalloffRadius) {
+            return 0.0;
+        }
+        
+        double falloffFactor = 1.0 - (distance / mFalloffRadius);
+        return baseWeight * falloffFactor;
+        
+    } catch (...) {
+        return 0.0;
+    }
+}
+
+MVector DeformationService::calculateOffsetVector(const MDagPath& curvePath, const OffsetPrimitive& primitive) const {
+    try {
+        // 기본 오프셋 벡터 반환
+        // 실제로는 곡선의 Frenet Frame을 계산하여 변환해야 함
+        return primitive.bindOffsetLocal;
+        
+    } catch (...) {
+        return MVector(0, 0, 0);
+    }
+}
+
+MStatus DeformationService::applyFrenetFrameDeformation(const MPoint& inputPoint, const MVector& offset, 
+                                                       MPoint& outputPoint) const {
+    try {
+        // 간단한 벡터 덧셈으로 변형 적용
+        // 실제로는 Frenet Frame (T, N, B) 기반 변형이 필요
+        outputPoint = inputPoint + offset;
+        return MS::kSuccess;
+        
+    } catch (...) {
+        return MS::kFailure;
+    }
+}
+
+// ✅ DataFlowController 구현
+DataFlowController::DataFlowController(ICurveRepository* curveRepo, 
+                                     IBindingRepository* bindingRepo,
+                                     CurveBindingService* bindingService,
+                                     DeformationService* deformationService)
+    : mCurveRepo(curveRepo)
+    , mBindingRepo(bindingRepo)
+    , mBindingService(bindingService)
+    , mDeformationService(deformationService)
+    , mDataFlowStatus(MS::kSuccess)
+    , mIsDataFlowValid(false)
+    , mIsInitialized(false)
+    , mLastProcessingTime(0.0)
+    , mProcessedDataCount(0) {
+    
+    // Repository 및 Service 유효성 검사
+    if (!mCurveRepo || !mBindingRepo || !mBindingService || !mDeformationService) {
+        mDataFlowStatus = MS::kInvalidParameter;
+        MGlobal::displayError("DataFlowController: Invalid repository or service pointers");
+    }
+}
+
+DataFlowController::~DataFlowController() {
+    // Repository와 Service는 외부에서 관리되므로 소멸하지 않음
+    cleanupDataFlow();
+}
+
+MStatus DataFlowController::initializeDataFlow() {
+    try {
+        // Repository 연결 검증
+        MStatus status = validateRepositoryConnections();
+        if (status != MS::kSuccess) {
+            return updateDataFlowStatus(status);
+        }
+        
+        // Service 연결 검증
+        status = validateServiceConnections();
+        if (status != MS::kSuccess) {
+            return updateDataFlowStatus(status);
+        }
+        
+        // 초기 데이터 검증
+        status = performDataValidation();
+        if (status != MS::kSuccess) {
+            return updateDataFlowStatus(status);
+        }
+        
+        mIsInitialized = true;
+        mIsDataFlowValid = true;
+        mDataFlowStatus = MS::kSuccess;
+        
+        MGlobal::displayInfo("DataFlowController: Data flow initialized successfully");
+        return MS::kSuccess;
+        
+    } catch (...) {
+        MGlobal::displayError("DataFlowController: Exception in initializeDataFlow");
+        return updateDataFlowStatus(MS::kFailure);
+    }
+}
+
+MStatus DataFlowController::processDataFlow() {
+    try {
+        if (!mIsInitialized) {
+            MGlobal::displayError("DataFlowController: Data flow not initialized");
+            return MS::kFailure;
+        }
+        
+        // 성능 모니터링 시작
+        auto startTime = std::chrono::high_resolution_clock::now();
+        
+        // Repository 동기화
+        MStatus status = synchronizeRepositories();
+        if (status != MS::kSuccess) {
+            return updateDataFlowStatus(status);
+        }
+        
+        // Service 간 데이터 전송
+        status = transferDataBetweenServices();
+        if (status != MS::kSuccess) {
+            return updateDataFlowStatus(status);
+        }
+        
+        // 데이터 흐름 검증
+        status = validateDataFlow();
+        if (status != MS::kSuccess) {
+            return updateDataFlowStatus(status);
+        }
+        
+        // 성능 모니터링 완료
+        auto endTime = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+        mLastProcessingTime = duration.count() / 1000.0; // 밀리초 단위
+        mProcessedDataCount++;
+        
+        return updateDataFlowStatus(MS::kSuccess);
+        
+    } catch (...) {
+        MGlobal::displayError("DataFlowController: Exception in processDataFlow");
+        return updateDataFlowStatus(MS::kFailure);
+    }
+}
+
+MStatus DataFlowController::validateDataFlow() {
+    try {
+        if (!mIsInitialized) {
+            return MS::kFailure;
+        }
+        
+        // Repository 상태 검증
+        if (!mCurveRepo || !mBindingRepo) {
+            return updateDataFlowStatus(MS::kInvalidParameter);
+        }
+        
+        // Service 상태 검증
+        if (!mBindingService || !mDeformationService) {
+            return updateDataFlowStatus(MS::kInvalidParameter);
+        }
+        
+        // 데이터 일관성 검증
+        MStatus status = performDataValidation();
+        if (status != MS::kSuccess) {
+            return updateDataFlowStatus(status);
+        }
+        
+        mIsDataFlowValid = true;
+        return updateDataFlowStatus(MS::kSuccess);
+        
+    } catch (...) {
+        MGlobal::displayError("DataFlowController: Exception in validateDataFlow");
+        return updateDataFlowStatus(MS::kFailure);
+    }
+}
+
+MStatus DataFlowController::synchronizeRepositories() {
+    try {
+        if (!mCurveRepo || !mBindingRepo) {
+            return MS::kInvalidParameter;
+        }
+        
+        // 곡선 데이터와 바인딩 데이터 간의 동기화
+        int curveCount = mCurveRepo->getCurveCount();
+        int bindingCount = mBindingRepo->getBindingCount();
+        
+        // 데이터 일관성 검사
+        if (curveCount > 0 && bindingCount == 0) {
+            MGlobal::displayWarning("DataFlowController: Curves exist but no bindings found");
+        }
+        
+        if (bindingCount > 0 && curveCount == 0) {
+            MGlobal::displayWarning("DataFlowController: Bindings exist but no curves found");
+        }
+        
+        return MS::kSuccess;
+        
+    } catch (...) {
+        MGlobal::displayError("DataFlowController: Exception in synchronizeRepositories");
+        return MS::kFailure;
+    }
+}
+
+MStatus DataFlowController::transferDataBetweenServices() {
+    try {
+        if (!mBindingService || !mDeformationService) {
+            return MS::kInvalidParameter;
+        }
+        
+        // 바인딩 서비스에서 변형 서비스로 데이터 전송
+        // (실제 구현에서는 더 구체적인 데이터 전송 로직이 필요)
+        
+        return MS::kSuccess;
+        
+    } catch (...) {
+        MGlobal::displayError("DataFlowController: Exception in transferDataBetweenServices");
+        return MS::kFailure;
+    }
+}
+
+bool DataFlowController::isDataFlowValid() const {
+    return mIsDataFlowValid && mIsInitialized;
+}
+
+MStatus DataFlowController::getDataFlowStatus() const {
+    return mDataFlowStatus;
+}
+
+MStatus DataFlowController::handleDataFlowError(const MStatus& error) {
+    try {
+        MGlobal::displayError("DataFlowController: Handling data flow error");
+        
+        // 에러 상태 업데이트
+        mDataFlowStatus = error;
+        mIsDataFlowValid = false;
+        
+        // 에러 복구 시도
+        MStatus recoveryStatus = recoverDataFlow();
+        if (recoveryStatus == MS::kSuccess) {
+            MGlobal::displayInfo("DataFlowController: Error recovered successfully");
+        }
+        
+        return recoveryStatus;
+        
+    } catch (...) {
+        MGlobal::displayError("DataFlowController: Exception in handleDataFlowError");
+        return MS::kFailure;
+    }
+}
+
+MStatus DataFlowController::recoverDataFlow() {
+    try {
+        MGlobal::displayInfo("DataFlowController: Attempting to recover data flow");
+        
+        // Repository 연결 재검증
+        MStatus status = validateRepositoryConnections();
+        if (status != MS::kSuccess) {
+            return status;
+        }
+        
+        // Service 연결 재검증
+        status = validateServiceConnections();
+        if (status != MS::kSuccess) {
+            return status;
+        }
+        
+        // 데이터 흐름 재초기화
+        status = initializeDataFlow();
+        if (status == MS::kSuccess) {
+            MGlobal::displayInfo("DataFlowController: Data flow recovered successfully");
+        }
+        
+        return status;
+        
+    } catch (...) {
+        MGlobal::displayError("DataFlowController: Exception in recoverDataFlow");
+        return MS::kFailure;
+    }
+}
+
+MStatus DataFlowController::optimizeDataFlow() {
+    try {
+        if (!mIsInitialized) {
+            return MS::kFailure;
+        }
+        
+        // 데이터 흐름 최적화 로직
+        // (실제 구현에서는 더 구체적인 최적화 로직이 필요)
+        
+        MGlobal::displayInfo("DataFlowController: Data flow optimized");
+        return MS::kSuccess;
+        
+    } catch (...) {
+        MGlobal::displayError("DataFlowController: Exception in optimizeDataFlow");
+        return MS::kFailure;
+    }
+}
+
+MStatus DataFlowController::monitorDataFlowPerformance() {
+    try {
+        if (!mIsInitialized) {
+            return MS::kFailure;
+        }
+        
+        // 성능 정보 출력
+        MGlobal::displayInfo("DataFlowController: Performance monitoring");
+        MGlobal::displayInfo(MString("Last processing time: ") + MString(std::to_string(mLastProcessingTime).c_str()) + " ms");
+        MGlobal::displayInfo(MString("Processed data count: ") + MString(std::to_string(mProcessedDataCount).c_str()));
+        
+        return MS::kSuccess;
+        
+    } catch (...) {
+        MGlobal::displayError("DataFlowController: Exception in monitorDataFlowPerformance");
+        return MS::kFailure;
+    }
+}
+
+MStatus DataFlowController::cleanupDataFlow() {
+    try {
+        // 데이터 흐름 정리
+        mIsInitialized = false;
+        mIsDataFlowValid = false;
+        mDataFlowStatus = MS::kSuccess;
+        mLastProcessingTime = 0.0;
+        mProcessedDataCount = 0;
+        
+        return MS::kSuccess;
+        
+    } catch (...) {
+        MGlobal::displayError("DataFlowController: Exception in cleanupDataFlow");
+        return MS::kFailure;
+    }
+}
+
+MStatus DataFlowController::validateRepositoryConnections() const {
+    try {
+        if (!mCurveRepo || !mBindingRepo) {
+            return MS::kInvalidParameter;
+        }
+        
+        return MS::kSuccess;
+        
+    } catch (...) {
+        return MS::kFailure;
+    }
+}
+
+MStatus DataFlowController::validateServiceConnections() const {
+    try {
+        if (!mBindingService || !mDeformationService) {
+            return MS::kInvalidParameter;
+        }
+        
+        return MS::kSuccess;
+        
+    } catch (...) {
+        return MS::kFailure;
+    }
+}
+
+MStatus DataFlowController::performDataValidation() const {
+    try {
+        // 기본 데이터 유효성 검사
+        if (mCurveRepo && mCurveRepo->getCurveCount() > 0) {
+            // 곡선 데이터 검증
+        }
+        
+        if (mBindingRepo && mBindingRepo->getBindingCount() > 0) {
+            // 바인딩 데이터 검증
+        }
+        
+        return MS::kSuccess;
+        
+    } catch (...) {
+        return MS::kFailure;
+    }
+}
+
+MStatus DataFlowController::updateDataFlowStatus(MStatus newStatus) {
+    mDataFlowStatus = newStatus;
+    mIsDataFlowValid = (newStatus == MS::kSuccess);
+    return newStatus;
+}

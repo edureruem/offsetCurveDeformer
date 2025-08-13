@@ -50,13 +50,21 @@ public:
     
     // 레거시 호환성 메서드들 (단순화)
     MStatus computeDeformation(MPointArray& points,
-                              const offsetCurveControlParams& params);
+                             const offsetCurveControlParams& params);
     
     // 병렬 처리 활성화/비활성화
     void enableParallelComputation(bool enable);
     
     // 포즈 타겟 설정
     void setPoseTarget(const MPointArray& poseTarget);
+    
+    // ✅ 추가: 데이터 흐름 관리 메서드들
+    MStatus processDataFlow();
+    MStatus validateDataFlow();
+    MStatus optimizeDataFlow();
+    MStatus monitorDataFlowPerformance();
+    bool isDataFlowValid() const;
+    MStatus getDataFlowStatus() const;
     
     // ✅ 추가: 새로운 시스템 초기화 및 설정
     MStatus initializeBindRemapping(double remappingStrength);
@@ -76,17 +84,17 @@ public:
     
     // 헬퍼 함수들
     void mergeAdjacentSegments(std::vector<ArcSegment>& segments,
-                               double maxCurvatureError) const;
+                              double maxCurvatureError) const;
     
     MStatus calculatePointOnCurveOnDemand(const MDagPath& curvePath,
                                          double paramU,
                                          MPoint& point) const;
     
     MStatus findClosestPointOnCurveOnDemand(const MDagPath& curvePath,
-                                            const MPoint& modelPoint,
-                                            double& paramU,
-                                            MPoint& closestPoint,
-                                            double& distance) const;
+                                           const MPoint& modelPoint,
+                                           double& paramU,
+                                           MPoint& closestPoint,
+                                           double& distance) const;
     
     // === 아티스트 제어 함수들 (특허 US8400455B2) ===
     MVector applyTwistControl(const MVector& offsetLocal,
@@ -128,24 +136,24 @@ public:
     
     // ✅ 추가: 영향력 혼합 관련 함수들
     MPoint blendAllInfluences(const MPoint& modelPoint, 
-                              const std::vector<OffsetPrimitive>& primitives,
-                              const offsetCurveControlParams& params) const;
+                             const std::vector<OffsetPrimitive>& primitives,
+                             const offsetCurveControlParams& params) const;
     void optimizeInfluenceBlending(std::vector<OffsetPrimitive>& primitives,
-                                   const MPoint& modelPoint) const;
+                                  const MPoint& modelPoint) const;
     
     // ✅ 추가: 공간적 보간 관련 함수들
     MPoint applySpatialInterpolation(const MPoint& modelPoint,
-                                     const MDagPath& curvePath,
-                                     double influenceRadius) const;
+                                    const MDagPath& curvePath,
+                                    double influenceRadius) const;
     void setSpatialInterpolationQuality(double quality);
     void setSpatialInterpolationSmoothness(double smoothness);
     
     // ✅ 수정: 특허 기반 볼륨 보존 시스템
     double calculateVolumePreservationFactor(const OffsetPrimitive& primitive,
-                                            double curvature) const;
+                                           double curvature) const;
     
     bool checkSelfIntersection(const OffsetPrimitive& primitive,
-                               double curvature) const;
+                              double curvature) const;
     
     MVector applySelfIntersectionPrevention(const MVector& deformedOffset,
                                            const OffsetPrimitive& primitive,
@@ -153,7 +161,7 @@ public:
     
     // 🔬 곡률 계산 함수 (특허 수학 공식)
     double calculateCurvatureAtPoint(const MDagPath& curvePath, double paramU) const;
-
+    
     MVector applyArtistControls(const MVector& bindOffsetLocal,
                                const MVector& currentTangent,
                                const MVector& currentNormal,
@@ -173,6 +181,10 @@ private:
     
     // Service Layer (비즈니스 로직 분리)
     std::unique_ptr<CurveBindingService> mBindingService;       // 곡선 바인딩 서비스
+    std::unique_ptr<DeformationService> mDeformationService;    // 변형 처리 서비스
+    
+    // ✅ 추가: DataFlowController (데이터 흐름 관리)
+    std::unique_ptr<IDataFlowController> mDataFlowController;   // 데이터 흐름 제어기
     
     // === 성능 및 기타 ===
     bool mUseParallelComputation;                               // 병렬 처리 플래그

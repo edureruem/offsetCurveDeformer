@@ -115,4 +115,32 @@ public:
     virtual bool isValidBinding(int vertexIndex) const = 0;
 };
 
+// ✅ DataFlowController 인터페이스 (데이터 흐름 관리)
+class IDataFlowController {
+public:
+    virtual ~IDataFlowController() = default;
+    
+               // 데이터 흐름 제어
+           virtual MStatus initializeDataFlow() = 0;
+           virtual MStatus processDataFlow() = 0;
+           virtual MStatus validateDataFlow() = 0;
+           
+           // 데이터 전송 및 동기화
+           virtual MStatus synchronizeRepositories() = 0;
+           virtual MStatus transferDataBetweenServices() = 0;
+           
+           // 데이터 흐름 상태 관리
+           virtual bool isDataFlowValid() const = 0;
+           virtual MStatus getDataFlowStatus() const = 0;
+           
+           // 에러 처리 및 복구
+           virtual MStatus handleDataFlowError(const MStatus& error) = 0;
+           virtual MStatus recoverDataFlow() = 0;
+           
+           // 추가 데이터 흐름 제어 메서드들
+           virtual MStatus optimizeDataFlow() = 0;
+           virtual MStatus monitorDataFlowPerformance() = 0;
+           virtual MStatus cleanupDataFlow() = 0;
+};
+
 #endif // OFFSETCURVETYPES_H

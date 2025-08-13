@@ -273,4 +273,100 @@ private:
     bool isCurveInRange(const MDagPath& curvePath, const MPoint& vertexPos, double falloffRadius) const;
 };
 
+// ✅ DeformationService 클래스 (변형 알고리즘 핵심 비즈니스 로직)
+class DeformationService {
+public:
+    DeformationService(ICurveRepository* curveRepo, IBindingRepository* bindingRepo);
+    ~DeformationService();
+    
+    // 메인 변형 처리
+    MStatus processDeformation(const MPointArray& inputPoints, MPointArray& outputPoints);
+    
+    // 개별 정점 변형 처리
+    MStatus deformVertex(int vertexIndex, const MPoint& inputPoint, MPoint& outputPoint);
+    
+    // 변형 파라미터 설정
+    void setDeformationParameters(double strength, double falloffRadius, bool useParallel);
+    
+    // 변형 품질 설정
+    void setDeformationQuality(double quality, double smoothness);
+    
+    // 에러 처리 및 검증
+    bool validateDeformationParameters() const;
+    MStatus getLastError() const;
+    
+private:
+    ICurveRepository* mCurveRepo;        // Repository 인터페이스 (소유권 없음)
+    IBindingRepository* mBindingRepo;    // Repository 인터페이스 (소유권 없음)
+    
+    // 변형 파라미터
+    double mDeformationStrength;
+    double mFalloffRadius;
+    bool mUseParallelComputation;
+    double mDeformationQuality;
+    double mSmoothness;
+    
+    // 에러 상태
+    mutable MStatus mLastError;
+    
+    // 내부 헬퍼 메서드들
+    MStatus calculateVertexDeformation(int vertexIndex, const MPoint& inputPoint, 
+                                      MPoint& outputPoint, const std::vector<OffsetPrimitive>& primitives);
+    double calculateInfluenceWeight(const MPoint& vertexPos, const MDagPath& curvePath, 
+                                   const OffsetPrimitive& primitive) const;
+    MVector calculateOffsetVector(const MDagPath& curvePath, const OffsetPrimitive& primitive) const;
+    MStatus applyFrenetFrameDeformation(const MPoint& inputPoint, const MVector& offset, 
+                                       MPoint& outputPoint) const;
+};
+
+// ✅ DataFlowController 구현 클래스 (데이터 흐름 관리)
+class DataFlowController : public IDataFlowController {
+public:
+    DataFlowController(ICurveRepository* curveRepo, 
+                      IBindingRepository* bindingRepo,
+                      CurveBindingService* bindingService,
+                      DeformationService* deformationService);
+    ~DataFlowController();
+    
+    // IDataFlowController 인터페이스 구현
+    MStatus initializeDataFlow() override;
+    MStatus processDataFlow() override;
+    MStatus validateDataFlow() override;
+    
+    MStatus synchronizeRepositories() override;
+    MStatus transferDataBetweenServices() override;
+    
+    bool isDataFlowValid() const override;
+    MStatus getDataFlowStatus() const override;
+    
+    MStatus handleDataFlowError(const MStatus& error) override;
+    MStatus recoverDataFlow() override;
+    
+    // 추가 데이터 흐름 제어 메서드들
+    MStatus optimizeDataFlow();
+    MStatus monitorDataFlowPerformance();
+    MStatus cleanupDataFlow();
+    
+private:
+    ICurveRepository* mCurveRepo;           // Repository 인터페이스 (소유권 없음)
+    IBindingRepository* mBindingRepo;       // Repository 인터페이스 (소유권 없음)
+    CurveBindingService* mBindingService;   // Service 인터페이스 (소유권 없음)
+    DeformationService* mDeformationService; // Service 인터페이스 (소유권 없음)
+    
+    // 데이터 흐름 상태
+    mutable MStatus mDataFlowStatus;
+    bool mIsDataFlowValid;
+    bool mIsInitialized;
+    
+    // 데이터 흐름 성능 모니터링
+    double mLastProcessingTime;
+    unsigned int mProcessedDataCount;
+    
+    // 내부 헬퍼 메서드들
+    MStatus validateRepositoryConnections() const;
+    MStatus validateServiceConnections() const;
+    MStatus performDataValidation() const;
+    MStatus updateDataFlowStatus(MStatus newStatus);
+};
+
 #endif // OFFSETCURVESYSTEMS_H
