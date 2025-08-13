@@ -3,8 +3,10 @@
  * Maya 플러그인 등록 및 초기화
  */
 
+// 프로젝트 헤더
 #include "offsetCurveDeformerNode.h"
 
+// Maya 헤더들
 #include <maya/MFnPlugin.h>
 #include <maya/MGlobal.h>
 

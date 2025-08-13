@@ -7,6 +7,9 @@ set(SOURCE_FILES
     "offsetCurveControlParams.h"
     "offsetCurveDeformerNode.cpp"
     "offsetCurveDeformerNode.h"
+    "offsetCurveSystems.cpp"
+    "offsetCurveSystems.h"
+    "offsetCurveTypes.h"
 )
 
 find_package(Maya REQUIRED)

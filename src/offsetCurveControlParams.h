@@ -37,6 +37,9 @@ public:
     bool getEnablePoseBlending() const;
     double getPoseWeight() const;
     
+    // ✅ 추가: 호환성을 위한 별칭 함수
+    bool isPoseBlendingEnabled() const { return getEnablePoseBlending(); }
+    
 private:
     // 기본 파라미터들
     double mVolumeStrength;

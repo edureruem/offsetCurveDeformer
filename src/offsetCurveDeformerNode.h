@@ -6,6 +6,7 @@
 
 #pragma once
 
+// Maya 헤더들
 #include <maya/MPxDeformerNode.h>
 #include <maya/MTypeId.h>
 #include <maya/MString.h>
@@ -28,6 +29,8 @@
 #include <maya/MFnEnumAttribute.h>
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MFnMessageAttribute.h>
+
+// C++ 표준 라이브러리
 #include <vector>
 #include <map>
 
@@ -148,7 +151,7 @@ public:
 
 private:
     // Offset Curve 알고리즘 인스턴스 (컴포지션 패턴 사용)
-    offsetCurveAlgorithm* mAlgorithm;
+    std::unique_ptr<offsetCurveAlgorithm> mAlgorithm;
     
     // 바인딩 상태 관리 (컴포지션 데이터에서 관리)
     bool mNeedsRebind;
