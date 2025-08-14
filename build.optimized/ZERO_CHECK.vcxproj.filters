@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.optimized\CMakeFiles\c27635a1905b8f0ca192167a98d3ea11\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{1B700104-1612-3B0C-8E12-43F2C18CC60A}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

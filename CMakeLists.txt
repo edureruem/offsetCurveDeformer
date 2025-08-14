@@ -6,7 +6,7 @@ endif()
 
 cmake_policy(SET CMP0048 NEW)
 
-project(offsetCurveDeformer VERSION 1.0 DESCRIPTION "My Maya Plug-in" LANGUAGES CXX)
+project(offsetCurveDeformer VERSION 2.0 DESCRIPTION "Optimized Offset Curve Deformer with GPU Acceleration" LANGUAGES CXX)
 
 set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_SOURCE_DIR})
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/modules)
