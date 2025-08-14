@@ -1,0 +1,10 @@
+^C:\USERS\EDURM\DIVKITBASE\PLUG-INS\PLUG-INS\OFFSETCURVEDEFORMER\OFFSETCURVEDEFORMER\BUILD.OPTIMIZED\_DEPS\GOOGLETEST-SUBBUILD\CMAKEFILES\5B50E46C045C5C8AB3C33FCE18B9C342\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.optimized/_deps/googletest-subbuild -BC:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.optimized/_deps/googletest-subbuild --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.optimized/_deps/googletest-subbuild/googletest-populate.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

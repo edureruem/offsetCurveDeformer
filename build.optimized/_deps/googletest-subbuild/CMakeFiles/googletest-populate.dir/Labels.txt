@@ -1,0 +1,14 @@
+# Target labels
+ googletest-populate
+# Source files and their labels
+C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.optimized/_deps/googletest-subbuild/CMakeFiles/googletest-populate
+C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.optimized/_deps/googletest-subbuild/CMakeFiles/5b50e46c045c5c8ab3c33fce18b9c342/googletest-populate.rule
+C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.optimized/_deps/googletest-subbuild/CMakeFiles/8de35f5be2ad11f234b643572eecbec6/googletest-populate-complete.rule
+C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.optimized/_deps/googletest-subbuild/CMakeFiles/30019ee1ace616bc0a3b2e197ee6676e/googletest-populate-build.rule
+C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.optimized/_deps/googletest-subbuild/CMakeFiles/30019ee1ace616bc0a3b2e197ee6676e/googletest-populate-configure.rule
+C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.optimized/_deps/googletest-subbuild/CMakeFiles/30019ee1ace616bc0a3b2e197ee6676e/googletest-populate-download.rule
+C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.optimized/_deps/googletest-subbuild/CMakeFiles/30019ee1ace616bc0a3b2e197ee6676e/googletest-populate-install.rule
+C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.optimized/_deps/googletest-subbuild/CMakeFiles/30019ee1ace616bc0a3b2e197ee6676e/googletest-populate-mkdir.rule
+C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.optimized/_deps/googletest-subbuild/CMakeFiles/30019ee1ace616bc0a3b2e197ee6676e/googletest-populate-patch.rule
+C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.optimized/_deps/googletest-subbuild/CMakeFiles/30019ee1ace616bc0a3b2e197ee6676e/googletest-populate-test.rule
+C:/Users/edurm/divkitBase/plug-ins/plug-ins/offsetCurveDeformer/offsetCurveDeformer/build.optimized/_deps/googletest-subbuild/CMakeFiles/30019ee1ace616bc0a3b2e197ee6676e/googletest-populate-update.rule

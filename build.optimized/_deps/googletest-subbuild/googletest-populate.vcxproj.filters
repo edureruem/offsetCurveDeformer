@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.optimized\_deps\googletest-subbuild\CMakeFiles\30019ee1ace616bc0a3b2e197ee6676e\googletest-populate-mkdir.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.optimized\_deps\googletest-subbuild\CMakeFiles\30019ee1ace616bc0a3b2e197ee6676e\googletest-populate-download.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.optimized\_deps\googletest-subbuild\CMakeFiles\30019ee1ace616bc0a3b2e197ee6676e\googletest-populate-update.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.optimized\_deps\googletest-subbuild\CMakeFiles\30019ee1ace616bc0a3b2e197ee6676e\googletest-populate-patch.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.optimized\_deps\googletest-subbuild\CMakeFiles\30019ee1ace616bc0a3b2e197ee6676e\googletest-populate-configure.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.optimized\_deps\googletest-subbuild\CMakeFiles\30019ee1ace616bc0a3b2e197ee6676e\googletest-populate-build.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.optimized\_deps\googletest-subbuild\CMakeFiles\30019ee1ace616bc0a3b2e197ee6676e\googletest-populate-install.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.optimized\_deps\googletest-subbuild\CMakeFiles\30019ee1ace616bc0a3b2e197ee6676e\googletest-populate-test.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.optimized\_deps\googletest-subbuild\CMakeFiles\8de35f5be2ad11f234b643572eecbec6\googletest-populate-complete.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.optimized\_deps\googletest-subbuild\CMakeFiles\5b50e46c045c5c8ab3c33fce18b9c342\googletest-populate.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.optimized\_deps\googletest-subbuild\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\edurm\divkitBase\plug-ins\plug-ins\offsetCurveDeformer\offsetCurveDeformer\build.optimized\_deps\googletest-subbuild\CMakeFiles\googletest-populate" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{AFF0A487-99ED-3BBF-AB7B-F62AAD7FAF96}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
