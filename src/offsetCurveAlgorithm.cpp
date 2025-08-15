@@ -105,9 +105,56 @@ MStatus offsetCurveAlgorithm::performBindingPhase(const MPointArray& modelPoints
 MStatus offsetCurveAlgorithm::performDeformationPhase(MPointArray& points,
                                                      const offsetCurveControlParams& params) {
     try {
-        // 변형 로직 구현
+        // 1. 바인딩된 곡선이 있는지 확인
+        if (mCurveRepo && mCurveRepo->getCurveCount() == 0) {
+            MGlobal::displayWarning("No curves bound. Binding required first.");
+            return MS::kFailure;
+        }
+        
+        // 2. 각 정점에 대해 변형 계산
+        for (unsigned int i = 0; i < points.length(); i++) {
+            MPoint& currentPoint = points[i];
+            
+            // 3. 이 정점에 영향을 주는 곡선들 찾기
+            MVector totalDeformation(0.0, 0.0, 0.0);
+            
+            if (mCurveRepo) {
+                std::vector<MDagPath> curves = mCurveRepo->getAllCurves();
+                
+                for (const auto& curvePath : curves) {
+                    // 곡선에서 가장 가까운 점 찾기
+                    double paramU;
+                    MPoint closestPoint;
+                    double distance;
+                    
+                    if (findClosestPointOnCurveOnDemand(curvePath, currentPoint, paramU, closestPoint, distance) == MS::kSuccess) {
+                        // 영향 반경 내에 있는지 확인
+                        if (distance <= 3.0) { // falloffRadius 대신 고정값 사용
+                            // 오프셋 벡터 계산 (간단한 버전)
+                            MVector offsetVector = closestPoint - currentPoint;
+                            double influenceWeight = 1.0 - (distance / 3.0); // 거리에 따른 가중치
+                            
+                            // 아티스트 제어 파라미터 적용
+                            offsetVector *= params.getVolumeStrength();
+                            offsetVector *= influenceWeight;
+                            
+                            totalDeformation += offsetVector;
+                        }
+                    }
+                }
+            }
+            
+            // 4. 변형 적용
+            currentPoint += totalDeformation;
+        }
+        
         return MS::kSuccess;
+        
+    } catch (const std::exception& e) {
+        MGlobal::displayError(MString("Deformation error: ") + e.what());
+        return MS::kFailure;
     } catch (...) {
+        MGlobal::displayError("Unknown deformation error");
         return MS::kFailure;
     }
 }
@@ -121,6 +168,11 @@ MStatus offsetCurveAlgorithm::computeDeformation(MPointArray& points,
 // ✅ 병렬 처리 설정
 void offsetCurveAlgorithm::enableParallelComputation(bool enable) {
     mUseParallelComputation = enable;
+}
+
+// ✅ 초기화 상태 확인
+bool offsetCurveAlgorithm::isInitialized() const {
+    return mCurveRepo && mCurveRepo->getCurveCount() > 0;
 }
 
 // ✅ 포즈 타겟 설정

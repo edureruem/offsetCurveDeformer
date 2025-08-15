@@ -55,6 +55,9 @@ public:
     // 병렬 처리 활성화/비활성화
     void enableParallelComputation(bool enable);
     
+    // 초기화 상태 확인
+    bool isInitialized() const;
+    
     // 포즈 타겟 설정
     void setPoseTarget(const MPointArray& poseTarget);
     

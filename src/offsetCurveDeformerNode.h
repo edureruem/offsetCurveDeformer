@@ -52,8 +52,14 @@ public:
                          const MMatrix& matrix,
                          unsigned int multiIndex);
     
-    // 추가 메서드 선언 (Maya 2020 호환성)
-    virtual MStatus compute(const MPlug& plug, MDataBlock& dataBlock);
+    // 🚀 1단계: 기본 동작 복구 함수들
+    MStatus applyBasicDeformation(MPointArray& points, 
+                                 const std::vector<MDagPath>& curves);
+    double calculateDistanceToCurve(const MPoint& point, const MDagPath& curve);
+    MVector calculateBasicOffset(const MPoint& point, const MDagPath& curve);
+    
+    // 🚨 Maya 권장 방식: compute() 오버라이드하지 않음
+    // Maya가 자동으로 compute()에서 deform()을 호출
     MStatus updateParameters(MDataBlock& dataBlock);
     MStatus rebindDeformer(MDataBlock& dataBlock, MItGeometry& iter);
     MStatus getCurvesFromInputs(MDataBlock& dataBlock, std::vector<MDagPath>& curves);
@@ -75,8 +81,6 @@ public:
     bool validateInputData(MDataBlock& dataBlock);
     bool checkMemoryStatus();
     bool checkGPUStatus();
-    MStatus performDeformation(MDataBlock& block, MItGeometry& iter, 
-                              const MMatrix& matrix, unsigned int multiIndex);
     bool validateOutputData(MItGeometry& iter);
     
     // 🔴 추가: 안전한 메모리 관리
