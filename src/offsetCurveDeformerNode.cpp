@@ -43,6 +43,11 @@ MObject offsetCurveDeformerNode::aRebindCurves;
 MObject offsetCurveDeformerNode::aUseParallel;
 MObject offsetCurveDeformerNode::aDebugDisplay;
 
+// ✅ 추가: influenceCurve 관련 어트리뷰트 변수들
+MObject offsetCurveDeformerNode::aInfluenceCurve;
+MObject offsetCurveDeformerNode::aInfluenceCurveData;
+MObject offsetCurveDeformerNode::aInfluenceCurveGroupId;
+
 // 아티스트 제어 속성
 MObject offsetCurveDeformerNode::aVolumeStrength;
 MObject offsetCurveDeformerNode::aSlideEffect;
@@ -96,7 +101,7 @@ offsetCurveDeformerNode::~offsetCurveDeformerNode()
 void* offsetCurveDeformerNode::creator() 
 {
     try {
-        return new offsetCurveDeformerNode();
+    return new offsetCurveDeformerNode();
     } catch (const std::exception& e) {
         MGlobal::displayError(MString("Failed to create node: ") + e.what());
         return nullptr;
@@ -134,7 +139,37 @@ MStatus offsetCurveDeformerNode::initialize()
     msgAttr.setStorable(false);
     msgAttr.setConnectable(true);
     
-    // 3. 바인딩 및 제어 매개변수
+    // ✅ 추가: 3. influenceCurve 관련 어트리뷰트들 (Maya 표준 input과 동일한 구조)
+    // 3.1. influenceCurveData: nurbsCurve 데이터 (하위 속성)
+    aInfluenceCurveData = tAttr.create("influenceCurveData", "icd", MFnData::kNurbsCurve, &status);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    tAttr.setStorable(false);
+    tAttr.setConnectable(true);
+    
+    // 3.2. influenceCurveGroupId: 그룹 ID (하위 속성)
+    aInfluenceCurveGroupId = nAttr.create("influenceCurveGroupId", "icgi", MFnNumericData::kLong, 0, &status);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    nAttr.setStorable(false);
+    nAttr.setConnectable(false);
+    
+    // 3.3. influenceCurve: 복합 속성 (Maya 표준 input과 동일한 구조)
+    aInfluenceCurve = cAttr.create("influenceCurve", "ic", &status);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    // 복합 속성에 하위 속성들 추가 (Maya 표준 방식)
+    status = cAttr.addChild(aInfluenceCurveData);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    status = cAttr.addChild(aInfluenceCurveGroupId);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    // 복합 속성 설정 (Maya 표준 input과 동일)
+    cAttr.setStorable(false);
+    cAttr.setConnectable(true);
+    cAttr.setArray(true);  // ✅ Maya 표준: 다중 곡선 지원
+    cAttr.setUsesArrayDataBuilder(true);  // ✅ Maya 표준: 배열 빌더 사용
+    
+    // 4. 바인딩 및 제어 매개변수
     aFalloffRadius = nAttr.create("falloffRadius", "fr", MFnNumericData::kDouble, 10.0, &status);
     CHECK_MSTATUS_AND_RETURN_IT(status);
     nAttr.setMin(0.001);
@@ -148,7 +183,7 @@ MStatus offsetCurveDeformerNode::initialize()
     nAttr.setKeyable(true);
     nAttr.setStorable(true);
     
-    // 4. 리바인드 트리거
+    // 5. 리바인드 트리거
     aRebindMesh = nAttr.create("rebindMesh", "rbm", MFnNumericData::kBoolean, false, &status);
     CHECK_MSTATUS_AND_RETURN_IT(status);
     nAttr.setKeyable(true);
@@ -159,7 +194,7 @@ MStatus offsetCurveDeformerNode::initialize()
     nAttr.setKeyable(true);
     nAttr.setStorable(false);
     
-    // 5. 아티스트 제어 속성
+    // 6. 아티스트 제어 속성
     aVolumeStrength = nAttr.create("volumeStrength", "vs", MFnNumericData::kDouble, 1.0, &status);
     CHECK_MSTATUS_AND_RETURN_IT(status);
     nAttr.setMin(0.0);
@@ -202,7 +237,7 @@ MStatus offsetCurveDeformerNode::initialize()
     nAttr.setKeyable(true);
     nAttr.setStorable(true);
     
-    // 6. 포즈 블렌딩
+    // 7. 포즈 블렌딩
     aEnablePoseBlend = nAttr.create("enablePoseBlend", "epb", MFnNumericData::kBoolean, false, &status);
     CHECK_MSTATUS_AND_RETURN_IT(status);
     nAttr.setKeyable(true);
@@ -220,7 +255,7 @@ MStatus offsetCurveDeformerNode::initialize()
     nAttr.setKeyable(true);
     nAttr.setStorable(true);
     
-    // 7. 추가 설정
+    // 8. 추가 설정
     aUseParallel = nAttr.create("useParallelComputation", "upc", MFnNumericData::kBoolean, false, &status);
     CHECK_MSTATUS_AND_RETURN_IT(status);
     nAttr.setKeyable(true);
@@ -231,11 +266,14 @@ MStatus offsetCurveDeformerNode::initialize()
     nAttr.setKeyable(true);
     nAttr.setStorable(true);
     
-    // 8. 속성 추가
+    // 9. 속성 추가
     status = addAttribute(aOffsetMode);
     CHECK_MSTATUS_AND_RETURN_IT(status);
     
     status = addAttribute(aOffsetCurves);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    status = addAttribute(aInfluenceCurve); // 복합 속성 추가
     CHECK_MSTATUS_AND_RETURN_IT(status);
     
     status = addAttribute(aFalloffRadius);
@@ -283,10 +321,12 @@ MStatus offsetCurveDeformerNode::initialize()
     status = addAttribute(aDebugDisplay);
     CHECK_MSTATUS_AND_RETURN_IT(status);
     
-    // 9. 속성 영향 설정
+    // 10. 속성 영향 설정
     status = attributeAffects(aOffsetMode, outputGeom);
     CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aOffsetCurves, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    status = attributeAffects(aInfluenceCurve, outputGeom); // 복합 속성 영향 설정
     CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aFalloffRadius, outputGeom);
     CHECK_MSTATUS_AND_RETURN_IT(status);
@@ -319,10 +359,10 @@ MStatus offsetCurveDeformerNode::initialize()
     status = attributeAffects(aDebugDisplay, outputGeom);
     CHECK_MSTATUS_AND_RETURN_IT(status);
     
-    // 10. 초기화 완료 메시지
+    // 11. 초기화 완료 메시지
     MGlobal::displayInfo("Offset Curve Deformer Node attributes initialized successfully");
     
-    return status;
+            return status;
 }
 
 // 🚨 Maya 권장 방식: compute() 오버라이드하지 않음
@@ -338,7 +378,7 @@ MStatus offsetCurveDeformerNode::initialize()
 // 디포머 메서드
 MStatus offsetCurveDeformerNode::deform(MDataBlock& block,
                                      MItGeometry& iter,
-                                     const MMatrix& matrix,
+                                       const MMatrix& matrix,
                                      unsigned int multiIndex)
 {
     MStatus status = MS::kSuccess;
@@ -370,12 +410,18 @@ MStatus offsetCurveDeformerNode::deform(MDataBlock& block,
         MPointArray points;
         iter.allPositions(points);
         
-        // 곡선 데이터 가져오기 (기본)
-        std::vector<MDagPath> curves;
-        status = getCurvesFromInputs(block, curves);
+        // ✅ 수정: 새로운 influenceCurve 어트리뷰트에서 곡선 데이터 가져오기
+        MDagPath influenceCurve;
+        status = getInfluenceCurve(block, influenceCurve);
         if (status != MS::kSuccess) {
-            MGlobal::displayWarning("Failed to get curve data");
+            MGlobal::displayWarning("No influence curve connected or failed to get curve data");
             return MS::kSuccess; // 오류가 있어도 기본 동작은 계속
+        }
+        
+        // 곡선을 벡터로 변환 (기존 코드와의 호환성)
+        std::vector<MDagPath> curves;
+        if (influenceCurve.isValid()) {
+            curves.push_back(influenceCurve);
         }
         
         // 🎯 핵심: 단순한 변형 적용 (테스트용)
@@ -386,12 +432,12 @@ MStatus offsetCurveDeformerNode::deform(MDataBlock& block,
                 return MS::kSuccess; // 오류가 있어도 기본 동작은 계속
             }
         }
-        
+
         // 🚀 결과를 메시에 적용
         iter.setAllPositions(points);
         
         // ✅ 기본 동작 완료
-        return MS::kSuccess;
+    return MS::kSuccess;
         
     } catch (const std::bad_alloc& e) {
         MGlobal::displayError("Memory allocation failed in Offset Curve Deformer");
@@ -490,9 +536,9 @@ MStatus offsetCurveDeformerNode::initializeBinding(MDataBlock& block, MItGeometr
         // 알고리즘 유효성 검사
         if (!mAlgorithm) {
             MGlobal::displayError("Algorithm not initialized");
-            return MS::kFailure;
-        }
-        
+        return MS::kFailure;
+    }
+    
         // 오프셋 모드 가져오기
         MDataHandle hOffsetMode = block.inputValue(aOffsetMode, &status);
         CHECK_MSTATUS_AND_RETURN_IT(status);
@@ -505,9 +551,9 @@ MStatus offsetCurveDeformerNode::initializeBinding(MDataBlock& block, MItGeometr
         
         if (curves.empty()) {
             MGlobal::displayWarning("No curves connected to the deformer.");
-            return MS::kFailure;
-        }
-        
+        return MS::kFailure;
+    }
+
         // 메시 점들 가져오기
         MPointArray points;
         status = iter.allPositions(points);
@@ -541,11 +587,11 @@ MStatus offsetCurveDeformerNode::initializeBinding(MDataBlock& block, MItGeometr
         int maxInfluences = hMaxInfluences.asInt();
         
         status = mAlgorithm->performBindingPhase(points, curves, falloffRadius, maxInfluences);
-        if (status != MS::kSuccess) {
+    if (status != MS::kSuccess) {
             MGlobal::displayWarning("OCD binding failed");
-            return status;
-        }
-        
+        return status;
+    }
+
         // 바인딩 완료 플래그 설정
         mNeedsRebind = false;
         mBindingInitialized = true;
@@ -620,8 +666,8 @@ MStatus offsetCurveDeformerNode::getCurvesFromInputs(MDataBlock& block, std::vec
                 }
             }
         }
-        
-        return MS::kSuccess;
+    
+    return MS::kSuccess;
         
     } catch (const std::exception& e) {
         MGlobal::displayError(MString("Error getting curves: ") + e.what());
@@ -970,5 +1016,86 @@ bool offsetCurveDeformerNode::initializeResources()
     } catch (const std::exception& e) {
         MGlobal::displayError(MString("Failed to initialize resources: ") + e.what());
         return false;
+    }
+}
+
+// ✅ 추가: influenceCurve에서 데이터 가져오기 (Maya 표준 input과 동일한 구조)
+MStatus offsetCurveDeformerNode::getInfluenceCurve(MDataBlock& dataBlock, MDagPath& influenceCurve)
+{
+    MStatus status;
+    
+    MGlobal::displayInfo("=== getInfluenceCurve() 시작 ===");
+    
+    // 1. influenceCurve 배열 속성에서 첫 번째 요소 가져오기 (logicalIndex 0)
+    MArrayDataHandle hInfluenceCurveArray = dataBlock.inputArrayValue(aInfluenceCurve, &status);
+    if (status != MS::kSuccess) {
+        MGlobal::displayError("Failed to get influenceCurve array");
+        return status;
+    }
+    
+    // 2. 배열에 요소가 있는지 확인
+    MGlobal::displayInfo(MString("배열 요소 개수: ") + hInfluenceCurveArray.elementCount());
+    if (hInfluenceCurveArray.elementCount() == 0) {
+        MGlobal::displayError("No influence curves connected");
+        return MS::kFailure;
+    }
+    
+    // 3. 첫 번째 요소로 이동 (logicalIndex 0)
+    MGlobal::displayInfo("첫 번째 요소로 이동 시도...");
+    status = hInfluenceCurveArray.jumpToElement(0);
+    if (status != MS::kSuccess) {
+        MGlobal::displayError("Failed to jump to first element");
+        return status;
+    }
+    MGlobal::displayInfo("첫 번째 요소로 이동 성공");
+
+    // 4. 복합 속성의 influenceCurveData에서 nurbsCurve 가져오기 (Maya API 표준 방식)
+    MGlobal::displayInfo("복합 속성 값 가져오기 시도...");
+    MDataHandle hInfluenceCurveCompound = hInfluenceCurveArray.inputValue(&status);
+    if (status != MS::kSuccess) {
+        MGlobal::displayError("Failed to get compound attribute value");
+        return status;
+    }
+    MGlobal::displayInfo("복합 속성 값 가져오기 성공");
+
+    // 5. influenceCurveData 하위 속성에서 nurbsCurve 데이터 가져오기
+    MGlobal::displayInfo("influenceCurveData 하위 속성 가져오기 시도...");
+    MDataHandle hInfluenceCurveData = hInfluenceCurveCompound.child(aInfluenceCurveData);
+    if (status != MS::kSuccess) {
+        MGlobal::displayError("Failed to get child attribute: influenceCurveData");
+        return status;
+    }
+    MGlobal::displayInfo("influenceCurveData 하위 속성 가져오기 성공");
+
+    // 6. nurbsCurve 데이터에서 MObject 가져오기
+    MGlobal::displayInfo("nurbsCurve 데이터에서 MObject 가져오기 시도...");
+    MObject influenceObj = hInfluenceCurveData.data();
+    if (influenceObj.isNull()) {
+        MGlobal::displayError("Influence curve data is null");
+        return MS::kFailure;
+    }
+    MGlobal::displayInfo("nurbsCurve 데이터에서 MObject 가져오기 성공");
+
+    // 7. MDagPath로 변환
+    MGlobal::displayInfo("MDagPath로 변환 시도...");
+    status = MDagPath::getAPathTo(influenceObj, influenceCurve);
+    if (status != MS::kSuccess) {
+        MGlobal::displayError("Failed to get DAG path to influence curve");
+        return status;
+    }
+    MGlobal::displayInfo("MDagPath로 변환 성공");
+
+    // 8. 디버그 정보 출력
+    MGlobal::displayInfo("Successfully found influence curve");
+
+    // 9. NURBS 곡선인지 확인
+    MGlobal::displayInfo("NURBS 곡선 타입 확인 중...");
+    if (influenceCurve.hasFn(MFn::kNurbsCurve)) {
+        MGlobal::displayInfo("Influence curve is a NURBS curve");
+        MGlobal::displayInfo("=== getInfluenceCurve() 성공 완료 ===");
+        return MS::kSuccess;
+    } else {
+        MGlobal::displayError("Influence curve is not a NURBS curve");
+        return MS::kFailure;
     }
 }

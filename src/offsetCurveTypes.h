@@ -12,6 +12,7 @@
 #include <maya/MVector.h>
 #include <maya/MMatrix.h>
 #include <maya/MObject.h>
+#include <maya/MDagPath.h>  // ✅ 추가: MDagPath 클래스 정의
 
 // C++ 표준 라이브러리 (최소한만)
 #include <vector>
@@ -25,7 +26,8 @@ enum offsetCurveOffsetMode {
 // ✅ OffsetPrimitive 구조체 정의 (특허 기술 완벽 보존)
 struct OffsetPrimitive {
     // === 핵심: 4개 값만 저장 ===
-    int influenceCurveIndex;             // 영향 곡선 인덱스 (MDagPath 참조용)
+    // ✅ 수정: 새로운 influenceCurve 어트리뷰트 구조에 맞게 변경
+    MDagPath influenceCurve;             // 영향 곡선 (MDagPath 직접 저장)
     double bindParamU;                   // 바인드 시점의 곡선 파라미터 u
     MVector bindOffsetLocal;             // 바인드 시점의 로컬 오프셋 벡터 (T,N,B 좌표계)
     double weight;                       // 영향 가중치
@@ -37,9 +39,10 @@ struct OffsetPrimitive {
     bool useWeightMap;                   // 가중치 맵 사용 여부
     
     OffsetPrimitive() : 
-        influenceCurveIndex(-1), bindParamU(0.0), weight(0.0),
+        bindParamU(0.0), weight(0.0),
         weightMapStrength(1.0), useWeightMap(false) {
         weightMapTransform = MMatrix::identity;
+        // influenceCurve는 기본 생성자에서 빈 MDagPath로 초기화됨
     }
 };
 

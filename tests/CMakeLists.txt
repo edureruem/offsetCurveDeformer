@@ -9,6 +9,11 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
+# UTF-8 인코딩 설정 (한글 문자 문제 해결)
+if(MSVC)
+    add_compile_options(/utf-8)
+endif()
+
 # 테스트 실행 파일들
 add_executable(OCDAlgorithmTests 
     test_offsetCurveAlgorithm.cpp 
@@ -27,6 +32,13 @@ add_executable(OCDIntegrationTests
     test_performance_benchmark.cpp 
     test_memory_usage.cpp
 )
+
+# UTF-8 컴파일 옵션 적용
+if(MSVC)
+    target_compile_options(OCDAlgorithmTests PRIVATE /utf-8)
+    target_compile_options(OCDPluginTests PRIVATE /utf-8)
+    target_compile_options(OCDIntegrationTests PRIVATE /utf-8)
+endif()
 
 # 링크 설정 - 실제 존재하는 라이브러리만 링크
 target_link_libraries(OCDAlgorithmTests 

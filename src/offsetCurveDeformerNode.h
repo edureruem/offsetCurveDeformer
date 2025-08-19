@@ -58,6 +58,9 @@ public:
     double calculateDistanceToCurve(const MPoint& point, const MDagPath& curve);
     MVector calculateBasicOffset(const MPoint& point, const MDagPath& curve);
     
+    // ✅ 추가: influenceCurve에서 데이터 가져오기 (Maya 표준 input과 동일한 구조)
+    MStatus getInfluenceCurve(MDataBlock& dataBlock, MDagPath& influenceCurve);
+    
     // 🚨 Maya 권장 방식: compute() 오버라이드하지 않음
     // Maya가 자동으로 compute()에서 deform()을 호출
     MStatus updateParameters(MDataBlock& dataBlock);
@@ -86,7 +89,7 @@ public:
     // 🔴 추가: 안전한 메모리 관리
     void cleanupResources();
     bool initializeResources();
-    
+
 public:
     // 노드 속성
     static MTypeId id;
@@ -103,6 +106,11 @@ public:
     static MObject aRebindCurves;        // 곡선 리바인드
     static MObject aUseParallel;         // 병렬 처리
     static MObject aDebugDisplay;        // 디버그 표시
+    
+    // ✅ 추가: influenceCurve 관련 속성들 (Maya 표준 input과 동일한 구조)
+    static MObject aInfluenceCurve;      // 영향 곡선 (복합 속성, 배열)
+    static MObject aInfluenceCurveData;  // 영향 곡선 데이터 (NURBS 곡선)
+    static MObject aInfluenceCurveGroupId; // 영향 곡선 그룹 ID
     
     // 아티스트 제어 속성
     static MObject aVolumeStrength;         // 볼륨 보존 강도

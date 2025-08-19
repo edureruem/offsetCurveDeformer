@@ -805,7 +805,8 @@ MStatus CurveBindingService::bindCurveToVertex(int vertexIndex, const MDagPath& 
         
         // OffsetPrimitive 생성 및 추가
         OffsetPrimitive primitive;
-        primitive.influenceCurveIndex = mCurveRepo->getCurveCount() - 1;
+        // ✅ 수정: 새로운 어트리뷰트 구조에 맞게 MDagPath 직접 저장
+        primitive.influenceCurve = curvePath;  // MDagPath 직접 저장
         primitive.bindParamU = 0.0;  // 기본값, 실제로는 계산 필요
         primitive.bindOffsetLocal = MVector(0, 0, 0);  // 기본값, 실제로는 계산 필요
         primitive.weight = 1.0;  // 기본값, 실제로는 falloff 기반 계산 필요
@@ -1049,12 +1050,13 @@ MStatus DeformationService::calculateVertexDeformation(int vertexIndex, const MP
         
         // 각 프리미티브의 영향력 계산 및 적용
         for (const auto& primitive : primitives) {
-            if (primitive.influenceCurveIndex < 0 || primitive.influenceCurveIndex >= mCurveRepo->getCurveCount()) {
-                continue; // 유효하지 않은 곡선 인덱스
+            // ✅ 수정: 새로운 어트리뷰트 구조에 맞게 MDagPath 직접 사용
+            if (!primitive.influenceCurve.isValid()) {
+                continue; // 유효하지 않은 곡선
             }
             
-            // 곡선 경로 가져오기
-            MDagPath curvePath = mCurveRepo->getCurve(primitive.influenceCurveIndex);
+            // 곡선 경로 가져오기 (이미 MDagPath에 저장되어 있음)
+            MDagPath curvePath = primitive.influenceCurve;
             if (!curvePath.isValid()) {
                 continue; // 유효하지 않은 곡선
             }

@@ -1,0 +1,201 @@
+// offsetCurveDeformer 플러그인 로드 테스트 MEL 스크립트
+// Maya 2020에서 플러그인 로드 상태를 확인하고 기본 기능을 테스트합니다.
+
+global proc checkPluginStatus()
+{
+    print("=== offsetCurveDeformer 플러그인 상태 확인 ===\n");
+    
+    // 1. 로드된 플러그인 목록 확인
+    print("1. 로드된 플러그인 목록 확인...\n");
+    string $loadedPlugins[] = `pluginInfo -query -listLoaded`;
+    if (size($loadedPlugins) > 0)
+    {
+        print("   로드된 플러그인 수: " + size($loadedPlugins) + "\n");
+        for ($plugin in $loadedPlugins)
+        {
+            if (gmatch($plugin, "*offsetCurve*"))
+            {
+                print("   발견된 관련 플러그인: " + $plugin + "\n");
+            }
+        }
+    }
+    else
+    {
+        print("   로드된 플러그인이 없습니다.\n");
+    }
+    
+    // 2. 특정 플러그인 정보 확인
+    print("2. offsetCurveDeformer 플러그인 정보 확인...\n");
+    if (`pluginInfo -exists "offsetCurveDeformer.mll"`)
+    {
+        print("   플러그인 파일 존재 확인\n");
+        string $version = `pluginInfo -query -version "offsetCurveDeformer.mll"`;
+        print("   플러그인 버전: " + $version + "\n");
+    }
+    else
+    {
+        print("   플러그인 파일을 찾을 수 없습니다.\n");
+    }
+    
+    // 3. 노드 타입 확인
+    print("3. 노드 타입 확인...\n");
+    string $nodeTypes[] = `ls -nodeTypes`;
+    string $offsetNodes[];
+    int $count = 0;
+    for ($nodeType in $nodeTypes)
+    {
+        if (gmatch($nodeType, "*offsetCurve*"))
+        {
+            $offsetNodes[$count] = $nodeType;
+            $count++;
+        }
+    }
+    
+    if ($count > 0)
+    {
+        print("   발견된 관련 노드 타입: ");
+        for ($i = 0; $i < $count; $i++)
+        {
+            print($offsetNodes[$i] + " ");
+        }
+        print("\n");
+    }
+    else
+    {
+        print("   관련 노드 타입을 찾을 수 없습니다.\n");
+    }
+}
+
+global proc loadPlugin()
+{
+    print("=== 플러그인 로드 시도 ===\n");
+    
+    // 1. 플러그인 로드 시도
+    print("1. 플러그인 로드 시도...\n");
+    try
+    {
+        loadPlugin "offsetCurveDeformer.mll";
+        print("   플러그인 로드 성공!\n");
+        
+        // 2. 로드 후 상태 재확인
+        print("2. 로드 후 상태 확인...\n");
+        checkPluginStatus();
+        
+        return true;
+    }
+    catch
+    {
+        print("   플러그인 로드 실패: " + $error + "\n");
+        return false;
+    }
+}
+
+global proc testBasicNodeCreation()
+{
+    print("=== 기본 노드 생성 테스트 ===\n");
+    
+    // 1. 테스트 커브 생성
+    print("1. 테스트 커브 생성...\n");
+    string $testCurve = `circle -radius 3 -sections 6 -name "testCurve"`;
+    print("   생성된 커브: " + $testCurve[0] + "\n");
+    
+    // 2. 노드 타입 확인
+    print("2. 사용 가능한 디포머 타입 확인...\n");
+    string $deformerTypes[] = `deformer -query -type`;
+    string $offsetDeformers[];
+    int $count = 0;
+    for ($deformerType in $deformerTypes)
+    {
+        if (gmatch($deformerType, "*offsetCurve*"))
+        {
+            $offsetDeformers[$count] = $deformerType;
+            $count++;
+        }
+    }
+    
+    if ($count > 0)
+    {
+        print("   발견된 offsetCurve 디포머: ");
+        for ($i = 0; $i < $count; $i++)
+        {
+            print($offsetDeformers[$i] + " ");
+        }
+        print("\n");
+        
+        // 3. 노드 생성 시도
+        print("3. offsetCurveDeformer 노드 생성 시도...\n");
+        try
+        {
+            string $deformerNode = `deformer -type $offsetDeformers[0] $testCurve[0]`;
+            print("   디포머 노드 생성 성공: " + $deformerNode[0] + "\n");
+            
+            // 4. 노드 속성 확인
+            print("4. 노드 속성 확인...\n");
+            string $attributes[] = `listAttr -keyable $deformerNode[0]`;
+            if (size($attributes) > 0)
+            {
+                print("   키프레임 가능한 속성들: ");
+                for ($attr in $attributes)
+                {
+                    print($attr + " ");
+                }
+                print("\n");
+            }
+            else
+            {
+                print("   키프레임 가능한 속성이 없습니다.\n");
+            }
+            
+            return true;
+        }
+        catch
+        {
+            print("   디포머 노드 생성 실패: " + $error + "\n");
+            return false;
+        }
+    }
+    else
+    {
+        print("   offsetCurve 디포머 타입을 찾을 수 없습니다.\n");
+        return false;
+    }
+}
+
+global proc cleanupTest()
+{
+    print("=== 테스트 데이터 정리 ===\n");
+    
+    // 테스트 커브 삭제
+    if (`objExists "testCurve"`)
+    {
+        delete "testCurve";
+        print("   testCurve 삭제 완료\n");
+    }
+    
+    // 디포머 노드들 삭제
+    string $deformerNodes[] = `ls -type "offsetCurveDeformerPatent"`;
+    for ($node in $deformerNodes)
+    {
+        delete $node;
+        print("   " + $node + " 삭제 완료\n");
+    }
+    
+    print("   정리 완료\n");
+}
+
+// 메인 실행
+print("offsetCurveDeformer 플러그인 로드 테스트\n");
+print("=" * 60 + "\n");
+
+// 1. 현재 상태 확인
+checkPluginStatus();
+
+// 2. 플러그인 로드 시도
+if (loadPlugin())
+{
+    // 3. 기본 노드 생성 테스트
+    testBasicNodeCreation();
+}
+
+print("=== 테스트 완료 ===\n");
+print("정리가 필요하면 cleanupTest() 함수를 실행하세요.\n");

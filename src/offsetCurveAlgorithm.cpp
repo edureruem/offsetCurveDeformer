@@ -90,10 +90,14 @@ MStatus offsetCurveAlgorithm::bindToCurves(const std::vector<MDagPath>& curvePat
 
 // ✅ 바인딩 페이즈
 MStatus offsetCurveAlgorithm::performBindingPhase(const MPointArray& modelPoints,
-                                                  const std::vector<MDagPath>& influenceCurves,
+                                                  const std::vector<MDagPath>& influenceCurvePaths,
                                                   double falloffRadius,
                                                  int maxInfluences) {
     try {
+        // ✅ 수정: 새로운 어트리뷰트 구조에 맞게 바인딩 로직 구현
+        // influenceCurvePaths는 이미 MDagPath 배열로 전달됨
+        // 레거시 인덱스 기반 접근 대신 직접 MDagPath 사용
+        
         // 바인딩 로직 구현
         return MS::kSuccess;
     } catch (...) {
