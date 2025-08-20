@@ -1,20 +1,30 @@
-# 소스 파일 목록
+# 소스 파일 목록 (cvwrap 방식)
 set(SOURCE_FILES
     "pluginMain.cpp"
+    "offsetCurveCmd.cpp"
+    "offsetCurveCmd.h"
+    "offsetCurveDeformerNode.cpp"
+    "offsetCurveDeformerNode.h"
     "offsetCurveAlgorithm.cpp"
     "offsetCurveAlgorithm.h"
     "offsetCurveControlParams.cpp"
     "offsetCurveControlParams.h"
-    "offsetCurveDeformerNode.cpp"
-    "offsetCurveDeformerNode.h"
     "offsetCurveSystems.cpp"
     "offsetCurveSystems.h"
     "offsetCurveTypes.h"
 )
 
+# AVX 최적화 플래그 설정
+if (WIN32)
+    set(COMPILE_FLAGS "/arch:AVX")
+else()
+    set(COMPILE_FLAGS "-mavx")
+endif()
+
 find_package(Maya REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
+target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_FLAGS})
 
 # UTF-8 인코딩 설정 (한글 문자 문제 해결)
 if(MSVC)
@@ -28,5 +38,5 @@ target_include_directories(${PROJECT_NAME}
 )
 MAYA_PLUGIN(${PROJECT_NAME})
 
-install(TARGETS ${PROJECT_NAME} ${MAYA_TARGET_TYPE} DESTINATION plug-ins/${MAYA_VERSION})
+install(TARGETS ${PROJECT_NAME} ${MAYA_TARGET_TYPE} DESTINATION plug-ins)
 

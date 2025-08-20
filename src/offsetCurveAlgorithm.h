@@ -61,7 +61,7 @@ public:
     // 포즈 타겟 설정
     void setPoseTarget(const MPointArray& poseTarget);
     
-    // ✅ 추가: 데이터 흐름 관리 메서드들
+    // 추가: 데이터 흐름 관리 메서드들
     MStatus processDataFlow();
     MStatus validateDataFlow();
     MStatus optimizeDataFlow();
@@ -69,12 +69,12 @@ public:
     bool isDataFlowValid() const;
     MStatus getDataFlowStatus() const;
     
-    // ✅ 추가: 새로운 시스템 초기화 및 설정
+    // 추가: 새로운 시스템 초기화 및 설정
     MStatus initializeBindRemapping(double remappingStrength);
     MStatus initializePoseSpaceDeformation(const std::vector<MObject>& skeletonJoints);
     MStatus initializeAdaptiveSubdivision(double maxCurvatureError);
     
-    // ✅ 추가: 시스템 적용 메서드
+    // 추가: 시스템 적용 메서드
     MStatus applyBindRemappingToPrimitives(std::vector<OffsetPrimitive>& primitives) const;
     MStatus applyPoseSpaceDeformation(MPointArray& points, 
                                      const std::vector<OffsetPrimitive>& primitives,
@@ -116,7 +116,7 @@ public:
                              double scaleAmount,
                              double paramU) const;
     
-    // ✅ 수정: Strategy를 사용하는 새로운 함수들
+    // 수정: Strategy를 사용하는 새로운 함수들
     MStatus calculateFrenetFrameWithStrategy(const MDagPath& curvePath, double paramU,
                                             MVector& tangent, MVector& normal, MVector& binormal) const;
     MStatus getPointAtParamWithStrategy(const MDagPath& curvePath, double paramU, MPoint& point) const;
@@ -124,27 +124,27 @@ public:
     MStatus getTangentAtParamWithStrategy(const MDagPath& curvePath, double paramU, MVector& tangent) const;
     double getCurvatureAtParamWithStrategy(const MDagPath& curvePath, double paramU) const;
     
-    // ✅ 추가: 에러 처리 및 검증 메서드들
+    // 추가: 에러 처리 및 검증 메서드들
     bool validateInputCurves(const std::vector<MDagPath>& curvePaths) const;
     bool validateModelPoints(const MPointArray& points) const;
     bool validateOffsetPrimitives(const std::vector<OffsetPrimitive>& primitives) const;
     
-    // ✅ 추가: 성능 최적화 관련 메서드들
+    // 추가: 성능 최적화 관련 메서드들
     void enableGPUAcceleration(bool enable);
     void setThreadCount(unsigned int count);
     
-    // ✅ 추가: 가중치 맵 처리 관련 함수들
+    // 추가: 가중치 맵 처리 관련 함수들
     MStatus processWeightMap(const MObject& weightMap, const MMatrix& transform, double strength);
     bool validateWeightMap(const MObject& weightMap) const;
     
-    // ✅ 추가: 영향력 혼합 관련 함수들
+    // 추가: 영향력 혼합 관련 함수들
     MPoint blendAllInfluences(const MPoint& modelPoint, 
                              const std::vector<OffsetPrimitive>& primitives,
                              const offsetCurveControlParams& params) const;
     void optimizeInfluenceBlending(std::vector<OffsetPrimitive>& primitives,
                                   const MPoint& modelPoint) const;
     
-    // ✅ 추가: 공간적 보간 관련 함수들
+    // 추가: 공간적 보간 관련 함수들
     MPoint applySpatialInterpolation(const MPoint& modelPoint,
                                     const MDagPath& curvePath,
                                     double influenceRadius) const;
@@ -174,7 +174,7 @@ public:
                                const offsetCurveControlParams& params) const;
 
 private:
-    // ✅ 리팩토링: Repository 패턴 적용
+    // 리팩토링: Repository 패턴 적용
     // === OCD 알고리즘: Repository 기반 데이터 관리 ===
     offsetCurveOffsetMode mOffsetMode;                          // Arc vs B-spline 모드
     
@@ -186,28 +186,28 @@ private:
     std::unique_ptr<CurveBindingService> mBindingService;       // 곡선 바인딩 서비스
     std::unique_ptr<DeformationService> mDeformationService;    // 변형 처리 서비스
     
-    // ✅ 추가: DataFlowController (데이터 흐름 관리)
+    // 추가: DataFlowController (데이터 흐름 관리)
     std::unique_ptr<IDataFlowController> mDataFlowController;   // 데이터 흐름 제어기
     
     // === 성능 및 기타 ===
     bool mUseParallelComputation;                               // 병렬 처리 플래그
     MPointArray mPoseTargetPoints;                              // 포즈 타겟 (선택사항)
     
-    // ✅ 추가: 특허의 고급 시스템들
+    // 추가: 특허의 고급 시스템들
     BindRemappingSystem mBindRemapping;                         // Bind Remapping 시스템
     PoseSpaceDeformationSystem mPoseSpaceDeformation;           // Pose Space Deformation 시스템
     AdaptiveSubdivisionSystem mAdaptiveSubdivision;             // Adaptive Subdivision 시스템
     
-    // ✅ 추가: Strategy Pattern Context
+    // 추가: Strategy Pattern Context
     InfluencePrimitiveContext mStrategyContext;                 // Strategy Context
     
-    // ✅ 추가: 가중치 맵 처리 시스템
+    // 추가: 가중치 맵 처리 시스템
     WeightMapProcessor mWeightMapProcessor;                     // 가중치 맵 처리기
     
-    // ✅ 추가: 영향력 혼합 시스템
+    // 추가: 영향력 혼합 시스템
     InfluenceBlendingSystem mInfluenceBlending;                 // 영향력 혼합 시스템
     
-    // ✅ 추가: 공간적 보간 시스템
+    // 추가: 공간적 보간 시스템
     SpatialInterpolationSystem mSpatialInterpolation;           // 공간적 보간 시스템
     
     // 🚨 제거: mOffsetPrimitives는 mVertexData 내부에 포함됨

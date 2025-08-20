@@ -1,0 +1,91 @@
+// ========================================
+// influenceCurve 연결 상태 디버그 테스트
+// ========================================
+
+print("=== influenceCurve 연결 상태 디버그 테스트 ===");
+
+// 1. 현재 씬의 모든 노드 확인
+print("\n1단계: 현재 씬의 모든 노드 확인");
+string $allNodes[] = `ls`;
+print("총 노드 개수: " + size($allNodes));
+for($i = 0; $i < size($allNodes); $i++) {
+    if(contains($allNodes[$i], "offsetCurveDeformer")) {
+        print("디포머 노드 발견: " + $allNodes[$i]);
+    }
+}
+
+// 2. offsetCurveDeformer 노드 찾기
+print("\n2단계: offsetCurveDeformer 노드 찾기");
+string $deformerNodes[] = `ls -type "offsetCurveDeformer"`;
+if(size($deformerNodes) > 0) {
+    string $deformer = $deformerNodes[0];
+    print("디포머 노드: " + $deformer);
+    
+    // 3. influenceCurve 어트리뷰트 정보 확인
+    print("\n3단계: influenceCurve 어트리뷰트 정보 확인");
+    if(`attributeExists "influenceCurve" $deformer`) {
+        print("✅ influenceCurve 어트리뷰트 존재");
+        
+        // 3.1. influenceCurve 배열 정보
+        print("\n3.1. influenceCurve 배열 정보");
+        int $arraySize = `getAttr -size $deformer.influenceCurve`;
+        print("influenceCurve 배열 크기: " + $arraySize);
+        
+        if($arraySize > 0) {
+            // 3.2. 첫 번째 요소의 influenceCurveData 확인
+            print("\n3.2. 첫 번째 요소의 influenceCurveData 확인");
+            if(`attributeExists "influenceCurveData" $deformer.influenceCurve[0]`) {
+                print("✅ influenceCurveData 어트리뷰트 존재");
+                
+                // 3.3. 연결 상태 확인
+                print("\n3.3. 연결 상태 확인");
+                string $connections[] = `listConnections $deformer.influenceCurve[0].influenceCurveData`;
+                if(size($connections) > 0) {
+                    print("✅ 연결된 노드: " + $connections[0]);
+                    
+                    // 3.4. 연결된 노드의 타입 확인
+                    string $nodeType = `nodeType $connections[0]`;
+                    print("연결된 노드 타입: " + $nodeType);
+                    
+                    // 3.5. 연결된 노드의 worldSpace 어트리뷰트 확인
+                    if(`attributeExists "worldSpace" $connections[0]`) {
+                        print("✅ worldSpace 어트리뷰트 존재");
+                        int $worldSpaceSize = `getAttr -size $connections[0].worldSpace`;
+                        print("worldSpace 배열 크기: " + $worldSpaceSize);
+                        
+                        if($worldSpaceSize > 0) {
+                            print("✅ worldSpace[0] 어트리뷰트 존재");
+                        } else {
+                            print("❌ worldSpace 배열이 비어있음");
+                        }
+                    } else {
+                        print("❌ worldSpace 어트리뷰트가 존재하지 않음");
+                    }
+                } else {
+                    print("❌ influenceCurveData에 연결된 노드가 없음");
+                }
+            } else {
+                print("❌ influenceCurveData 어트리뷰트가 존재하지 않음");
+            }
+        } else {
+            print("❌ influenceCurve 배열이 비어있음");
+        }
+    } else {
+        print("❌ influenceCurve 어트리뷰트가 존재하지 않음");
+    }
+    
+    // 4. 모든 어트리뷰트 확인
+    print("\n4단계: 모든 어트리뷰트 확인");
+    string $allAttrs[] = `listAttr $deformer`;
+    print("디포머 노드의 모든 어트리뷰트:");
+    for($i = 0; $i < size($allAttrs); $i++) {
+        if(contains($allAttrs[$i], "influence")) {
+            print("  " + $allAttrs[$i]);
+        }
+    }
+    
+} else {
+    print("❌ offsetCurveDeformer 노드를 찾을 수 없음");
+}
+
+print("\n=== 디버그 테스트 완료 ===");

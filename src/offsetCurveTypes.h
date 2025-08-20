@@ -12,27 +12,27 @@
 #include <maya/MVector.h>
 #include <maya/MMatrix.h>
 #include <maya/MObject.h>
-#include <maya/MDagPath.h>  // ✅ 추가: MDagPath 클래스 정의
+#include <maya/MDagPath.h>  // 추가: MDagPath 클래스 정의
 
 // C++ 표준 라이브러리 (최소한만)
 #include <vector>
 
-// ✅ 오프셋 모드 enum 정의 (단일 정의)
+// 오프셋 모드 enum 정의 (단일 정의)
 enum offsetCurveOffsetMode {
     ARC_SEGMENT = 0,    // 아크 세그먼트 방식
     B_SPLINE = 1        // B-스플라인 방식
 };
 
-// ✅ OffsetPrimitive 구조체 정의 (특허 기술 완벽 보존)
+// OffsetPrimitive 구조체 정의 (특허 기술 완벽 보존)
 struct OffsetPrimitive {
     // === 핵심: 4개 값만 저장 ===
-    // ✅ 수정: 새로운 influenceCurve 어트리뷰트 구조에 맞게 변경
+    // 수정: 새로운 influenceCurve 어트리뷰트 구조에 맞게 변경
     MDagPath influenceCurve;             // 영향 곡선 (MDagPath 직접 저장)
     double bindParamU;                   // 바인드 시점의 곡선 파라미터 u
     MVector bindOffsetLocal;             // 바인드 시점의 로컬 오프셋 벡터 (T,N,B 좌표계)
     double weight;                       // 영향 가중치
     
-    // ✅ 추가: 가중치 맵 시스템
+    // 추가: 가중치 맵 시스템
     MObject weightMap;                   // 가중치 맵 (Maya 텍스처 객체)
     MMatrix weightMapTransform;          // 가중치 맵 변환 행렬 (UV 좌표 변환용)
     double weightMapStrength;            // 가중치 맵 강도 (0.0 ~ 2.0)
@@ -46,7 +46,7 @@ struct OffsetPrimitive {
     }
 };
 
-// ✅ ArcSegment 구조체 정의 (특허 기술 보존)
+// ArcSegment 구조체 정의 (특허 기술 보존)
 struct ArcSegment {
     double startParamU;           // 시작 파라미터
     double endParamU;             // 끝 파라미터
@@ -63,7 +63,7 @@ struct ArcSegment {
     }
 };
 
-// ✅ VertexDeformationData 구조체 정의 (특허 기술 보존)
+// VertexDeformationData 구조체 정의 (특허 기술 보존)
 struct VertexDeformationData {
     int vertexIndex;
     MPoint bindPosition;
@@ -74,7 +74,7 @@ struct VertexDeformationData {
     }
 };
 
-// ✅ Repository 인터페이스들 (데이터 접근 추상화)
+// Repository 인터페이스들 (데이터 접근 추상화)
 class ICurveRepository {
 public:
     virtual ~ICurveRepository() = default;
@@ -118,7 +118,7 @@ public:
     virtual bool isValidBinding(int vertexIndex) const = 0;
 };
 
-// ✅ DataFlowController 인터페이스 (데이터 흐름 관리)
+// DataFlowController 인터페이스 (데이터 흐름 관리)
 class IDataFlowController {
 public:
     virtual ~IDataFlowController() = default;
