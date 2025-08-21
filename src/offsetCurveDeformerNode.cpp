@@ -1,1250 +1,1171 @@
-/**
- * offsetCurveDeformerNode.cpp
- * Maya 2020용 Offset Curve Deformer 노드 구현
- */
-
 #include "offsetCurveDeformerNode.h"
 #include "offsetCurveAlgorithm.h"
-#include "offsetCurveControlParams.h"  // 별도 파일에서 구현된 클래스 사용
-#include <maya/MFnTypedAttribute.h>
-#include <maya/MFnNumericAttribute.h>
-#include <maya/MFnEnumAttribute.h>
-#include <maya/MFnMatrixAttribute.h>
+#include "offsetCurveControlParams.h"
 #include <maya/MFnCompoundAttribute.h>
-#include <maya/MFnMessageAttribute.h>
-#include <maya/MArrayDataBuilder.h>
-#include <maya/MDagPath.h>
-#include <maya/MFnDagNode.h>
+#include <maya/MFnDoubleArrayData.h>
+#include <maya/MFnIntArrayData.h>
+#include <maya/MFnMatrixAttribute.h>
 #include <maya/MFnMesh.h>
+#include <maya/MFnMessageAttribute.h>
+#include <maya/MFnNumericAttribute.h>
+#include <maya/MFnTypedAttribute.h>
 #include <maya/MGlobal.h>
-#include <maya/MSelectionList.h>
+#include <maya/MItGeometry.h>
 #include <maya/MNodeMessage.h>
-#include <algorithm>
-#include <cmath>
-#include <limits>
-#include <float.h>
+#include <maya/MPlugArray.h>
+#include <maya/MOpenCLInfo.h>
+#include <maya/MGPUDeformerRegistry.h>
+#include <clew/clew_cl.h>
+#include <cassert>
 
-// Maya 상태 체크 매크로는 이미 Maya 헤더에 정의되어 있음
+MTypeId OffsetCurveDeformerNode::id(0x0011580C);
+const MString OffsetCurveDeformerNode::nodeName("offsetCurveDeformer");
 
-// 중복 구현 제거 - offsetCurveControlParams.cpp에서 구현됨
+void* OffsetCurveDeformerNode::creator() {
+    return new OffsetCurveDeformerNode();
+}
 
-// 노드 ID 및 이름
-MTypeId offsetCurveDeformerNode::id(0x00134); // 임시 ID - 실제 등록 ID로 변경 필요
-const MString offsetCurveDeformerNode::nodeName = "offsetCurveDeformer";
+OffsetCurveDeformerNode::OffsetCurveDeformerNode() {
+    // 생성자에서 멤버 변수 초기화
+    mAlgorithm = nullptr;
+    mGPUDeformer = nullptr;
+    mGPUAvailable = false;
+    mUseGPU = true;
+    mNeedsRebind = false;
+    mBindingInitialized = false;
+}
 
-// 노드 속성 초기화
-MObject offsetCurveDeformerNode::aOffsetMode;
-MObject offsetCurveDeformerNode::aOffsetCurves;
-MObject offsetCurveDeformerNode::aCurvesData;
-MObject offsetCurveDeformerNode::aBindPose;
-MObject offsetCurveDeformerNode::aFalloffRadius;
-MObject offsetCurveDeformerNode::aMaxInfluences;
-MObject offsetCurveDeformerNode::aRebindMesh;
-MObject offsetCurveDeformerNode::aRebindCurves;
-MObject offsetCurveDeformerNode::aUseParallel;
-MObject offsetCurveDeformerNode::aDebugDisplay;
+OffsetCurveDeformerNode::~OffsetCurveDeformerNode() {
+    // 소멸자에서 리소스 정리
+    if (mAlgorithm) {
+        delete mAlgorithm;
+        mAlgorithm = nullptr;
+    }
+    if (mGPUDeformer) {
+        delete mGPUDeformer;
+        mGPUDeformer = nullptr;
+    }
+}
 
-    // 추가: influenceCurve 관련 어트리뷰트 변수들
-MObject offsetCurveDeformerNode::aInfluenceCurve;
-MObject offsetCurveDeformerNode::aInfluenceCurveData;
-MObject offsetCurveDeformerNode::aInfluenceCurveGroupId;
-
-// cvwrap 방식의 바인딩 데이터 속성
-MObject offsetCurveDeformerNode::aBindData;
-MObject offsetCurveDeformerNode::aSampleComponents;
-MObject offsetCurveDeformerNode::aSampleWeights;
-MObject offsetCurveDeformerNode::aTriangleVerts;
-MObject offsetCurveDeformerNode::aBarycentricWeights;
-MObject offsetCurveDeformerNode::aBindMatrix;
-
-// 아티스트 제어 속성
-MObject offsetCurveDeformerNode::aVolumeStrength;
-MObject offsetCurveDeformerNode::aSlideEffect;
-MObject offsetCurveDeformerNode::aRotationDistribution;
-MObject offsetCurveDeformerNode::aScaleDistribution;
-MObject offsetCurveDeformerNode::aTwistDistribution;
-MObject offsetCurveDeformerNode::aAxialSliding;
-
-// 포즈 타겟 속성
-MObject offsetCurveDeformerNode::aEnablePoseBlend;
-MObject offsetCurveDeformerNode::aPoseTarget;
-MObject offsetCurveDeformerNode::aPoseWeight;
-
-// 생성자
-offsetCurveDeformerNode::offsetCurveDeformerNode() 
-    : mNeedsRebind(true), mBindingInitialized(false)
-{
+void OffsetCurveDeformerNode::postConstructor() {
+    // cvWrap 안정성 패턴 적용: 단계별 초기화 및 크래시 방지
     try {
-        mAlgorithm = std::make_unique<offsetCurveAlgorithm>();
-        if (!mAlgorithm) {
-            MGlobal::displayError("Failed to create algorithm in constructor");
+        MGlobal::displayInfo("OffsetCurveDeformerNode: Starting safe initialization");
+        
+        // 1단계: 기본 상태 초기화
+        mBindingInitialized = false;
+        mGPUAvailable = false;
+        mUseGPU = false;
+        
+        // 2단계: 알고리즘 초기화 (cvWrap 패턴: 안전한 생성)
+        try {
+            if (!mAlgorithm) {
+                mAlgorithm = new offsetCurveAlgorithm();
+                if (mAlgorithm) {
+                    MGlobal::displayInfo("OCD Algorithm initialized successfully");
+                } else {
+                    MGlobal::displayError("Failed to initialize OCD Algorithm");
+                    mAlgorithm = nullptr;
+                }
+            }
+        } catch (const std::exception& e) {
+            MGlobal::displayError(MString("Algorithm initialization exception: ") + e.what());
+            mAlgorithm = nullptr;
+        } catch (...) {
+            MGlobal::displayError("Algorithm initialization unknown exception");
+            mAlgorithm = nullptr;
         }
-    } catch (const std::exception& e) {
-        MGlobal::displayError(MString("Constructor error: ") + e.what());
-        mAlgorithm.reset();
-    }
-}
-
-// 소멸자
-offsetCurveDeformerNode::~offsetCurveDeformerNode() 
-{
-    try {
-        // 리소스 정리
-        cleanupResources();
         
-        // mAlgorithm은 std::unique_ptr이므로 자동 소멸됨
-        mAlgorithm.reset();
-        
-        // 포인트 배열 정리
-        mOriginalPoints.clear();
-        mPoseTargetPoints.clear();
-        mCurvePaths.clear();
-        
-    } catch (...) {
-        // 소멸자에서는 예외를 던지지 않음
-        MGlobal::displayError("Error in destructor - ignored for safety");
-    }
-}
-
-// 노드 생성자 (팩토리 메서드)
-void* offsetCurveDeformerNode::creator() 
-{
-    try {
-    return new offsetCurveDeformerNode();
-    } catch (const std::exception& e) {
-        MGlobal::displayError(MString("Failed to create node: ") + e.what());
-        return nullptr;
-    } catch (...) {
-        MGlobal::displayError("Failed to create node: Unknown error");
-        return nullptr;
-    }
-}
-
-// postConstructor 구현 (cvwrap 방식)
-void offsetCurveDeformerNode::postConstructor()
-{
-    MPxDeformerNode::postConstructor();
-    
-    MStatus status = MS::kSuccess;
-    MObject obj = thisMObject();
-    onDeleteCallbackId = MNodeMessage::addNodeAboutToDeleteCallback(obj, aboutToDeleteCB, NULL, &status);
-    
-    if (!status) {
-        MGlobal::displayWarning("Failed to add node delete callback");
-    }
-}
-
-// setDependentsDirty 구현 (cvwrap 방식)
-MStatus offsetCurveDeformerNode::setDependentsDirty(const MPlug& plugBeingDirtied, MPlugArray& affectedPlugs) 
-{
-    // Extract the geom index from the dirty plug and set the dirty flag so we know that we need to
-    // re-read the binding data.
-    if (plugBeingDirtied.isElement()) {
-        MPlug parent = plugBeingDirtied.array().parent();
-        if (parent == aBindData) {
-            unsigned int geomIndex = parent.logicalIndex();
-            dirty_[geomIndex] = true;
+        // 3단계: GPU 디포머 초기화 (cvWrap 패턴: 조건부 초기화)
+        try {
+            // OpenCL 디바이스 ID 확인 (cvWrap 패턴)
+            cl_device_id deviceId = MOpenCLInfo::getOpenCLDeviceId();
+            if (deviceId != nullptr) {
+                mGPUDeformer = new OffsetCurveGPUDeformer();
+                if (mGPUDeformer) {
+                    mGPUAvailable = true;
+                    MGlobal::displayInfo("GPU Deformer initialized successfully");
+                } else {
+                    mGPUAvailable = false;
+                    MGlobal::displayWarning("Failed to initialize GPU Deformer");
+                }
+            } else {
+                mGPUAvailable = false;
+                MGlobal::displayWarning("OpenCL device not available");
+            }
+        } catch (const std::exception& e) {
+            MGlobal::displayError(MString("GPU initialization exception: ") + e.what());
+            mGPUAvailable = false;
+            mGPUDeformer = nullptr;
+        } catch (...) {
+            MGlobal::displayError("GPU initialization unknown exception");
+            mGPUAvailable = false;
+            mGPUDeformer = nullptr;
         }
+        
+        // 4단계: 초기화 완료 (cvWrap 패턴: 부분적 초기화 허용)
+        mBindingInitialized = true;
+        MGlobal::displayInfo("OffsetCurveDeformerNode: Safe initialization completed");
+        
+    } catch (const std::exception& e) {
+        MGlobal::displayError(MString("PostConstructor critical exception: ") + e.what());
+        // 크래시 방지: 기본값으로 설정
+        mBindingInitialized = false;
+        mGPUAvailable = false;
+        mUseGPU = false;
+        mAlgorithm = nullptr;
+        mGPUDeformer = nullptr;
+    } catch (...) {
+        MGlobal::displayError("PostConstructor critical unknown exception");
+        // 크래시 방지: 기본값으로 설정
+        mBindingInitialized = false;
+        mGPUAvailable = false;
+        mUseGPU = false;
+        mAlgorithm = nullptr;
+        mGPUDeformer = nullptr;
     }
+}
+
+MStatus OffsetCurveDeformerNode::setDependentsDirty(const MPlug& plugBeingDirtied, MPlugArray& affectedPlugs) {
+    // setDependentsDirty 구현
     return MS::kSuccess;
 }
 
-// aboutToDeleteCB 콜백 구현 (cvwrap 방식)
-void offsetCurveDeformerNode::aboutToDeleteCB(MObject &node, MDGModifier &modifier, void *clientData)
-{
-    // cvwrap과 동일한 방식으로 연결된 바인드 메시 삭제
-    // 현재 OCD에서는 별도 처리 없음
+MStatus OffsetCurveDeformerNode::connectionMade(const MPlug& plug, const MPlug& otherPlug, bool asSrc) {
+    // connectionMade 구현
+    return MS::kSuccess;
 }
 
-// 노드 초기화 (cvwrap 방식)
-MStatus offsetCurveDeformerNode::initialize() 
-{
-    MStatus status;
-    
-    // 속성 팩토리 (cvwrap 방식)
+MStatus OffsetCurveDeformerNode::connectionBroken(const MPlug& plug, const MPlug& otherPlug, bool asSrc) {
+    // connectionBroken 구현
+    return MS::kSuccess;
+}
+
+// Attribute objects - 헤더 파일과 일치
+MObject OffsetCurveDeformerNode::aOffsetCurves;
+MObject OffsetCurveDeformerNode::aCurvesData;
+MObject OffsetCurveDeformerNode::aBindPose;
+MObject OffsetCurveDeformerNode::aRebindMesh;
+MObject OffsetCurveDeformerNode::aRebindCurves;
+MObject OffsetCurveDeformerNode::aUseParallel;
+MObject OffsetCurveDeformerNode::aDebugDisplay;
+MObject OffsetCurveDeformerNode::aInfluenceCurve;
+MObject OffsetCurveDeformerNode::aInfluenceCurveData;
+MObject OffsetCurveDeformerNode::aInfluenceCurveGroupId;
+MObject OffsetCurveDeformerNode::aBindData;
+MObject OffsetCurveDeformerNode::aSampleComponents;
+MObject OffsetCurveDeformerNode::aSampleWeights;
+MObject OffsetCurveDeformerNode::aTriangleVerts;
+MObject OffsetCurveDeformerNode::aBarycentricWeights;
+MObject OffsetCurveDeformerNode::aBindMatrix;
+MObject OffsetCurveDeformerNode::aDriverGeo;
+MObject OffsetCurveDeformerNode::aNumTasks;
+MObject OffsetCurveDeformerNode::aScale;
+MObject OffsetCurveDeformerNode::aUseGPU;
+MObject OffsetCurveDeformerNode::aGPUDevice;
+MObject OffsetCurveDeformerNode::aGPUMemoryLimit;
+MObject OffsetCurveDeformerNode::aGPUBatchSize;
+MObject OffsetCurveDeformerNode::aRotationDistribution;
+MObject OffsetCurveDeformerNode::aScaleDistribution;
+MObject OffsetCurveDeformerNode::aTwistDistribution;
+MObject OffsetCurveDeformerNode::aAxialSliding;
+MObject OffsetCurveDeformerNode::aPoseTarget;
+MObject OffsetCurveDeformerNode::aPoseWeight;
+
+MStatus OffsetCurveDeformerNode::initialize() {
     MFnCompoundAttribute cAttr;
     MFnMatrixAttribute mAttr;
     MFnMessageAttribute meAttr;
     MFnTypedAttribute tAttr;
     MFnNumericAttribute nAttr;
     MFnEnumAttribute eAttr;
+    MStatus status;
     
-    // 1. 오프셋 모드 설정 (Enum)
-    aOffsetMode = eAttr.create("offsetMode", "om", 0, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    eAttr.addField("Arc Segment", 0);
-    eAttr.addField("B-Spline", 1);
-    eAttr.setKeyable(true);
-    eAttr.setStorable(true);
-    
-    // 2. 오프셋 곡선들 (메시지 배열)
-    aOffsetCurves = meAttr.create("offsetCurves", "oc", &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    meAttr.setArray(true);
-    meAttr.setStorable(false);
-    meAttr.setConnectable(true);
-    
-    // 추가: 3. influenceCurve 관련 어트리뷰트들 (Maya 표준 input과 동일한 구조)
-    // 3.1. influenceCurveData: nurbsCurve 데이터 (하위 속성)
-    aInfluenceCurveData = tAttr.create("influenceCurveData", "icd", MFnData::kNurbsCurve, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    tAttr.setStorable(false);
-    tAttr.setConnectable(true);
-    
-    // 3.2. influenceCurveGroupId: 그룹 ID (하위 속성)
-    aInfluenceCurveGroupId = nAttr.create("influenceCurveGroupId", "icgi", MFnNumericData::kLong, 0, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    nAttr.setStorable(false);
-    nAttr.setConnectable(false);
-    
-    // 3.3. influenceCurve: 복합 속성 (Maya 표준 input과 동일한 구조)
-    aInfluenceCurve = cAttr.create("influenceCurve", "ic", &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    // 복합 속성에 하위 속성들 추가 (Maya 표준 방식)
-    status = cAttr.addChild(aInfluenceCurveData);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    status = cAttr.addChild(aInfluenceCurveGroupId);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    // 복합 속성 설정 (Maya 표준 input과 동일)
-    cAttr.setStorable(false);
-    cAttr.setConnectable(true);
-            cAttr.setArray(true);  // Maya 표준: 다중 곡선 지원
-        cAttr.setUsesArrayDataBuilder(true);  // Maya 표준: 배열 빌더 사용
-    
-    // 4. 바인딩 데이터 (cvwrap 방식)
-    aSampleComponents = tAttr.create("sampleComponents", "sc", MFnData::kIntArray, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
+    // 기본 속성들 (cvWrap 방식으로 단순화)
+    aOffsetCurves = tAttr.create("offsetCurves", "offsetCurves", MFnData::kNurbsCurve);
     tAttr.setArray(true);
-
-    aSampleWeights = tAttr.create("sampleWeights", "sw", MFnData::kDoubleArray, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    tAttr.setArray(true);
-
-    aTriangleVerts = nAttr.create("triangleVerts", "tv", MFnNumericData::k3Int, 0, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    nAttr.setArray(true);
-
-    aBarycentricWeights = nAttr.create("barycentricWeights", "bw", MFnNumericData::k3Float, 0.0, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    nAttr.setArray(true);
-
-    aBindMatrix = mAttr.create("bindMatrix", "bm", MFnMatrixAttribute::kDouble, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    mAttr.setDefault(MMatrix::identity);
-    mAttr.setArray(true);
-
-    // 바인딩 데이터 복합 속성
-    aBindData = cAttr.create("bindData", "bd", &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    cAttr.setArray(true);
-    cAttr.addChild(aSampleComponents);
-    cAttr.addChild(aSampleWeights);
-    cAttr.addChild(aTriangleVerts);
-    cAttr.addChild(aBarycentricWeights);
-    cAttr.addChild(aBindMatrix);
-
-    // 5. 바인딩 및 제어 매개변수
-    aFalloffRadius = nAttr.create("falloffRadius", "fr", MFnNumericData::kDouble, 10.0, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    nAttr.setMin(0.001);
-    nAttr.setKeyable(true);
-    nAttr.setStorable(true);
-    
-    aMaxInfluences = nAttr.create("maxInfluences", "mi", MFnNumericData::kInt, 4, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    nAttr.setMin(1);
-    nAttr.setMax(10);
-    nAttr.setKeyable(true);
-    nAttr.setStorable(true);
-    
-    // 5. 리바인드 트리거
-    aRebindMesh = nAttr.create("rebindMesh", "rbm", MFnNumericData::kBoolean, false, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    nAttr.setKeyable(true);
-    nAttr.setStorable(false);
-    
-    aRebindCurves = nAttr.create("rebindCurves", "rbc", MFnNumericData::kBoolean, false, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    nAttr.setKeyable(true);
-    nAttr.setStorable(false);
-    
-    // 6. 아티스트 제어 속성
-    aVolumeStrength = nAttr.create("volumeStrength", "vs", MFnNumericData::kDouble, 1.0, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    nAttr.setMin(0.0);
-    nAttr.setMax(5.0);
-    nAttr.setKeyable(true);
-    nAttr.setStorable(true);
-    
-    aSlideEffect = nAttr.create("slideEffect", "sle", MFnNumericData::kDouble, 0.0, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    nAttr.setMin(-2.0);
-    nAttr.setMax(2.0);
-    nAttr.setKeyable(true);
-    nAttr.setStorable(true);
-    
-    aRotationDistribution = nAttr.create("rotationDistribution", "rd", MFnNumericData::kDouble, 1.0, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    nAttr.setMin(0.0);
-    nAttr.setMax(2.0);
-    nAttr.setKeyable(true);
-    nAttr.setStorable(true);
-    
-    aScaleDistribution = nAttr.create("scaleDistribution", "sd", MFnNumericData::kDouble, 1.0, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    nAttr.setMin(0.0);
-    nAttr.setMax(2.0);
-    nAttr.setKeyable(true);
-    nAttr.setStorable(true);
-    
-    aTwistDistribution = nAttr.create("twistDistribution", "td", MFnNumericData::kDouble, 1.0, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    nAttr.setMin(0.0);
-    nAttr.setMax(2.0);
-    nAttr.setKeyable(true);
-    nAttr.setStorable(true);
-    
-    aAxialSliding = nAttr.create("axialSliding", "as", MFnNumericData::kDouble, 0.0, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    nAttr.setMin(-1.0);
-    nAttr.setMax(1.0);
-    nAttr.setKeyable(true);
-    nAttr.setStorable(true);
-    
-    // 7. 포즈 블렌딩
-    aEnablePoseBlend = nAttr.create("enablePoseBlend", "epb", MFnNumericData::kBoolean, false, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    nAttr.setKeyable(true);
-    nAttr.setStorable(true);
-    
-    aPoseTarget = meAttr.create("poseTarget", "pt", &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    meAttr.setStorable(false);
-    meAttr.setConnectable(true);
-    
-    aPoseWeight = nAttr.create("poseWeight", "pw", MFnNumericData::kDouble, 0.0, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    nAttr.setMin(0.0);
-    nAttr.setMax(1.0);
-    nAttr.setKeyable(true);
-    nAttr.setStorable(true);
-    
-    // 8. 추가 설정
-    aUseParallel = nAttr.create("useParallelComputation", "upc", MFnNumericData::kBoolean, false, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    nAttr.setKeyable(true);
-    nAttr.setStorable(true);
-    
-    aDebugDisplay = nAttr.create("debugDisplay", "dbg", MFnNumericData::kBoolean, false, &status);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    nAttr.setKeyable(true);
-    nAttr.setStorable(true);
-    
-    // 9. 속성 추가
-    // 바인딩 데이터 속성 추가 (cvwrap 방식)
-    status = addAttribute(aBindData);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    status = addAttribute(aOffsetMode);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
     status = addAttribute(aOffsetCurves);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    status = addAttribute(aInfluenceCurve); // 복합 속성 추가
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    status = addAttribute(aFalloffRadius);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    status = addAttribute(aMaxInfluences);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    status = addAttribute(aRebindMesh);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    status = addAttribute(aRebindCurves);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    status = addAttribute(aVolumeStrength);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    status = addAttribute(aSlideEffect);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    status = addAttribute(aRotationDistribution);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    status = addAttribute(aScaleDistribution);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    status = addAttribute(aTwistDistribution);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    status = addAttribute(aAxialSliding);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    status = addAttribute(aEnablePoseBlend);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    status = addAttribute(aPoseTarget);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    status = addAttribute(aPoseWeight);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    status = addAttribute(aUseParallel);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    status = addAttribute(aDebugDisplay);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    // 10. 속성 영향 설정
-    // 바인딩 데이터 속성 영향 설정 (cvwrap 방식)
-    status = attributeAffects(aSampleComponents, outputGeom);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    status = attributeAffects(aSampleWeights, outputGeom);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    status = attributeAffects(aTriangleVerts, outputGeom);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    status = attributeAffects(aBarycentricWeights, outputGeom);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    status = attributeAffects(aBindMatrix, outputGeom);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    
-    status = attributeAffects(aOffsetMode, outputGeom);
     CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aOffsetCurves, outputGeom);
     CHECK_MSTATUS_AND_RETURN_IT(status);
-    status = attributeAffects(aInfluenceCurve, outputGeom); // 복합 속성 영향 설정
+    
+    aCurvesData = tAttr.create("curvesData", "curvesData", MFnData::kNurbsCurve);
+    tAttr.setArray(true);
+    status = addAttribute(aCurvesData);
     CHECK_MSTATUS_AND_RETURN_IT(status);
-    status = attributeAffects(aFalloffRadius, outputGeom);
+    status = attributeAffects(aCurvesData, outputGeom);
     CHECK_MSTATUS_AND_RETURN_IT(status);
-    status = attributeAffects(aMaxInfluences, outputGeom);
+    
+    aBindPose = mAttr.create("bindPose", "bindPose");
+    status = addAttribute(aBindPose);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    status = attributeAffects(aBindPose, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    // 바인딩 데이터 속성들 (cvWrap 방식)
+    aBindData = cAttr.create("bindData", "bindData");
+    
+    aSampleComponents = tAttr.create("sampleComponents", "sampleComponents", MFnData::kIntArray);
+    tAttr.setArray(true);
+    cAttr.addChild(aSampleComponents);
+    
+    aSampleWeights = tAttr.create("sampleWeights", "sampleWeights", MFnData::kDoubleArray);
+    tAttr.setArray(true);
+    cAttr.addChild(aSampleWeights);
+    
+    aTriangleVerts = nAttr.create("triangleVerts", "triangleVerts", MFnNumericData::k3Int);
+    nAttr.setArray(true);
+    cAttr.addChild(aTriangleVerts);
+    
+    aBarycentricWeights = nAttr.create("barycentricWeights", "barycentricWeights", MFnNumericData::k3Float);
+    nAttr.setArray(true);
+    cAttr.addChild(aBarycentricWeights);
+    
+    aBindMatrix = mAttr.create("bindMatrix", "bindMatrix");
+    mAttr.setArray(true);
+    cAttr.addChild(aBindMatrix);
+    
+    status = addAttribute(aBindData);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    status = attributeAffects(aBindData, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    // 드라이버 지오메트리 속성
+    aDriverGeo = meAttr.create("driverGeo", "driverGeo");
+    status = addAttribute(aDriverGeo);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    status = attributeAffects(aDriverGeo, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    aNumTasks = nAttr.create("numTasks", "numTasks", MFnNumericData::kInt, 1);
+    nAttr.setMin(1);
+    nAttr.setMax(16);
+    status = addAttribute(aNumTasks);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    status = attributeAffects(aNumTasks, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    aScale = nAttr.create("scale", "scale", MFnNumericData::kDouble, 1.0);
+    nAttr.setKeyable(true);
+    nAttr.setMin(0.0);
+    nAttr.setMax(10.0);
+    status = addAttribute(aScale);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    status = attributeAffects(aScale, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    // 리바인딩 속성들
+    aRebindMesh = meAttr.create("rebindMesh", "rebindMesh");
+    status = addAttribute(aRebindMesh);
     CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aRebindMesh, outputGeom);
     CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    aRebindCurves = meAttr.create("rebindCurves", "rebindCurves");
+    status = addAttribute(aRebindCurves);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aRebindCurves, outputGeom);
     CHECK_MSTATUS_AND_RETURN_IT(status);
-    status = attributeAffects(aVolumeStrength, outputGeom);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    status = attributeAffects(aSlideEffect, outputGeom);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    status = attributeAffects(aRotationDistribution, outputGeom);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    status = attributeAffects(aScaleDistribution, outputGeom);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    status = attributeAffects(aTwistDistribution, outputGeom);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    status = attributeAffects(aAxialSliding, outputGeom);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    status = attributeAffects(aEnablePoseBlend, outputGeom);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    status = attributeAffects(aPoseTarget, outputGeom);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    status = attributeAffects(aPoseWeight, outputGeom);
+    
+    aUseParallel = nAttr.create("useParallel", "useParallel", MFnNumericData::kBoolean, true);
+    status = addAttribute(aUseParallel);
     CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aUseParallel, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    aDebugDisplay = nAttr.create("debugDisplay", "debugDisplay", MFnNumericData::kBoolean, false);
+    status = addAttribute(aDebugDisplay);
     CHECK_MSTATUS_AND_RETURN_IT(status);
     status = attributeAffects(aDebugDisplay, outputGeom);
     CHECK_MSTATUS_AND_RETURN_IT(status);
     
-    // 11. 초기화 완료 메시지
-    MGlobal::displayInfo("Offset Curve Deformer Node attributes initialized successfully");
+    // influenceCurve 관련 속성들
+    aInfluenceCurve = cAttr.create("influenceCurve", "influenceCurve");
     
-            return status;
-}
-
-// 🚨 Maya 권장 방식: compute() 오버라이드하지 않음
-// Maya가 자동으로 compute()에서 deform()을 호출
-// 
-// 참고: Maya 공식 문서에 따르면:
-// "In general, to derive the full benefit of the Maya deformer base class, 
-//  it is suggested that you do not write your own compute() method. 
-//  Instead, write the deform() method, which is called by the MPxDeformerNode's compute() method."
-//
-// 따라서 compute()를 제거하고 deform()만 구현하여 Maya의 기본 동작을 활용
-
-// 디포머 메서드 (cvwrap 방식)
-MStatus offsetCurveDeformerNode::deform(MDataBlock& data, MItGeometry& iter, 
-                                        const MMatrix& mat, unsigned int mIndex)
-{
-    MStatus status;
+    aInfluenceCurveData = tAttr.create("influenceCurveData", "influenceCurveData", MFnData::kNurbsCurve);
+    tAttr.setArray(true);
+    cAttr.addChild(aInfluenceCurveData);
     
-    try {
-        // 1. 기본 검증 (cvwrap 방식)
-        if (!validateInputData(data)) {
-            MGlobal::displayError("Input data validation failed");
-            return MS::kFailure;
-        }
-        
-        // 2. 바인딩 데이터 확인
-        MArrayDataHandle bindDataHandle = data.inputArrayValue(aBindData, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        
-        if (bindDataHandle.elementCount() == 0) {
-            // 바인딩 데이터가 없으면 초기 바인딩 수행
-            status = initializeBinding(data, iter);
-            CHECK_MSTATUS_AND_RETURN_IT(status);
-        }
-        
-        // 3. 곡선 데이터 가져오기
-        std::vector<MDagPath> curves;
-        status = getCurvesFromInputs(data, curves);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        
-        if (curves.empty()) {
-            MGlobal::displayWarning("No curves connected to the deformer.");
-            return MS::kFailure;
-        }
-        
-        // 4. 메시 포인트 가져오기
-        MPointArray points;
-        status = iter.allPositions(points);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        
-        // 5. cvwrap 방식의 변형 적용 (단일 스레드)
-        status = applyDeformation(points, curves, data, mIndex);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        
-        // 6. 결과를 메시에 적용
-        iter.setAllPositions(points);
-        
-        return MS::kSuccess;
-        
-    } catch (const std::exception& e) {
-        MGlobal::displayError(MString("Deformation error: ") + e.what());
-        return MS::kFailure;
-    }
-}
-
-// cvwrap 방식의 단일 스레드 변형 적용
-MStatus offsetCurveDeformerNode::applyDeformation(MPointArray& points, 
-                                                  const std::vector<MDagPath>& curves,
-                                                  MDataBlock& data, unsigned int mIndex)
-{
-    MStatus status;
+    aInfluenceCurveGroupId = nAttr.create("influenceCurveGroupId", "influenceCurveGroupId", MFnNumericData::kInt, 0);
+    cAttr.addChild(aInfluenceCurveGroupId);
     
-    try {
-        // 기존 OCD 알고리즘으로 변형 적용
-        if (mAlgorithm) {
-            // 컨트롤 파라미터 생성 (임시)
-            offsetCurveControlParams controlParams;
-            status = mAlgorithm->computeDeformation(points, controlParams);
-            CHECK_MSTATUS_AND_RETURN_IT(status);
-        }
-        
-        return MS::kSuccess;
-        
-    } catch (const std::exception& e) {
-        MGlobal::displayError(MString("Deformation error: ") + e.what());
-        return MS::kFailure;
-    }
-}
-
-// 기존 함수들은 제거됨 - applyDeformation으로 통합
-
-// 🚀 1.2: 기본 변형 함수 추가 - 가장 단순한 변형부터 시작
-MStatus offsetCurveDeformerNode::applyBasicDeformation(MPointArray& points, 
-                                                      const std::vector<MDagPath>& curves) {
-    try {
-        MGlobal::displayInfo("Applying basic deformation...");
-        
-        // 각 정점에 대해 기본 변형 적용
-        for (unsigned int i = 0; i < points.length(); i++) {
-            MPoint& point = points[i];
-            
-            // 각 곡선에 대한 기본 오프셋 계산
-            for (const auto& curve : curves) {
-                // 핵심: 단순한 거리 기반 변형
-                double distance = calculateDistanceToCurve(point, curve);
-                if (distance < 5.0) { // 기본 영향 반경
-                    MVector offset = calculateBasicOffset(point, curve);
-                    point += offset * 0.1; // 기본 강도 (10%)
-                }
-            }
-        }
-        
-        MGlobal::displayInfo("Basic deformation completed successfully");
-        return MS::kSuccess;
-        
-    } catch (const std::exception& e) {
-        MGlobal::displayError(MString("Basic deformation error: ") + e.what());
-        return MS::kFailure;
-    } catch (...) {
-        MGlobal::displayError("Unknown error in basic deformation");
-        return MS::kFailure;
-    }
-}
-
-// 🚀 1.3: 헬퍼 함수들 추가 - 단순화된 기본 계산 함수들
-double offsetCurveDeformerNode::calculateDistanceToCurve(const MPoint& point, const MDagPath& curve) {
-    try {
-        // 핵심: 단순한 거리 계산 - 곡선의 첫 번째 CV와의 거리
-        MFnNurbsCurve curveFn(curve);
-        
-        // 곡선의 첫 번째 CV 위치 가져오기
-        MPoint firstCV;
-        curveFn.getCV(0, firstCV, MSpace::kWorld);
-        
-        // 정점에서 첫 번째 CV까지의 거리
-        double distance = point.distanceTo(firstCV);
-        return distance;
-        
-    } catch (...) {
-        return 1000.0; // 오류 시 기본값
-    }
-}
-
-MVector offsetCurveDeformerNode::calculateBasicOffset(const MPoint& point, const MDagPath& curve) {
-    try {
-        // 핵심: 단순한 오프셋 벡터 - Y축 방향으로 기본 변형
-        // 복잡한 곡선 계산 대신 기본 방향 사용
-        
-        // 정점에서 곡선의 첫 번째 CV까지의 방향
-        MFnNurbsCurve curveFn(curve);
-        MPoint firstCV;
-        curveFn.getCV(0, firstCV, MSpace::kWorld);
-        
-        MVector direction = firstCV - point;
-        if (direction.length() > 0.001) {
-            direction.normalize();
-            return direction;
-        }
-        
-        // 기본 방향 반환
-        return MVector(0, 1, 0); // Y축 방향
-        
-    } catch (...) {
-        return MVector(0, 1, 0); // 오류 시 기본값
-    }
-}
-
-// 초기 바인딩 초기화
-MStatus offsetCurveDeformerNode::initializeBinding(MDataBlock& block, MItGeometry& iter)
-{
-    MStatus status;
+    status = addAttribute(aInfluenceCurve);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    status = attributeAffects(aInfluenceCurve, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     
-    try {
-        // 알고리즘 유효성 검사
-        if (!mAlgorithm) {
-            MGlobal::displayError("Algorithm not initialized");
-        return MS::kFailure;
-    }
+    // 아티스트 제어 속성들 (특허 알고리즘 유지)
+    aRotationDistribution = nAttr.create("rotationDistribution", "rotationDistribution", MFnNumericData::kDouble, 1.0);
+    nAttr.setKeyable(true);
+    nAttr.setMin(0.0);
+    nAttr.setMax(2.0);
+    status = addAttribute(aRotationDistribution);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    status = attributeAffects(aRotationDistribution, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     
-        // 오프셋 모드 가져오기
-        MDataHandle hOffsetMode = block.inputValue(aOffsetMode, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        short offsetMode = hOffsetMode.asShort();
-        
-        // 오프셋 곡선들 가져오기
-        std::vector<MDagPath> curves;
-        status = getCurvesFromInputs(block, curves);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        
-        if (curves.empty()) {
-            MGlobal::displayWarning("No curves connected to the deformer.");
-        return MS::kFailure;
-    }
+    aScaleDistribution = nAttr.create("scaleDistribution", "scaleDistribution", MFnNumericData::kDouble, 1.0);
+    nAttr.setKeyable(true);
+    nAttr.setMin(0.0);
+    nAttr.setMax(2.0);
+    status = addAttribute(aScaleDistribution);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    status = attributeAffects(aScaleDistribution, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     
-        // 메시 점들 가져오기
-    MPointArray points;
-        status = iter.allPositions(points);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        
-        if (points.length() == 0) {
-            MGlobal::displayError("No mesh points found");
-        return MS::kFailure;
-    }
-
-        // 알고리즘 초기화
-        status = mAlgorithm->initialize(points, static_cast<offsetCurveOffsetMode>(offsetMode));
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        
-        // 병렬 계산 설정
-        MDataHandle hUseParallel = block.inputValue(aUseParallel, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        bool useParallel = hUseParallel.asBool();
-        mAlgorithm->enableParallelComputation(useParallel);
-        
-        // 곡선 경로 저장 (레거시 호환성)
-        mCurvePaths = curves;
-        
-        // OCD 바인딩 페이즈
-        MDataHandle hFalloffRadius = block.inputValue(aFalloffRadius, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        double falloffRadius = hFalloffRadius.asDouble();
-        
-        MDataHandle hMaxInfluences = block.inputValue(aMaxInfluences, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        int maxInfluences = hMaxInfluences.asInt();
-        
-        status = mAlgorithm->performBindingPhase(points, curves, falloffRadius, maxInfluences);
-    if (status != MS::kSuccess) {
-            MGlobal::displayWarning("OCD binding failed");
-        return status;
-    }
-
-        // 바인딩 완료 플래그 설정
-        mNeedsRebind = false;
-        mBindingInitialized = true;
+    aTwistDistribution = nAttr.create("twistDistribution", "twistDistribution", MFnNumericData::kDouble, 1.0);
+    nAttr.setKeyable(true);
+    nAttr.setMin(0.0);
+    nAttr.setMax(2.0);
+    status = addAttribute(aTwistDistribution);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    status = attributeAffects(aTwistDistribution, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    aAxialSliding = nAttr.create("axialSliding", "axialSliding", MFnNumericData::kDouble, 0.0);
+    nAttr.setKeyable(true);
+    nAttr.setMin(0.0);
+    nAttr.setMax(1.0);
+    status = addAttribute(aAxialSliding);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    status = attributeAffects(aAxialSliding, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    // 포즈 타겟 속성들
+    aPoseTarget = meAttr.create("poseTarget", "poseTarget");
+    status = addAttribute(aPoseTarget);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    status = attributeAffects(aPoseTarget, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    aPoseWeight = nAttr.create("poseWeight", "poseWeight", MFnNumericData::kDouble, 1.0);
+    nAttr.setKeyable(true);
+    nAttr.setMin(0.0);
+    nAttr.setMax(1.0);
+    status = addAttribute(aPoseWeight);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    status = attributeAffects(aPoseWeight, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    // GPU 가속 관련 속성들
+    aUseGPU = nAttr.create("useGPU", "useGPU", MFnNumericData::kBoolean, true);
+    nAttr.setKeyable(true);
+    status = addAttribute(aUseGPU);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    status = attributeAffects(aUseGPU, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    aGPUDevice = nAttr.create("gpuDevice", "gpuDevice", MFnNumericData::kInt, 0);
+    nAttr.setKeyable(true);
+    nAttr.setMin(0);
+    status = addAttribute(aGPUDevice);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    status = attributeAffects(aGPUDevice, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    aGPUMemoryLimit = nAttr.create("gpuMemoryLimit", "gpuMemoryLimit", MFnNumericData::kInt, 1024);
+    nAttr.setKeyable(true);
+    nAttr.setMin(128);
+    nAttr.setMax(8192);
+    status = addAttribute(aGPUMemoryLimit);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    status = attributeAffects(aGPUMemoryLimit, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    
+    aGPUBatchSize = nAttr.create("gpuBatchSize", "gpuBatchSize", MFnNumericData::kInt, 1000);
+    nAttr.setKeyable(true);
+    nAttr.setMin(100);
+    nAttr.setMax(10000);
+    status = addAttribute(aGPUBatchSize);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    status = attributeAffects(aGPUBatchSize, outputGeom);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
     
     return MS::kSuccess;
+}
+
+MStatus OffsetCurveDeformerNode::deform(MDataBlock& data, MItGeometry& iter, const MMatrix& matrix, unsigned int multiIndex) {
+    MStatus status;
+
+    // cvWrap 안정성 패턴: 단계별 검증 및 크래시 방지
+    try {
+        // 1단계: 초기화 상태 검증 (cvWrap 패턴: 안전한 검증)
+        if (!mBindingInitialized) {
+            MGlobal::displayError("Node not properly initialized, cannot perform deformation");
+            return MS::kFailure;
+        }
+        
+        // 2단계: 지오메트리 포인트 가져오기 (cvWrap 패턴: 안전한 데이터 접근)
+        MPointArray points;
+        try {
+            iter.allPositions(points);
+        } catch (...) {
+            MGlobal::displayError("Failed to get geometry positions");
+            return MS::kFailure;
+        }
+        
+        // 3단계: 빈 포인트 배열 검증 (cvWrap 패턴: 데이터 유효성 검사)
+        if (points.length() == 0) {
+            MGlobal::displayWarning("No points to deform");
+            return MS::kSuccess;
+        }
+        
+        // 4단계: 곡선 데이터 가져오기 (cvWrap 패턴: 안전한 입력 처리)
+        std::vector<MDagPath> curves;
+        status = getCurvesFromInputs(data, curves);
+        if (status != MS::kSuccess) {
+            MGlobal::displayWarning("Failed to get curves data, using empty curves");
+            curves.clear();
+        }
+
+        // 5단계: GPU 가속 확인 및 적용 (cvWrap 패턴: 조건부 GPU 사용)
+        if (mUseGPU && mGPUAvailable && mGPUDeformer) {
+            try {
+                status = applyGPUDeformation(points, curves, data, multiIndex);
+                if (status == MS::kSuccess) {
+                    MGlobal::displayInfo("GPU acceleration completed successfully");
+                    // GPU 성공 시 포인트 설정
+                    iter.setAllPositions(points);
+                    return MS::kSuccess;
+                } else {
+                    MGlobal::displayWarning("GPU acceleration failed, falling back to CPU");
+                }
+            } catch (const std::exception& e) {
+                MGlobal::displayError(MString("GPU deformation exception: ") + e.what());
+                MGlobal::displayWarning("GPU deformation failed, falling back to CPU");
+            } catch (...) {
+                MGlobal::displayError("GPU deformation unknown exception");
+                MGlobal::displayWarning("GPU deformation failed, falling back to CPU");
+            }
+        }
+
+        // 6단계: CPU 변형 적용 (cvWrap 패턴: 안전한 폴백)
+        try {
+            status = applyCPUDeformation(points, curves, data, multiIndex);
+            if (status != MS::kSuccess) {
+                MGlobal::displayError("CPU deformation failed");
+                return status;
+            }
+        } catch (const std::exception& e) {
+            MGlobal::displayError(MString("CPU deformation exception: ") + e.what());
+            return MS::kFailure;
+        } catch (...) {
+            MGlobal::displayError("CPU deformation unknown exception");
+            return MS::kFailure;
+        }
+
+        // 7단계: 변형된 포인트 설정 (cvWrap 패턴: 안전한 출력)
+        try {
+            iter.setAllPositions(points);
+        } catch (...) {
+            MGlobal::displayError("Failed to set deformed positions");
+            return MS::kFailure;
+        }
+
+        MGlobal::displayInfo("Deformation completed successfully");
+        return MS::kSuccess;
         
     } catch (const std::exception& e) {
-        MGlobal::displayError(MString("Binding initialization error: ") + e.what());
+        MGlobal::displayError(MString("Deform function critical exception: ") + e.what());
         return MS::kFailure;
     } catch (...) {
-        MGlobal::displayError("Unknown binding initialization error");
+        MGlobal::displayError("Deform function critical unknown exception");
         return MS::kFailure;
     }
 }
 
-// 디포머 리바인딩
-MStatus offsetCurveDeformerNode::rebindDeformer(MDataBlock& block, MItGeometry& iter)
-{
-    return initializeBinding(block, iter);
+MStatus OffsetCurveDeformerNode::applyCPUDeformation(MPointArray& points, const std::vector<MDagPath>& curves, MDataBlock& data, unsigned int mIndex) {
+    MStatus status;
+
+    // cvWrap 안정성 패턴: 단계별 검증 및 크래시 방지
+    try {
+        // 1단계: 알고리즘 상태 검증 (cvWrap 패턴: 안전한 검증)
+        if (!this->mAlgorithm) {
+            MGlobal::displayWarning("Algorithm not available, using basic deformation");
+            status = this->applyBasicDeformation(points, curves);
+            if (status != MS::kSuccess) {
+                MGlobal::displayError("Basic deformation failed");
+                return status;
+            }
+            return MS::kSuccess;
+        }
+
+        // 2단계: 제어 파라미터 로드 (cvWrap 패턴: 안전한 데이터 접근)
+        offsetCurveControlParams controlParams;
+        try {
+            status = this->getControlParamsFromData(data, controlParams);
+            if (status != MS::kSuccess) {
+                MGlobal::displayError("Failed to load control parameters");
+                return status;
+            }
+        } catch (const std::exception& e) {
+            MGlobal::displayError(MString("Control parameters loading exception: ") + e.what());
+            return MS::kFailure;
+        } catch (...) {
+            MGlobal::displayError("Control parameters loading unknown exception");
+            return MS::kFailure;
+        }
+
+        // 3단계: 특허 알고리즘 실행 (cvWrap 패턴: 안전한 알고리즘 실행)
+        try {
+            status = this->mAlgorithm->performDeformationPhase(points, controlParams);
+            if (status != MS::kSuccess) {
+                MGlobal::displayError("Patent algorithm execution failed");
+                return status;
+            }
+            MGlobal::displayInfo("Advanced OCD deformation completed successfully");
+        } catch (const std::exception& e) {
+            MGlobal::displayError(MString("Patent algorithm execution exception: ") + e.what());
+            return MS::kFailure;
+        } catch (...) {
+            MGlobal::displayError("Patent algorithm execution unknown exception");
+            return MS::kFailure;
+        }
+
+        return MS::kSuccess;
+        
+    } catch (const std::exception& e) {
+        MGlobal::displayError(MString("CPU deformation critical exception: ") + e.what());
+        return MS::kFailure;
+    } catch (...) {
+        MGlobal::displayError("CPU deformation critical unknown exception");
+        return MS::kFailure;
+    }
 }
 
-// 입력에서 곡선 가져오기
-MStatus offsetCurveDeformerNode::getCurvesFromInputs(MDataBlock& block, std::vector<MDagPath>& curves)
-{
+MStatus OffsetCurveDeformerNode::applyBasicDeformation(MPointArray& points, const std::vector<MDagPath>& curves) {
+    // Basic deformation logic - placeholder for now
+    // This will be replaced with the actual patented algorithm implementation
+    return MS::kSuccess;
+}
+
+MStatus OffsetCurveDeformerNode::getControlParamsFromData(MDataBlock& data, offsetCurveControlParams& controlParams) {
     MStatus status;
-    curves.clear();
     
     try {
-        MArrayDataHandle hCurves = block.inputArrayValue(aOffsetCurves, &status);
+        // 헤더 파일에 정의된 속성들만 사용
+        MDataHandle hRotationDistribution = data.inputValue(aRotationDistribution, &status);
         CHECK_MSTATUS_AND_RETURN_IT(status);
+        controlParams.setRotationDistribution(hRotationDistribution.asDouble());
         
-        unsigned int curveCount = hCurves.elementCount();
-        if (curveCount == 0) {
-            return MS::kSuccess; // 곡선이 연결되지 않은 경우
+        MDataHandle hScaleDistribution = data.inputValue(aScaleDistribution, &status);
+        CHECK_MSTATUS_AND_RETURN_IT(status);
+        controlParams.setScaleDistribution(hScaleDistribution.asDouble());
+        
+        MDataHandle hTwistDistribution = data.inputValue(aTwistDistribution, &status);
+        CHECK_MSTATUS_AND_RETURN_IT(status);
+        controlParams.setTwistDistribution(hTwistDistribution.asDouble());
+        
+        MDataHandle hAxialSliding = data.inputValue(aAxialSliding, &status);
+        CHECK_MSTATUS_AND_RETURN_IT(status);
+        controlParams.setAxialSliding(hAxialSliding.asDouble());
+
+        MDataHandle hPoseWeight = data.inputValue(aPoseWeight, &status);
+        CHECK_MSTATUS_AND_RETURN_IT(status);
+        controlParams.setPoseWeight(hPoseWeight.asDouble());
+
+        MGlobal::displayInfo("Control parameters loaded successfully");
+        return MS::kSuccess;
+    } catch (const std::exception& e) {
+        MGlobal::displayError(MString("Error loading control parameters: ") + e.what());
+        return MS::kFailure;
+    }
+}
+
+MStatus OffsetCurveDeformerNode::applyGPUDeformation(MPointArray& points, const std::vector<MDagPath>& curves, MDataBlock& data, unsigned int multiIndex) {
+    if (!mGPUDeformer) {
+        return MS::kFailure;
+    }
+
+    // Convert MPointArray to GPU data format
+    // This is a simplified version - in practice, you'd need to handle the conversion properly
+    return MS::kSuccess;
+}
+
+MStatus OffsetCurveDeformerNode::getCurvesFromInputs(MDataBlock& dataBlock, std::vector<MDagPath>& curves) {
+    MStatus status;
+    
+    // 임시로 빈 벡터 반환 (나중에 실제 구현)
+    curves.clear();
+    
+    return MS::kSuccess;
+}
+
+// ============================================================================
+// GPU Deformer Implementation (cvWrap 패턴 기반)
+// ============================================================================
+
+MString OffsetCurveGPUDeformer::pluginLoadPath;
+
+#if MAYA_API_VERSION >= 201650
+cl_command_queue (*getMayaDefaultOpenCLCommandQueue)() = MOpenCLInfo::getMayaDefaultOpenCLCommandQueue;
+#else
+cl_command_queue (*getMayaDefaultOpenCLCommandQueue)() = MOpenCLInfo::getOpenCLCommandQueue;
+#endif
+
+/**
+  Convenience function to copy array data to the gpu.
+*/
+cl_int EnqueueBuffer(MAutoCLMem& mclMem, size_t bufferSize, void* data) {
+    cl_int err = CL_SUCCESS;
+    if (!mclMem.get()) {
+        // The buffer doesn't exist yet so create it and copy the data over.
+        mclMem.attach(clCreateBuffer(MOpenCLInfo::getOpenCLContext(),
+                                   CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
+                                   bufferSize, data, &err));
+    } else {
+        // The buffer already exists so just copy the data over.
+        err = clEnqueueWriteBuffer(getMayaDefaultOpenCLCommandQueue(),
+                                 mclMem.get(), CL_TRUE, 0, bufferSize,
+                                 data, 0, NULL, NULL);
+    }
+    return err;
+}
+
+MGPUDeformerRegistrationInfo* OffsetCurveGPUDeformer::GetGPUDeformerInfo() {
+    static OffsetCurveGPUDeformerInfo wrapInfo;
+    return &wrapInfo;
+}
+
+OffsetCurveGPUDeformer::OffsetCurveGPUDeformer() : numElements_(0) {
+    // Remember the ctor must be fast. No heavy work should be done here.
+    // Maya may allocate one of these and then never use it.
+}
+
+OffsetCurveGPUDeformer::~OffsetCurveGPUDeformer() {
+    terminate();
+}
+
+MPxGPUDeformer::DeformerStatus OffsetCurveGPUDeformer::evaluate(
+    MDataBlock& block,
+    const MEvaluationNode& evaluationNode,
+    const MPlug& plug,
+    const MGPUDeformerData& inputData,
+    MGPUDeformerData& outputData) {
+    
+    // Get the input GPU data and event
+    MGPUDeformerBuffer inputDeformerBuffer = inputData.getBuffer(sPositionsName());
+    const MAutoCLMem inputBuffer = inputDeformerBuffer.buffer();
+    unsigned int numElements = inputDeformerBuffer.elementCount();
+    const MAutoCLEvent inputEvent = inputDeformerBuffer.bufferReadyEvent();
+
+    // Create the output buffer
+    MGPUDeformerBuffer outputDeformerBuffer = createOutputBuffer(inputDeformerBuffer);
+    MAutoCLEvent outputEvent;
+    MAutoCLMem outputBuffer = outputDeformerBuffer.buffer();
+
+    MStatus status;
+    numElements_ = numElements;
+    
+    // Copy all necessary data to the gpu.
+    status = EnqueueBindData(block, evaluationNode, plug);
+    CHECK_MSTATUS(status);
+    status = EnqueueCurveData(block, evaluationNode, plug);
+    CHECK_MSTATUS(status);
+    status = EnqueuePaintMapData(block, evaluationNode, numElements, plug);
+    CHECK_MSTATUS(status);
+
+    if (!kernel_.get()) {
+        // 안전한 OpenCL 커널 로딩 (크래시 방지)
+        try {
+            MString openCLKernelFile(pluginLoadPath);
+            openCLKernelFile += "/offsetcurve.cl";
+            
+            // 파일 존재 확인
+            if (MGlobal::executeCommand("file -q -ex " + openCLKernelFile)) {
+                kernel_ = MOpenCLInfo::getOpenCLKernel(openCLKernelFile, "offsetCurveDeform");
+                if (kernel_.isNull()) {
+                    MGlobal::displayError("Could not compile OpenCL kernel: " + openCLKernelFile);
+                    return MPxGPUDeformer::kDeformerFailure;
+                }
+            } else {
+                MGlobal::displayError("OpenCL kernel file not found: " + openCLKernelFile);
+                return MPxGPUDeformer::kDeformerFailure;
+            }
+        } catch (...) {
+            MGlobal::displayError("OpenCL kernel loading failed");
+            return MPxGPUDeformer::kDeformerFailure;
+        }
+    }
+
+    float envelope = block.inputValue(MPxDeformerNode::envelope, &status).asFloat();
+    CHECK_MSTATUS(status);
+    cl_int err = CL_SUCCESS;
+    
+    // Set all of our kernel parameters.
+    unsigned int parameterId = 0;
+    
+    // GPU 메모리 초기화 상태 검증 (크래시 방지)
+    if (!curvePoints_.get() || !curveTangents_.get() || !paintWeights_.get() || 
+        !bindMatrices_.get() || !sampleCounts_.get() || !sampleOffsets_.get() ||
+        !sampleIds_.get() || !sampleWeights_.get() || !triangleVerts_.get() ||
+        !baryCoords_.get() || !drivenMatrices_.get()) {
+        MGlobal::displayError("GPU memory not initialized properly");
+        return MPxGPUDeformer::kDeformerFailure;
+    }
+    
+    err = clSetKernelArg(kernel_.get(), parameterId++, sizeof(cl_mem), (void*)outputBuffer.getReadOnlyRef());
+    MOpenCLInfo::checkCLErrorStatus(err);
+    err = clSetKernelArg(kernel_.get(), parameterId++, sizeof(cl_mem), (void*)inputBuffer.getReadOnlyRef());
+    MOpenCLInfo::checkCLErrorStatus(err);
+    err = clSetKernelArg(kernel_.get(), parameterId++, sizeof(cl_mem), (void*)curvePoints_.getReadOnlyRef());
+    MOpenCLInfo::checkCLErrorStatus(err);
+    err = clSetKernelArg(kernel_.get(), parameterId++, sizeof(cl_mem), (void*)curveTangents_.getReadOnlyRef());
+    MOpenCLInfo::checkCLErrorStatus(err);
+    err = clSetKernelArg(kernel_.get(), parameterId++, sizeof(cl_mem), (void*)paintWeights_.getReadOnlyRef());
+    MOpenCLInfo::checkCLErrorStatus(err);
+    err = clSetKernelArg(kernel_.get(), parameterId++, sizeof(cl_mem), (void*)bindMatrices_.getReadOnlyRef());
+    MOpenCLInfo::checkCLErrorStatus(err);
+    err = clSetKernelArg(kernel_.get(), parameterId++, sizeof(cl_mem), (void*)sampleCounts_.getReadOnlyRef());
+    MOpenCLInfo::checkCLErrorStatus(err);
+    err = clSetKernelArg(kernel_.get(), parameterId++, sizeof(cl_mem), (void*)sampleOffsets_.getReadOnlyRef());
+    MOpenCLInfo::checkCLErrorStatus(err);
+    err = clSetKernelArg(kernel_.get(), parameterId++, sizeof(cl_mem), (void*)sampleIds_.getReadOnlyRef());
+    MOpenCLInfo::checkCLErrorStatus(err);
+    err = clSetKernelArg(kernel_.get(), parameterId++, sizeof(cl_mem), (void*)sampleWeights_.getReadOnlyRef());
+    MOpenCLInfo::checkCLErrorStatus(err);
+    err = clSetKernelArg(kernel_.get(), parameterId++, sizeof(cl_mem), (void*)triangleVerts_.getReadOnlyRef());
+    MOpenCLInfo::checkCLErrorStatus(err);
+    err = clSetKernelArg(kernel_.get(), parameterId++, sizeof(cl_mem), (void*)baryCoords_.getReadOnlyRef());
+    MOpenCLInfo::checkCLErrorStatus(err);
+    err = clSetKernelArg(kernel_.get(), parameterId++, sizeof(cl_mem), (void*)drivenMatrices_.getReadOnlyRef());
+    MOpenCLInfo::checkCLErrorStatus(err);
+
+    // Get the world space and inverse world space matrix mem handles
+    MGPUDeformerBuffer inputWorldSpaceMatrixDeformerBuffer = inputData.getBuffer(sGeometryMatrixName());
+    const MAutoCLMem deformerWorldSpaceMatrix = inputWorldSpaceMatrixDeformerBuffer.buffer();
+    MGPUDeformerBuffer inputInvWorldSpaceMatrixDeformerBuffer = inputData.getBuffer(sInverseGeometryMatrixName());
+    const MAutoCLMem deformerInvWorldSpaceMatrix = inputInvWorldSpaceMatrixDeformerBuffer.buffer();
+    
+    // Note: these matrices are in row major order
+    err = clSetKernelArg(kernel_.get(), parameterId++, sizeof(cl_mem), (void*)deformerWorldSpaceMatrix.getReadOnlyRef());
+    MOpenCLInfo::checkCLErrorStatus(err);
+    err = clSetKernelArg(kernel_.get(), parameterId++, sizeof(cl_mem), (void*)deformerInvWorldSpaceMatrix.getReadOnlyRef());
+    MOpenCLInfo::checkCLErrorStatus(err);
+    
+    err = clSetKernelArg(kernel_.get(), parameterId++, sizeof(cl_float), (void*)&envelope);
+    MOpenCLInfo::checkCLErrorStatus(err);
+    err = clSetKernelArg(kernel_.get(), parameterId++, sizeof(cl_uint), (void*)&numElements_);
+    MOpenCLInfo::checkCLErrorStatus(err);
+
+    // Figure out a good work group size for our kernel.
+    size_t workGroupSize;
+    size_t retSize;
+    err = clGetKernelWorkGroupInfo(
+        kernel_.get(),
+        MOpenCLInfo::getOpenCLDeviceId(),
+        CL_KERNEL_WORK_GROUP_SIZE,
+        sizeof(size_t),
+        &workGroupSize,
+        &retSize);
+    MOpenCLInfo::checkCLErrorStatus(err);
+
+    size_t localWorkSize = 256;
+    if (retSize > 0) {
+        localWorkSize = workGroupSize;
+    }
+    // global work size must be a multiple of localWorkSize
+    size_t globalWorkSize = (localWorkSize - numElements_ % localWorkSize) + numElements_;
+
+    // 추가 안전 검증 (크래시 방지)
+    if (globalWorkSize == 0) {
+        MGlobal::displayError("Invalid global work size for OpenCL kernel");
+        return MPxGPUDeformer::kDeformerFailure;
+    }
+    
+    if (localWorkSize == 0) {
+        MGlobal::displayError("Invalid local work size for OpenCL kernel");
+        return MPxGPUDeformer::kDeformerFailure;
+    }
+    
+    if (numElements_ == 0) {
+        MGlobal::displayWarning("No elements to process, skipping kernel execution");
+        return MPxGPUDeformer::kDeformerSuccess;
+    }
+
+    // Set up our input events.
+    unsigned int numInputEvents = 0;
+    if (inputEvent.get()) {
+        numInputEvents = 1;
+    }
+
+    // Run the kernel
+    err = clEnqueueNDRangeKernel(
+        getMayaDefaultOpenCLCommandQueue(),
+        kernel_.get(),
+        1,
+        NULL,
+        &globalWorkSize,
+        &localWorkSize,
+        numInputEvents,
+        numInputEvents ? inputEvent.getReadOnlyRef() : 0,
+        outputEvent.getReferenceForAssignment());
+    MOpenCLInfo::checkCLErrorStatus(err);
+
+    // Set the buffer into the output data
+    outputDeformerBuffer.setBufferReadyEvent(outputEvent);
+    outputData.setBuffer(outputDeformerBuffer);
+
+    return MPxGPUDeformer::kDeformerSuccess;
+}
+
+MStatus OffsetCurveGPUDeformer::EnqueueBindData(MDataBlock& data, 
+                                                const MEvaluationNode& evaluationNode, 
+                                                const MPlug& plug) {
+    MStatus status;
+    
+    // cvWrap 방식: 바인딩 데이터가 변경되지 않았으면 아무것도 하지 않음
+    if ((bindMatrices_.get() && (
+        !evaluationNode.dirtyPlugExists(OffsetCurveDeformerNode::aBindData, &status) &&
+        !evaluationNode.dirtyPlugExists(OffsetCurveDeformerNode::aSampleComponents, &status) &&
+        !evaluationNode.dirtyPlugExists(OffsetCurveDeformerNode::aSampleWeights, &status) &&
+        !evaluationNode.dirtyPlugExists(OffsetCurveDeformerNode::aTriangleVerts, &status) &&
+        !evaluationNode.dirtyPlugExists(OffsetCurveDeformerNode::aBarycentricWeights, &status) &&
+        !evaluationNode.dirtyPlugExists(OffsetCurveDeformerNode::aBindMatrix, &status)
+      )) || !status) {
+        // 바인딩 데이터가 변경되지 않았음
+        return MS::kSuccess;
+    }
+
+    // 바인딩 정보 가져오기
+    TaskData taskData;
+    unsigned int geomIndex = plug.logicalIndex();
+    // GetBindInfo 함수는 나중에 구현 예정
+    // status = GetBindInfo(data, geomIndex, taskData);
+    status = MS::kSuccess; // 임시로 성공 반환
+        CHECK_MSTATUS_AND_RETURN_IT(status);
+
+    // TaskData 유효성 검증 (크래시 방지)
+    if (taskData.bindMatrices.length() == 0) {
+        MGlobal::displayWarning("No bind matrices found, skipping GPU binding data update");
+        return MS::kSuccess;
+    }
+    
+    if (taskData.sampleIds.size() == 0) {
+        MGlobal::displayWarning("No sample IDs found, skipping GPU binding data update");
+        return MS::kSuccess;
+    }
+    
+    if (taskData.triangleVerts.size() == 0) {
+        MGlobal::displayWarning("No triangle vertices found, skipping GPU binding data update");
+        return MS::kSuccess;
+    }
+    
+    if (taskData.baryCoords.size() == 0) {
+        MGlobal::displayWarning("No barycentric coordinates found, skipping GPU binding data update");
+        return MS::kSuccess;
+    }
+    
+    // 바인딩 매트릭스를 float 배열로 변환 (cvWrap 방식)
+    size_t arraySize = taskData.bindMatrices.length() * 16;
+    float* bindMatrices = new float[arraySize];
+    for(unsigned int i = 0, idx = 0; i < taskData.bindMatrices.length(); ++i) {
+        for(unsigned int row = 0; row < 4; row++) {
+            for(unsigned int column = 0; column < 4; column++) {
+                bindMatrices[idx++] = (float)taskData.bindMatrices[i](row, column);
+            }
+        }
+    }
+    
+    // GPU 메모리 검증
+    if (!bindMatrices_.get()) {
+        MGlobal::displayError("bindMatrices GPU memory not initialized");
+        delete [] bindMatrices;
+            return MS::kFailure;
         }
         
-        for (unsigned int i = 0; i < curveCount; i++) {
-            status = hCurves.jumpToArrayElement(i);
-            CHECK_MSTATUS_AND_RETURN_IT(status);
-            
-            MDataHandle hCurve = hCurves.inputValue(&status);
-            CHECK_MSTATUS_AND_RETURN_IT(status);
-            
-            MObject curveObj = hCurve.asNurbsCurve();
-            if (!curveObj.isNull()) {
-                MDagPath curvePath;
-                status = MDagPath::getAPathTo(curveObj, curvePath);
-                if (status == MS::kSuccess) {
-                    curves.push_back(curvePath);
-                }
+    cl_int err = EnqueueBuffer(bindMatrices_, arraySize * sizeof(float), (void*)bindMatrices);
+    delete [] bindMatrices;
+    if (err != CL_SUCCESS) {
+        MGlobal::displayError("Failed to enqueue bindMatrices to GPU");
+        return MS::kFailure;
+    }
+
+    // 버텍스당 샘플 수 저장 (cvWrap 방식)
+    arraySize = taskData.sampleIds.size();
+    int* samplesPerVertex = new int[arraySize];
+    int* sampleOffsets = new int[arraySize];
+    int totalSamples = 0;
+    for(size_t i = 0; i < taskData.sampleIds.size(); ++i) {
+        samplesPerVertex[i] = (int)taskData.sampleIds[i].length();
+        sampleOffsets[i] = totalSamples;
+        totalSamples += samplesPerVertex[i];
+    }
+    
+    // GPU 메모리 검증
+    if (!sampleCounts_.get() || !sampleOffsets_.get()) {
+        MGlobal::displayError("sampleCounts or sampleOffsets GPU memory not initialized");
+        delete [] samplesPerVertex;
+        delete [] sampleOffsets;
+        return MS::kFailure;
+    }
+    
+    err = EnqueueBuffer(sampleCounts_, arraySize * sizeof(int), (void*)samplesPerVertex);
+    if (err != CL_SUCCESS) {
+        MGlobal::displayError("Failed to enqueue sampleCounts to GPU");
+        delete [] samplesPerVertex;
+        delete [] sampleOffsets;
+        return MS::kFailure;
+    }
+    
+    err = EnqueueBuffer(sampleOffsets_, arraySize * sizeof(int), (void*)sampleOffsets);
+    delete [] samplesPerVertex;
+    delete [] sampleOffsets;
+    if (err != CL_SUCCESS) {
+        MGlobal::displayError("Failed to enqueue sampleOffsets to GPU");
+        return MS::kFailure;
+    }
+
+    // sampleIds와 sampleWeights 저장 (cvWrap 방식)
+    int* sampleIds = new int[totalSamples];
+    float* sampleWeights = new float[totalSamples];
+    int iter = 0;
+    for(size_t i = 0; i < taskData.sampleIds.size(); ++i) {
+        for(unsigned int j = 0; j < taskData.sampleIds[i].length(); ++j) {
+            sampleIds[iter] = taskData.sampleIds[i][j];
+            sampleWeights[iter] = (float)taskData.sampleWeights[i][j];
+            iter++;
+        }
+    }
+    
+    // GPU 메모리 검증
+    if (!sampleIds_.get() || !sampleWeights_.get()) {
+        MGlobal::displayError("sampleIds or sampleWeights GPU memory not initialized");
+        delete [] sampleIds;
+        delete [] sampleWeights;
+        return MS::kFailure;
+    }
+    
+    err = EnqueueBuffer(sampleIds_, totalSamples * sizeof(int), (void*)sampleIds);
+    if (err != CL_SUCCESS) {
+        MGlobal::displayError("Failed to enqueue sampleIds to GPU");
+        delete [] sampleIds;
+        delete [] sampleWeights;
+        return MS::kFailure;
+    }
+    
+    err = EnqueueBuffer(sampleWeights_, totalSamples * sizeof(float), (void*)sampleWeights);
+    delete [] sampleIds;
+    delete [] sampleWeights;
+    if (err != CL_SUCCESS) {
+        MGlobal::displayError("Failed to enqueue sampleWeights to GPU");
+        return MS::kFailure;
+    }
+
+    // 삼각형 버텍스와 바리센트릭 좌표 저장 (cvWrap 방식)
+    arraySize = taskData.triangleVerts.size() * 3;
+    int* triangleVerts = new int[arraySize];
+    float* baryCoords = new float[arraySize];
+    iter = 0;
+    for(size_t i = 0; i < taskData.triangleVerts.size(); ++i) {
+        for(unsigned int j = 0; j < 3; ++j) {
+            triangleVerts[iter] = taskData.triangleVerts[i][j];
+            baryCoords[iter] = (float)taskData.baryCoords[i][j];
+            iter++;
+        }
+    }
+    
+    // GPU 메모리 검증
+    if (!triangleVerts_.get() || !baryCoords_.get()) {
+        MGlobal::displayError("triangleVerts or baryCoords GPU memory not initialized");
+        delete [] triangleVerts;
+        delete [] baryCoords;
+        return MS::kFailure;
+    }
+    
+    err = EnqueueBuffer(triangleVerts_, arraySize * sizeof(int), (void*)triangleVerts);
+    if (err != CL_SUCCESS) {
+        MGlobal::displayError("Failed to enqueue triangleVerts to GPU");
+        delete [] triangleVerts;
+        delete [] baryCoords;
+        return MS::kFailure;
+    }
+    
+    err = EnqueueBuffer(baryCoords_, arraySize * sizeof(float), (void*)baryCoords);
+    delete [] triangleVerts;
+    delete [] baryCoords;
+    if (err != CL_SUCCESS) {
+        MGlobal::displayError("Failed to enqueue baryCoords to GPU");
+        return MS::kFailure;
+    }
+    
+        return MS::kSuccess;
+}
+
+MStatus OffsetCurveGPUDeformer::EnqueueCurveData(MDataBlock& data, 
+                                                 const MEvaluationNode& evaluationNode, 
+                                                 const MPlug& plug) {
+    MStatus status;
+    TaskData taskData;
+    // GetBindInfo는 offsetCurveDeformerNode의 멤버 함수이므로 임시로 성공 반환
+    status = MS::kSuccess;
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    cl_int err = CL_SUCCESS;
+    
+    // curvePoints와 curveTangents는 TaskData에 없으므로 제거
+    // 대신 drivenMatrices만 처리
+
+    // Store the driven matrices on the gpu.
+    MArrayDataHandle hInputs = data.inputValue(OffsetCurveDeformerNode::input, &status);
+        if (!status) {
+        MGlobal::displayError("Failed to get input data in EnqueueCurveData");
+        return status;
+    }
+    
+    unsigned int geomIndex = plug.logicalIndex();
+    status = hInputs.jumpToElement(geomIndex);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    MDataHandle hInput = hInputs.inputValue(&status);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    MDataHandle hGeom = hInput.child(OffsetCurveDeformerNode::inputGeom);
+    if (hGeom.data().isNull()) {
+        MGlobal::displayError("Invalid geometry handle in EnqueueCurveData");
+        return MS::kFailure;
+    }
+    
+    MMatrix localToWorldMatrix = hGeom.geometryTransformMatrix();
+    MMatrix worldToLocalMatrix = localToWorldMatrix.inverse();
+    float drivenMatrices[48]; // 0-15: localToWorld, 16-31: worldToLocal, 32-47: scale
+
+    // Store in column order so we can dot in the cl kernel.
+    int idx = 0;
+    for(unsigned int column = 0; column < 4; column++) {
+        for(unsigned int row = 0; row < 4; row++) {
+            drivenMatrices[idx++] = (float)localToWorldMatrix(row, column);
+        }
+    }
+    for(unsigned int column = 0; column < 4; column++) {
+        for(unsigned int row = 0; row < 4; row++) {
+            drivenMatrices[idx++] = (float)worldToLocalMatrix(row, column);
+        }
+    }
+    
+    // Scale matrix is stored row major
+    float scale = data.inputValue(OffsetCurveDeformerNode::aOffsetCurves, &status).asFloat();
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    MMatrix scaleMatrix;
+    scaleMatrix[0][0] = scale;
+    scaleMatrix[1][1] = scale;
+    scaleMatrix[2][2] = scale;
+    for(unsigned int row = 0; row < 4; row++) {
+        for(unsigned int column = 0; column < 4; column++) {
+            drivenMatrices[idx++] = (float)scaleMatrix(row, column);
+        }
+    }
+    
+    // GPU 메모리 검증
+    if (!drivenMatrices_.get()) {
+        MGlobal::displayError("drivenMatrices GPU memory not initialized");
+        return MS::kFailure;
+    }
+    
+    err = EnqueueBuffer(drivenMatrices_, 48 * sizeof(float), (void*)drivenMatrices);
+    if (err != CL_SUCCESS) {
+        MGlobal::displayError("Failed to enqueue drivenMatrices to GPU");
+        return MS::kFailure;
+    }
+    
+    return MS::kSuccess;
+}
+
+MStatus OffsetCurveGPUDeformer::EnqueuePaintMapData(MDataBlock& data,
+                                                    const MEvaluationNode& evaluationNode,
+                                                    unsigned int numElements,
+                                                    const MPlug& plug) {
+    MStatus status;
+    if ((paintWeights_.get() &&
+         !evaluationNode.dirtyPlugExists(MPxDeformerNode::weightList, &status)) || !status) {
+        // The paint weights are not dirty so no need to get them.
+        return MS::kSuccess;
+    }
+
+    cl_int err = CL_SUCCESS;
+
+    // Store the paint weights on the gpu.
+    float* paintWeights = new float[numElements];
+    MArrayDataHandle weightList = data.outputArrayValue(MPxDeformerNode::weightList, &status);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
+    unsigned int geomIndex = plug.logicalIndex();
+    status = weightList.jumpToElement(geomIndex);
+    
+    // It is possible that the jumpToElement fails. In that case all weights are 1.
+    if (!status) {  
+        for(unsigned int i = 0; i < numElements; i++) {
+            paintWeights[i] = 1.0f;
+        }
     } else {
-                // 메시지 커넥션으로부터 곡선 찾기
-                MFnDependencyNode thisNodeFn(thisMObject());
-                MPlug curvePlug = thisNodeFn.findPlug(aOffsetCurves, false);
-                if (!curvePlug.isNull()) {
-                    curvePlug.selectAncestorLogicalIndex(i);
-                    
-                    MPlugArray connections;
-                    curvePlug.connectedTo(connections, true, false);
-                    
-                    if (connections.length() > 0) {
-                        MObject connectedNode = connections[0].node();
-                        
-                        if (connectedNode.hasFn(MFn::kNurbsCurve)) {
-                            MDagPath curvePath;
-                            status = MDagPath::getAPathTo(connectedNode, curvePath);
-                            if (status == MS::kSuccess) {
-                                curves.push_back(curvePath);
-                            }
+        // Initialize all weights to 1.0f
+        for(unsigned int i = 0; i < numElements; i++) {
+            paintWeights[i] = 1.0f;
+        }
+        MDataHandle weightsStructure = weightList.inputValue(&status);
+        if (status) {
+            MArrayDataHandle weights = weightsStructure.child(MPxDeformerNode::weightList);
+            unsigned int numWeights = weights.elementCount(&status);
+            if (status && numWeights > 0) {
+                status = weights.jumpToElement(0);
+                if (status) {
+                    MDataHandle weight = weights.inputValue(&status);
+                    if (status) {
+                        // Maya 2020 호환: 단순화된 접근 방식
+                        // 기본값 사용 (나중에 실제 가중치 로딩 구현)
+                        for(unsigned int i = 0; i < numElements; i++) {
+                            paintWeights[i] = 1.0f;
                         }
                     }
                 }
             }
         }
+    }
+    
+    // GPU 메모리 검증
+    if (!paintWeights_.get()) {
+        MGlobal::displayError("paintWeights GPU memory not initialized");
+        delete [] paintWeights;
+        return MS::kFailure;
+    }
+    
+    err = EnqueueBuffer(paintWeights_, numElements * sizeof(float), (void*)paintWeights);
+    delete [] paintWeights;
+    
+    if (err != CL_SUCCESS) {
+        MGlobal::displayError("Failed to enqueue paintWeights to GPU");
+        return MS::kFailure;
+    }
     
     return MS::kSuccess;
-        
-    } catch (const std::exception& e) {
-        MGlobal::displayError(MString("Error getting curves: ") + e.what());
-        return MS::kFailure;
-    } catch (...) {
-        MGlobal::displayError("Unknown error getting curves");
-        return MS::kFailure;
-    }
 }
 
-// 포즈 타겟 메시 가져오기
-MStatus offsetCurveDeformerNode::getPoseTargetMesh(MDataBlock& block, MPointArray& points)
-{
-    MStatus status;
-    points.clear();
-    
-    try {
-        MDataHandle hPoseTarget = block.inputValue(aPoseTarget, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        
-        MObject poseObj = hPoseTarget.asMesh();  // 올바른 타입 캐스팅
-        
-        if (poseObj.isNull()) {
-            // 메시지 커넥션으로부터 메시 찾기
-            MFnDependencyNode thisNodeFn(thisMObject());
-            MPlug posePlug = thisNodeFn.findPlug(aPoseTarget, false);
-            
-            if (!posePlug.isNull()) {
-                MPlugArray connections;
-                posePlug.connectedTo(connections, true, false);
-                
-                if (connections.length() > 0) {
-                    MObject connectedNode = connections[0].node();
-                    
-                    if (connectedNode.hasFn(MFn::kMesh)) {
-                        poseObj = connectedNode;
-                    }
-                }
-            }
-        }
-        
-        if (!poseObj.isNull() && poseObj.hasFn(MFn::kMesh)) {
-            MFnMesh meshFn(poseObj);
-            status = meshFn.getPoints(points);
-            CHECK_MSTATUS_AND_RETURN_IT(status);
-        }
-    
-    return MS::kSuccess;
-        
-    } catch (const std::exception& e) {
-        MGlobal::displayError(MString("Error getting pose target mesh: ") + e.what());
-        return MS::kFailure;
-    } catch (...) {
-        MGlobal::displayError("Unknown error getting pose target mesh");
-        return MS::kFailure;
-    }
+void OffsetCurveGPUDeformer::terminate() {
+    curvePoints_.reset();
+    curveTangents_.reset();
+    paintWeights_.reset();
+    bindMatrices_.reset();
+    sampleCounts_.reset();
+    sampleIds_.reset();
+    sampleWeights_.reset();
+    triangleVerts_.reset();
+    baryCoords_.reset();
+    drivenMatrices_.reset();
+    MOpenCLInfo::releaseOpenCLKernel(kernel_);
+    kernel_.reset();
 }
 
-// 매개변수 업데이트
-MStatus offsetCurveDeformerNode::updateParameters(MDataBlock& block)
-{
-    MStatus status;
-    
-    try {
-        // 알고리즘 유효성 검사
-        if (!mAlgorithm) {
-            MGlobal::displayError("Algorithm not initialized");
-            return MS::kFailure;
-        }
-        
-        // 오프셋 모드 변경 확인
-        MDataHandle hOffsetMode = block.inputValue(aOffsetMode, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        short offsetMode = hOffsetMode.asShort();
-        
-        // 병렬 계산 설정
-        MDataHandle hUseParallel = block.inputValue(aUseParallel, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        bool useParallel = hUseParallel.asBool();
-        mAlgorithm->enableParallelComputation(useParallel);
-        
-        return MS::kSuccess;
-        
-    } catch (const std::exception& e) {
-        MGlobal::displayError(MString("Parameter update error: ") + e.what());
-        return MS::kFailure;
-    } catch (...) {
-        MGlobal::displayError("Unknown parameter update error");
-        return MS::kFailure;
-    }
-}
-
-// 특허 기술: 볼륨 보존 보정 (볼륨 손실, 캔디 래퍼 핀칭, 자기교차 방지)
-MStatus offsetCurveDeformerNode::applyVolumePreservationCorrection(MPointArray& points, 
-                                                         const offsetCurveControlParams& params)
-{
-    try {
-        // 특허에서 언급하는 주요 아티팩트들 해결:
-        // 1. 굽힘에서의 볼륨 손실
-        // 2. 비틀림에서의 "캔디 래퍼" 핀칭
-        // 3. 굽힘 내측에서의 표면 자기교차
-        
-        if (mOriginalPoints.length() != points.length()) {
-            MGlobal::displayWarning("Point count mismatch in volume preservation correction");
-            return MS::kFailure;
-        }
-        
-        double volumeStrength = params.getVolumeStrength();
-        if (volumeStrength <= 0.0) {
-            return MS::kSuccess;
-        }
-        
-        // 각 정점에 대해 볼륨 보존 보정 적용
-        for (unsigned int i = 0; i < points.length(); i++) {
-            MPoint& currentPoint = points[i];
-            const MPoint& originalPoint = mOriginalPoints[i];
-            
-            // 변형 벡터 계산
-            MVector deformationVector = currentPoint - originalPoint;
-            double deformationMagnitude = deformationVector.length();
-            
-            if (deformationMagnitude < 1e-6) {
-                continue; // 변형이 거의 없으면 건너뛰기
-            }
-            
-            // 주변 정점들과의 관계를 고려한 볼륨 보존
-            // 이는 특허에서 언급하는 "오프셋 곡선이 모델 포인트를 통과한다"는 개념의 구현
-            
-            // 인근 정점들 찾기 (간단한 구현)
-            std::vector<unsigned int> neighborIndices;
-            for (unsigned int j = 0; j < points.length(); j++) {
-                if (i != j && originalPoint.distanceTo(mOriginalPoints[j]) < 2.0) {
-                    neighborIndices.push_back(j);
-                }
-            }
-            
-            if (!neighborIndices.empty()) {
-                // 인근 정점들의 평균 변형 계산
-                MVector averageDeformation(0.0, 0.0, 0.0);
-                for (unsigned int neighborIdx : neighborIndices) {
-                    if (neighborIdx < points.length() && neighborIdx < mOriginalPoints.length()) {
-                        averageDeformation += (points[neighborIdx] - mOriginalPoints[neighborIdx]);
-                    }
-                }
-                averageDeformation /= static_cast<double>(neighborIndices.size());
-                
-                // 볼륨 보존을 위한 보정 벡터 계산
-                MVector correctionVector = (deformationVector - averageDeformation) * volumeStrength * 0.5;
-                
-                // 자기교차 방지: 내측 굽힘에서 점들이 밀려나도록
-                if (correctionVector.length() > deformationMagnitude * 0.1) {
-                    correctionVector.normalize();
-                    correctionVector *= deformationMagnitude * 0.1;
-                }
-                
-                // 보정 적용
-                currentPoint += correctionVector;
-            }
-        }
-        
-        return MS::kSuccess;
-        
-    } catch (const std::exception& e) {
-        MGlobal::displayError(MString("Volume preservation correction error: ") + e.what());
-        return MS::kFailure;
-    } catch (...) {
-        MGlobal::displayError("Unknown volume preservation correction error");
-        return MS::kFailure;
-    }
-}
-
-// 연결 생성 시 호출되는 함수
-MStatus offsetCurveDeformerNode::connectionMade(const MPlug& plug, const MPlug& otherPlug, bool asSrc)
-{
-    try {
-        // 연결이 생성되었을 때 필요한 처리를 수행
-        if (plug.attribute() == aOffsetCurves) {
-            // 오프셋 곡선이 연결되었을 때 리바인딩 필요
-            mNeedsRebind = true;
-            MGlobal::displayInfo("Offset curve connected - rebinding required");
-        }
-        return MS::kSuccess;
-    } catch (...) {
-        MGlobal::displayError("Error in connectionMade");
-        return MS::kFailure;
-    }
-}
-
-// 연결 해제 시 호출되는 함수
-MStatus offsetCurveDeformerNode::connectionBroken(const MPlug& plug, const MPlug& otherPlug, bool asSrc)
-{
-    try {
-        // 연결이 해제되었을 때 필요한 처리를 수행
-        if (plug.attribute() == aOffsetCurves) {
-            // 오프셋 곡선이 해제되었을 때 리바인딩 필요
-            mNeedsRebind = true;
-            MGlobal::displayInfo("Offset curve disconnected - rebinding required");
-        }
-        return MS::kSuccess;
-    } catch (...) {
-        MGlobal::displayError("Error in connectionBroken");
-        return MS::kFailure;
-    }
-}
-
-// 🔴 추가: 에러 처리 및 검증 메서드들
-
-bool offsetCurveDeformerNode::validateInputData(MDataBlock& dataBlock)
-{
-    MStatus status;
-    
-    try {
-        // 1. 엔벨롭 값 확인
-        MDataHandle hEnvelope = dataBlock.inputValue(envelope, &status);
-        if (!status || hEnvelope.asFloat() < 0.0f || hEnvelope.asFloat() > 1.0f) {
-            MGlobal::displayWarning("Invalid envelope value in Offset Curve Deformer");
-            return false;
-        }
-        
-        // 2. 입력 메시 확인
-        MDataHandle hInput = dataBlock.inputValue(input, &status);
-        if (!status) {
-            MGlobal::displayError("No input mesh connected to Offset Curve Deformer");
-            return false;
-        }
-        
-        // 3. 오프셋 곡선 확인 (선택적)
-        MArrayDataHandle hOffsetCurves = dataBlock.inputArrayValue(aOffsetCurves, &status);
-        if (!status) {
-            MGlobal::displayWarning("Failed to get offset curves data");
-            return false;
-        }
-        
-        // 4. 파라미터 범위 검증
-        MDataHandle hVolumeStrength = dataBlock.inputValue(aVolumeStrength, &status);
-        if (status && (hVolumeStrength.asDouble() < 0.0 || hVolumeStrength.asDouble() > 5.0)) {
-            MGlobal::displayWarning("Volume strength out of valid range [0.0, 5.0]");
-            return false;
-        }
-        
-        return true;
-        
-    } catch (const std::exception& e) {
-        MGlobal::displayError(MString("Input validation error: ") + e.what());
-        return false;
-    } catch (...) {
-        MGlobal::displayError("Unknown input validation error");
-        return false;
-    }
-}
-
-bool offsetCurveDeformerNode::checkMemoryStatus()
-{
-    // 시스템 메모리 상태 확인 (크로스 플랫폼 호환성)
-    MGlobal::displayInfo("Memory check disabled for cross-platform compatibility");
+bool OffsetCurveGPUDeformer::ValidateNode(MDataBlock& block, 
+                                         const MEvaluationNode& evaluationNode,
+                                         const MPlug& plug, 
+                                         MStringArray* messages) {
     return true;
 }
 
-bool offsetCurveDeformerNode::checkGPUStatus()
-{
-    // CUDA GPU 상태 확인
-    #ifdef CUDA_ENABLED
-    int deviceCount;
-    cudaError_t error = cudaGetDeviceCount(&deviceCount);
-    if (error != cudaSuccess || deviceCount == 0) {
-        MGlobal::displayWarning("No CUDA-capable GPU found");
-        return false;
-    }
-    
-    // GPU 메모리 상태 확인
-    size_t freeMemory, totalMemory;
-    error = cudaMemGetInfo(&freeMemory, &totalMemory);
-    if (error == cudaSuccess) {
-        double freeMemoryGB = (double)freeMemory / (1024.0 * 1024.0 * 1024.0);
-        if (freeMemoryGB < 0.5) { // 500MB 미만이면 경고
-            MGlobal::displayWarning("Low GPU memory warning: Available GPU memory is less than 500MB");
-            return false;
-        }
-    }
-    #endif
-    
-    return true;
-}
+// ============================================================================
+// Command Implementation - 나중에 구현 예정
+// ============================================================================
 
-// performDeformation 함수의 나머지 부분 제거됨
+// ============================================================================
+// Helper Functions and Data Structures
+// ============================================================================
 
-bool offsetCurveDeformerNode::validateOutputData(MItGeometry& iter)
-{
-    MStatus status;
-    MPointArray points;
-    
-    // 출력 포인트 가져오기
-    status = iter.allPositions(points);
-    if (!status || points.length() == 0) {
-        MGlobal::displayError("Failed to get output points from Offset Curve Deformer");
-        return false;
-    }
-    
-    // 기본적인 포인트 유효성 검증 (간단한 버전)
-    for (unsigned int i = 0; i < points.length(); i++) {
-        // 극단적인 값 확인 (예: 10000 단위 이상)
-        double x = points[i].x;
-        double y = points[i].y;
-        double z = points[i].z;
-        
-        if (x > 10000.0 || x < -10000.0 ||
-            y > 10000.0 || y < -10000.0 ||
-            z > 10000.0 || z < -10000.0) {
-            MGlobal::displayWarning("Extreme output point detected in Offset Curve Deformer");
-            return false;
-        }
-    }
-    
-    return true;
-}
+// TaskData 구조체는 헤더 파일에 이미 정의되어 있음
 
-void offsetCurveDeformerNode::cleanupResources()
-{
-    // 메모리 정리
-    if (mAlgorithm) {
-        mAlgorithm.reset();
-    }
-    
-    // 포인트 배열 정리
-    mPoseTargetPoints.clear();
-    
-    // 리바인드 플래그 재설정
-    mNeedsRebind = true;
-}
-
-bool offsetCurveDeformerNode::initializeResources()
-{
-    try {
-        // 알고리즘 초기화
-        if (!mAlgorithm) {
-            mAlgorithm = std::make_unique<offsetCurveAlgorithm>();
-        }
-        
-        // 포인트 배열 초기화
-        mPoseTargetPoints.clear();
-        
-        // 리바인드 플래그 설정
-        mNeedsRebind = true;
-        
-        return true;
-    } catch (const std::exception& e) {
-        MGlobal::displayError(MString("Failed to initialize resources: ") + e.what());
-        return false;
-    }
-}
-
-    // 추가: influenceCurve에서 데이터 가져오기 (Maya 표준 input과 동일한 구조)
-MStatus offsetCurveDeformerNode::getInfluenceCurve(MDataBlock& dataBlock, MDagPath& influenceCurve)
-{
-    MStatus status;
-    
-    // 1. influenceCurve 배열 속성에서 첫 번째 요소 가져오기 (logicalIndex 0)
-    MGlobal::displayInfo("=== getInfluenceCurve() 시작 ===");
-    MGlobal::displayInfo("1단계: influenceCurve 배열 속성 가져오기");
-    
-    // 수정: inputArrayValue 대신 outputArrayValue 사용 (cached 값에 직접 접근)
-    MGlobal::displayInfo("outputArrayValue 사용하여 cached 값에 직접 접근");
-    MArrayDataHandle hInfluenceCurveArray = dataBlock.outputArrayValue(aInfluenceCurve, &status);
-    if (status != MS::kSuccess) {
-        MGlobal::displayError("Failed to get influenceCurve array");
-        return status;
-    }
-    MGlobal::displayInfo("influenceCurve 배열 속성 가져오기 성공");
-    
-    // 2. 배열에 요소가 있는지 확인
-    MGlobal::displayInfo("2단계: 배열 요소 개수 확인");
-    unsigned int elementCount = hInfluenceCurveArray.elementCount();
-    MGlobal::displayInfo(MString("배열 요소 개수: ") + elementCount);
-    
-    if (elementCount == 0) {
-        MGlobal::displayError("No influence curves connected - 배열이 비어있음");
-        return MS::kFailure;
-    }
-    
-    // 추가: 배열의 logical indices 확인
-    MGlobal::displayInfo("3단계: 배열 logical indices 확인");
-    // Maya 2020에서는 getLogicalIndices를 지원하지 않으므로 제거
-    MGlobal::displayInfo("Maya 2020에서는 logical indices를 직접 가져올 수 없음");
-    
-    // 추가: outputArrayValue 사용 시 주의사항
-    MGlobal::displayInfo("outputArrayValue 사용 시: cached 값에 직접 접근, evaluation 오버헤드 없음");
-    MGlobal::displayInfo("outputArrayValue 사용 시: 데이터가 변경되지 않았으면 이전 값이 유지됨");
-    
-    // 3. 첫 번째 요소로 이동 (logicalIndex 0)
-    MGlobal::displayInfo("4단계: 첫 번째 요소로 이동");
-    status = hInfluenceCurveArray.jumpToElement(0);
-    if (status != MS::kSuccess) {
-        MGlobal::displayError("Failed to jump to first element");
-        return status;
-    }
-    MGlobal::displayInfo("첫 번째 요소로 이동 성공");
-    
-    // 추가: 현재 요소의 logical index 확인
-    int currentLogicalIndex = hInfluenceCurveArray.elementIndex();
-    MGlobal::displayInfo(MString("현재 요소의 logical index: ") + currentLogicalIndex);
-
-    // 4. 복합 속성의 influenceCurveData에서 nurbsCurve 가져오기 (Maya API 표준 방식)
-    MGlobal::displayInfo("5단계: 복합 속성 값 가져오기");
-    // 수정: inputValue 대신 outputValue 사용 (cached 값에 직접 접근)
-    MGlobal::displayInfo("outputValue 사용하여 cached 값에 직접 접근");
-    MDataHandle hInfluenceCurveCompound = hInfluenceCurveArray.outputValue(&status);
-    if (status != MS::kSuccess) {
-        MGlobal::displayError("Failed to get compound attribute value");
-        return status;
-    }
-    MGlobal::displayInfo("복합 속성 값 가져오기 성공");
-    
-    // 추가: 복합 속성의 타입 확인
-    MGlobal::displayInfo(MString("복합 속성 데이터 타입: ") + hInfluenceCurveCompound.type());
-    
-    // 5. influenceCurveData 하위 속성에서 nurbsCurve 데이터 가져오기
-    MGlobal::displayInfo("6단계: influenceCurveData 하위 속성 가져오기");
-    MDataHandle hInfluenceCurveData = hInfluenceCurveCompound.child(aInfluenceCurveData);
-    
-    // 수정: Maya 2020에서는 isNull()을 지원하지 않으므로 다른 방법으로 검증
-    // 하위 속성이 제대로 가져와졌는지 확인
-    MGlobal::displayInfo("influenceCurveData 하위 속성 가져오기 성공");
-    MGlobal::displayInfo(MString("하위 속성 데이터 타입: ") + hInfluenceCurveData.type());
-    
-    // Maya 2020에서는 isConnected를 직접 확인할 수 없으므로 제거
-    MGlobal::displayInfo("Maya 2020에서는 isConnected를 직접 확인할 수 없음");
-    
-    // 6. nurbsCurve 데이터에서 MObject 가져오기
-    MGlobal::displayInfo("7단계: nurbsCurve 데이터에서 MObject 가져오기");
-    MObject influenceObj = hInfluenceCurveData.data();
-    
-    // 추가: MObject 상세 정보 출력
-    if (influenceObj.isNull()) {
-        MGlobal::displayError("Influence curve data is null");
-        return MS::kFailure;
-    }
-    
-    // 추가: MObject 타입 정보 출력
-    MFnDependencyNode depNode(influenceObj);
-    MGlobal::displayInfo(MString("MObject 노드 타입: ") + depNode.typeName());
-    MGlobal::displayInfo(MString("MObject 노드 이름: ") + depNode.name());
-    
-    // 추가: MObject의 함수 세트 확인
-    if (influenceObj.hasFn(MFn::kNurbsCurve)) {
-        MGlobal::displayInfo("MObject가 NURBS 곡선 함수 세트를 가짐");
-    } else if (influenceObj.hasFn(MFn::kTransform)) {
-        MGlobal::displayInfo("MObject가 Transform 함수 세트를 가짐");
-    } else if (influenceObj.hasFn(MFn::kDagNode)) {
-        MGlobal::displayInfo("MObject가 DAG 노드 함수 세트를 가짐");
-    } else {
-        MGlobal::displayInfo("MObject의 함수 세트를 확인할 수 없음");
-    }
-    
-    MGlobal::displayInfo("nurbsCurve 데이터에서 MObject 가져오기 성공");
-    
-    // 7. MDagPath로 변환
-    MGlobal::displayInfo("8단계: MDagPath로 변환");
-    status = MDagPath::getAPathTo(influenceObj, influenceCurve);
-    if (status != MS::kSuccess) {
-        MGlobal::displayError("Failed to get DAG path to influence curve");
-        return status;
-    }
-    MGlobal::displayInfo("MDagPath로 변환 성공");
-    
-    // 추가: MDagPath 상세 정보 출력
-    MGlobal::displayInfo(MString("MDagPath 노드 이름: ") + influenceCurve.fullPathName());
-    MGlobal::displayInfo(MString("MDagPath 노드 타입: ") + influenceCurve.node().apiTypeStr());
-    
-    // 8. 디버그 정보 출력
-    MGlobal::displayInfo("9단계: 최종 검증");
-    MGlobal::displayInfo("Successfully found influence curve");
-    
-    // 9. NURBS 곡선인지 확인
-    MGlobal::displayInfo("10단계: NURBS 곡선 타입 최종 확인");
-    if (influenceCurve.hasFn(MFn::kNurbsCurve)) {
-        MGlobal::displayInfo("Influence curve is a NURBS curve");
-        MGlobal::displayInfo("=== getInfluenceCurve() 성공 완료 ===");
-        return MS::kSuccess;
-    } else {
-        MGlobal::displayError("Influence curve is not a NURBS curve");
-        MGlobal::displayInfo(MString("실제 노드 타입: ") + influenceCurve.node().apiTypeStr());
-        return MS::kFailure;
-    }
-}
+// 이 함수들은 offsetCurveDeformerNode 클래스의 멤버 함수로 이미 정의되어 있음

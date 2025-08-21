@@ -177,6 +177,106 @@ public:
     static std::unique_ptr<InfluencePrimitiveStrategy> createOptimalStrategy(const MDagPath& curvePath);
 };
 
+// ✅ OffsetCurve 클래스 (특허 핵심: 각 포인트별 완전한 오프셋 곡선)
+class OffsetCurve {
+public:
+    OffsetCurve();
+    OffsetCurve(const MDagPath& influenceCurve, const MVector& offsetVector);
+    ~OffsetCurve();
+    
+    // 기본 속성
+    MDagPath getInfluenceCurve() const { return mInfluenceCurve; }
+    MVector getOffsetVector() const { return mOffsetVector; }
+    const std::vector<MPoint>& getCurvePoints() const { return mCurvePoints; }
+    const std::vector<MVector>& getCurveTangents() const { return mCurveTangents; }
+    
+    // 오프셋 곡선 생성 (특허 핵심)
+    MStatus generateOffsetCurve(const MPoint& modelPoint, 
+                               const MDagPath& influenceCurve,
+                               double sampleDensity = 0.01);
+    
+    // 오프셋 곡선에서 점 찾기
+    MStatus findPointOnOffsetCurve(double paramU, MPoint& point) const;
+    MStatus findClosestPointOnOffsetCurve(const MPoint& targetPoint, 
+                                         double& paramU, 
+                                         MPoint& closestPoint, 
+                                         double& distance) const;
+    
+    // 오프셋 곡선의 접선 계산
+    MStatus calculateTangentAtParam(double paramU, MVector& tangent) const;
+    
+    // 오프셋 곡선의 곡률 계산
+    double calculateCurvatureAtParam(double paramU) const;
+    
+    // 오프셋 곡선의 길이 계산
+    double calculateCurveLength() const;
+    
+    // 오프셋 곡선 유효성 검사
+    bool isValid() const;
+    
+private:
+    MDagPath mInfluenceCurve;                    // 원본 영향 곡선
+    MVector mOffsetVector;                       // 오프셋 벡터 v
+    std::vector<MPoint> mCurvePoints;            // 오프셋 곡선의 실제 점들
+    std::vector<MVector> mCurveTangents;        // 오프셋 곡선의 접선들
+    std::vector<double> mCurveParams;            // 곡선 파라미터들
+    double mCurveLength;                         // 곡선 길이 (캐시)
+    bool mIsValid;                               // 유효성 플래그
+    
+    // 내부 헬퍼 함수들
+    MStatus sampleInfluenceCurve(double sampleDensity);
+    MStatus calculateOffsetPoints();
+    MStatus calculateOffsetTangents();
+    MStatus validateOffsetCurve();
+};
+
+// ✅ Offset Primitive Strategy (특허 핵심 알고리즘)
+class OffsetPrimitiveStrategy {
+public:
+    virtual ~OffsetPrimitiveStrategy() = default;
+    
+    // 특허 US8400455B2의 핵심 함수들
+    virtual MVector calculateOffset(const MPoint& point, 
+                                   const offsetCurveControlParams& params) const = 0;
+    virtual MStatus createOffsetPrimitive(const MPoint& point,
+                                        const MDagPath& influenceCurve,
+                                        OffsetPrimitive& primitive) const = 0;
+    virtual std::string getStrategyName() const = 0;
+    virtual bool isOptimizedForCurveType(const MDagPath& curvePath) const = 0;
+};
+
+// ✅ Arc-Segment Strategy (특허 기술 보존)
+class ArcSegmentOffsetStrategy : public OffsetPrimitiveStrategy {
+public:
+    ArcSegmentOffsetStrategy();
+    ~ArcSegmentOffsetStrategy();
+    
+    // 전략 구현
+    MVector calculateOffset(const MPoint& point, 
+                           const offsetCurveControlParams& params) const override;
+    MStatus createOffsetPrimitive(const MPoint& point,
+                                 const MDagPath& influenceCurve,
+                                 OffsetPrimitive& primitive) const override;
+    std::string getStrategyName() const override;
+    bool isOptimizedForCurveType(const MDagPath& curvePath) const override;
+};
+
+// ✅ B-Spline Strategy (특허 기술 보존)
+class BSplineOffsetStrategy : public OffsetPrimitiveStrategy {
+public:
+    BSplineOffsetStrategy();
+    ~BSplineOffsetStrategy();
+    
+    // 전략 구현
+    MVector calculateOffset(const MPoint& point, 
+                           const offsetCurveControlParams& params) const override;
+    MStatus createOffsetPrimitive(const MPoint& point,
+                                 const MDagPath& influenceCurve,
+                                 OffsetPrimitive& primitive) const override;
+    std::string getStrategyName() const override;
+    bool isOptimizedForCurveType(const MDagPath& curvePath) const override;
+};
+
 // ✅ Strategy Context (특허 기술 보존)
 class InfluencePrimitiveContext {
 public:

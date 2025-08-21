@@ -1,0 +1,44 @@
+// Offset Curve Deformer Attribute Editor Template
+// Maya 2020 Compatible
+
+global proc AEoffsetCurveDeformerTemplate(string $nodeName)
+{
+    editorTemplate -beginScrollLayout;
+    
+    // Main Settings
+    editorTemplate -beginLayout "Offset Curve Settings" -collapse 0;
+        editorTemplate -addControl "offsetCurves";
+        editorTemplate -addControl "curvesData";
+        editorTemplate -addControl "bindPose";
+        editorTemplate -addControl "rebindMesh";
+        editorTemplate -addControl "rebindCurves";
+    editorTemplate -endLayout;
+    
+    // Influence Settings
+    editorTemplate -beginLayout "Influence Settings" -collapse 0;
+        editorTemplate -addControl "influenceCurve";
+        editorTemplate -addControl "influenceCurveData";
+        editorTemplate -addControl "influenceCurveGroupId";
+    editorTemplate -endLayout;
+    
+    // Deformation Settings
+    editorTemplate -beginLayout "Deformation Settings" -collapse 0;
+        editorTemplate -addControl "rotationDistribution";
+        editorTemplate -addControl "scaleDistribution";
+        editorTemplate -addControl "twistDistribution";
+        editorTemplate -addControl "axialSliding";
+        editorTemplate -addControl "poseTarget";
+    editorTemplate -endLayout;
+    
+    // Performance Settings
+    editorTemplate -beginLayout "Performance Settings" -collapse 1;
+        editorTemplate -addControl "useParallel";
+        editorTemplate -addControl "debugDisplay";
+    editorTemplate -endLayout;
+    
+    // Common Attributes
+    editorTemplate -addSeparator;
+    editorTemplate -addControl "envelope";
+    
+    editorTemplate -endScrollLayout;
+}

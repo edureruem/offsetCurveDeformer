@@ -74,12 +74,43 @@ public:
     MStatus initializePoseSpaceDeformation(const std::vector<MObject>& skeletonJoints);
     MStatus initializeAdaptiveSubdivision(double maxCurvatureError);
     
-    // 추가: 시스템 적용 메서드
-    MStatus applyBindRemappingToPrimitives(std::vector<OffsetPrimitive>& primitives) const;
+    // === 고급 특허 기능 구현 ===
+    
+    // 포즈 공간 변형 강화 (특허 핵심)
     MStatus applyPoseSpaceDeformation(MPointArray& points, 
                                      const std::vector<OffsetPrimitive>& primitives,
                                      const MMatrix& worldMatrix) const;
+    
+    // 바인딩 재매핑 강화 (특허 핵심)
+    MStatus applyBindRemappingToPrimitives(std::vector<OffsetPrimitive>& primitives) const;
+    
+    // 적응형 세분화 강화 (특허 핵심)
+    MStatus applyAdaptiveSubdivision(std::vector<OffsetPrimitive>& primitives,
+                                    double maxCurvatureError) const;
     std::vector<ArcSegment> getAdaptiveSegments(const MDagPath& curvePath) const;
+    
+    // === 내부 헬퍼 함수들 ===
+    
+    // 공간적 가중치 계산
+    double calculateSpatialWeightAlongCurve(double paramU, const MDagPath& curvePath) const;
+    double calculateWeightAlongCurve(double paramU, const MDagPath& curvePath, const MObject& weightMap) const;
+    
+    // 프리미티브 영향 확인
+    bool isPointInfluencedByPrimitive(const MPoint& point, const OffsetPrimitive& primitive) const;
+    
+    // 포즈 공간 오프셋 계산
+    MVector calculatePoseSpaceOffset(const MPoint& point, 
+                                    const std::vector<const OffsetPrimitive*>& primitives,
+                                    const MMatrix& worldMatrix) const;
+    
+    // 바인딩 재매핑 헬퍼
+    double calculateRemappingStrength(const OffsetPrimitive& primitive) const;
+    MMatrix recalculateBindMatrix(const OffsetPrimitive& primitive, double strength) const;
+    void updatePrimitiveBindData(OffsetPrimitive& primitive, const MMatrix& newMatrix) const;
+    
+    // 적응형 세분화 헬퍼
+    double calculateCurvatureError(const OffsetPrimitive& primitive) const;
+    void subdividePrimitive(OffsetPrimitive& primitive, double maxError) const;
     MStatus applyPoseBlending(MPointArray& points, 
                              const std::vector<OffsetPrimitive>& primitives,
                              const MMatrix& worldMatrix,
@@ -98,6 +129,22 @@ public:
                                            double& paramU,
                                            MPoint& closestPoint,
                                            double& distance) const;
+    
+    // === 특허 핵심 알고리즘 (전략 패턴 사용) ===
+    // 전략 패턴을 통한 오프셋 계산 (특허 보존)
+    MVector calculateOffsetUsingStrategy(const MPoint& point, 
+                                       const offsetCurveControlParams& params) const;
+    
+    // 전략 패턴을 통한 오프셋 프리미티브 생성 (특허 보존)
+    MStatus createOffsetPrimitiveUsingStrategy(const MPoint& point, 
+                                             const MDagPath& influenceCurve,
+                                             OffsetPrimitive& primitive) const;
+    
+    // 전략 설정
+    void setOffsetStrategy(std::unique_ptr<OffsetPrimitiveStrategy> strategy);
+    
+    // 전략 가져오기
+    const OffsetPrimitiveStrategy* getOffsetStrategy() const;
     
     // === 아티스트 제어 함수들 (특허 US8400455B2) ===
     MVector applyTwistControl(const MVector& offsetLocal,
@@ -144,7 +191,21 @@ public:
     void optimizeInfluenceBlending(std::vector<OffsetPrimitive>& primitives,
                                   const MPoint& modelPoint) const;
     
-    // 추가: 공간적 보간 관련 함수들
+    // === 아티스트 제어 기능 (특허 FIGS. 13A-13H) ===
+    
+    // 공간적 변화 제어 (특허 핵심)
+    MStatus applySpatialVariationControl(const MPoint& modelPoint,
+                                        const MDagPath& curvePath,
+                                        const offsetCurveControlParams& params,
+                                        MVector& spatialOffset) const;
+    
+    // 영향 곡선을 따른 가중치 맵 처리
+    MStatus processWeightMapAlongCurve(const MObject& weightMap,
+                                      const MDagPath& curvePath,
+                                      double paramU,
+                                      double& weight) const;
+    
+    // 공간적 보간 관련 함수들
     MPoint applySpatialInterpolation(const MPoint& modelPoint,
                                     const MDagPath& curvePath,
                                     double influenceRadius) const;
@@ -200,6 +261,9 @@ private:
     
     // 추가: Strategy Pattern Context
     InfluencePrimitiveContext mStrategyContext;                 // Strategy Context
+    
+    // 추가: Offset Primitive Strategy (특허 핵심)
+    std::unique_ptr<OffsetPrimitiveStrategy> mOffsetStrategy;   // 오프셋 전략
     
     // 추가: 가중치 맵 처리 시스템
     WeightMapProcessor mWeightMapProcessor;                     // 가중치 맵 처리기

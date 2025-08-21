@@ -14,6 +14,11 @@ set(SOURCE_FILES
     "offsetCurveTypes.h"
 )
 
+# OpenCL 커널 파일 추가
+set(OPENCL_FILES
+    "offsetcurve.cl"
+)
+
 # AVX 최적화 플래그 설정
 if (WIN32)
     set(COMPILE_FLAGS "/arch:AVX")
@@ -39,4 +44,13 @@ target_include_directories(${PROJECT_NAME}
 MAYA_PLUGIN(${PROJECT_NAME})
 
 install(TARGETS ${PROJECT_NAME} ${MAYA_TARGET_TYPE} DESTINATION plug-ins)
+
+# OpenCL 커널 파일 설치
+install(FILES ${OPENCL_FILES} DESTINATION plug-ins)
+
+# Scripts 디렉토리 설치
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/scripts DESTINATION .)
+
+# Module.txt 설치
+install(FILES ${CMAKE_SOURCE_DIR}/module.txt DESTINATION .)
 
