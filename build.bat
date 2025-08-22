@@ -1,19 +1,41 @@
 @echo off
-FOR %%G IN (2019, 2020, 2022, 2023) DO (call :subroutine "%%G")
+echo Building OffsetCurveDeformer for Maya...
+
+FOR %%G IN (2019, 2020, 2022, 2023, 2024, 2025) DO (call :build_for_maya "%%G")
 GOTO :eof
 
-:subroutine
-set builddir=build.%%G
-if not exist %builddir% goto BUILDENV
-del %builddir% /S /Q
-:BUILDENV
-mkdir %builddir%
-cd %builddir%
-if %%G LSS "2020" (
-    cmake -A x64 -T v140 -DMAYA_VERSION=%%G ../
-) ELSE (
-    cmake -A x64 -T v141 -DMAYA_VERSION=%%G ../
+:build_for_maya
+set MAYA_VERSION=%1
+set BUILD_DIR=build.%MAYA_VERSION%
+echo Building for Maya %MAYA_VERSION%...
+
+if exist %BUILD_DIR% (
+    echo Cleaning build directory...
+    rmdir /s /q %BUILD_DIR%
 )
+
+mkdir %BUILD_DIR%
+cd %BUILD_DIR%
+
+if %MAYA_VERSION% LSS "2020" (
+    cmake -A x64 -T v140 -DMAYA_VERSION=%MAYA_VERSION% ../
+) ELSE (
+    cmake -A x64 -T v141 -DMAYA_VERSION=%MAYA_VERSION% ../
+)
+
+if %ERRORLEVEL% NEQ 0 (
+    echo CMake configuration failed for Maya %MAYA_VERSION%
+    cd ..
+    goto :eof
+)
+
 cmake --build . --target install --config Release
+
+if %ERRORLEVEL% NEQ 0 (
+    echo Build failed for Maya %MAYA_VERSION%
+) ELSE (
+    echo Build completed successfully for Maya %MAYA_VERSION%
+)
+
 cd ..
-goto :eof
+echo.

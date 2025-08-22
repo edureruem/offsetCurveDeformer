@@ -1,56 +1,50 @@
-﻿/**
- * offsetCurveControlParams.h
- * 간단한 기본 제어 파라미터 헤더
- */
+#ifndef OFFSET_CURVE_CONTROL_PARAMS_H
+#define OFFSET_CURVE_CONTROL_PARAMS_H
 
-#ifndef OFFSETCURVECONTROLPARAMS_H
-#define OFFSETCURVECONTROLPARAMS_H
+#include <maya/MObject.h>
+#include <maya/MString.h>
 
-// 기본 제어 파라미터 클래스
-class offsetCurveControlParams {
+// OCD 제어 파라미터 클래스
+class OffsetCurveControlParams {
 public:
-    offsetCurveControlParams();
-    ~offsetCurveControlParams();
-    
-    // 기본값으로 초기화
-    void resetToDefaults();
-    
-    // 설정 메서드들
-    void setVolumeStrength(double strength);
-    void setSlideEffect(double effect);
-    void setRotationDistribution(double distribution);
-    void setScaleDistribution(double distribution);
-    void setTwistDistribution(double distribution);
-    void setAxialSliding(double sliding);
-    void setNormalOffset(double offset);
-    void setEnablePoseBlending(bool enable);
-    void setPoseWeight(double weight);
-    
-    // 접근자 메서드들
-    double getVolumeStrength() const;
-    double getSlideEffect() const;
-    double getRotationDistribution() const;
-    double getScaleDistribution() const;
-    double getTwistDistribution() const;
-    double getAxialSliding() const;
-    double getNormalOffset() const;
-    bool getEnablePoseBlending() const;
-    double getPoseWeight() const;
-    
-    // ✅ 추가: 호환성을 위한 별칭 함수
-    bool isPoseBlendingEnabled() const { return getEnablePoseBlending(); }
-    
-private:
-    // 기본 파라미터들
-    double mVolumeStrength;
-    double mSlideEffect;
-    double mRotationDistribution;
-    double mScaleDistribution;
-    double mTwistDistribution;
-    double mAxialSliding;
-    double mNormalOffset;
-    bool mEnablePoseBlending;
-    double mPoseWeight;
+  OffsetCurveControlParams();
+  ~OffsetCurveControlParams();
+  
+  // 파라미터 초기화
+  static MStatus initialize();
+  
+  // 파라미터 정리
+  static MStatus uninitialize();
+  
+  // 정적 파라미터 객체들
+  static MObject aInfluenceCurves;      // 영향 곡선들
+  static MObject aOffsetDistance;       // 오프셋 거리
+  static MObject aFalloffRadius;        // 영향 감쇠 반경
+  static MObject aCurveType;            // 곡선 타입
+  static MObject aBindData;             // 바인딩 데이터
+  static MObject aSamplePoints;         // 샘플링된 포인트들
+  static MObject aSampleWeights;        // 샘플링 가중치들
+  static MObject aOffsetVectors;        // 오프셋 벡터들
+  static MObject aBindMatrices;         // 바인딩 매트릭스들
+  static MObject aNumTasks;             // 태스크 수
+  static MObject aEnvelope;             // 엔벨로프
+  
+  // 파라미터 기본값들
+  static const double kDefaultOffsetDistance;
+  static const double kDefaultFalloffRadius;
+  static const int kDefaultCurveType;
+  static const int kDefaultNumTasks;
+  static const float kDefaultEnvelope;
+  
+  // 파라미터 범위들
+  static const double kMinOffsetDistance;
+  static const double kMaxOffsetDistance;
+  static const double kMinFalloffRadius;
+  static const double kMaxFalloffRadius;
+  static const int kMinNumTasks;
+  static const int kMaxNumTasks;
+  static const float kMinEnvelope;
+  static const float kMaxEnvelope;
 };
 
-#endif // OFFSETCURVECONTROLPARAMS_H
+#endif

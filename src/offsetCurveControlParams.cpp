@@ -6,17 +6,37 @@
 
 #include "offsetCurveControlParams.h"
 
-// 생성자
-offsetCurveControlParams::offsetCurveControlParams()
-{
-    // 기본값 초기화
-    resetToDefaults();
+// 파라미터 기본값들
+const double OffsetCurveControlParams::kDefaultOffsetDistance = 1.0;
+const double OffsetCurveControlParams::kDefaultFalloffRadius = 2.0;
+const int OffsetCurveControlParams::kDefaultCurveType = 0;
+const int OffsetCurveControlParams::kDefaultNumTasks = 32;
+const float OffsetCurveControlParams::kDefaultEnvelope = 1.0f;
+
+// 파라미터 범위들
+const double OffsetCurveControlParams::kMinOffsetDistance = 0.001;
+const double OffsetCurveControlParams::kMaxOffsetDistance = 100.0;
+const double OffsetCurveControlParams::kMinFalloffRadius = 0.1;
+const double OffsetCurveControlParams::kMaxFalloffRadius = 100.0;
+const int OffsetCurveControlParams::kMinNumTasks = 1;
+const int OffsetCurveControlParams::kMaxNumTasks = 64;
+const float OffsetCurveControlParams::kMinEnvelope = 0.0f;
+const float OffsetCurveControlParams::kMaxEnvelope = 1.0f;
+
+OffsetCurveControlParams::OffsetCurveControlParams() {
 }
 
-// 소멸자
-offsetCurveControlParams::~offsetCurveControlParams()
-{
-    // 필요한 정리 작업 (현재 없음)
+OffsetCurveControlParams::~OffsetCurveControlParams() {
+}
+
+MStatus OffsetCurveControlParams::initialize() {
+    // 파라미터 초기화 (현재는 기본값만 정의)
+    return MS::kSuccess;
+}
+
+MStatus OffsetCurveControlParams::uninitialize() {
+    // 파라미터 정리
+    return MS::kSuccess;
 }
 
 // 볼륨 및 슬라이딩 설정 메서드

@@ -1,0 +1,47 @@
+# Build artifacts
+build*/
+*.obj
+*.exe
+*.pdb
+*.user
+*.aps
+*.pch
+*.vspscc
+*_i.c
+*_p.c
+*.ncb
+*.suo
+*.tlb
+*.tlh
+*.bak
+*.cache
+*.ilk
+*.log
+*.lib
+*.sbr
+*.mll
+*.bundle
+*.so
+
+# IDE files
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+Thumbs.db
+.DS_Store
+*.tmp
+
+# Maya specific
+*.ma
+*.mb
+*.ma.bak
+*.mb.bak
+
+# Temporary files
+temp/
+tmp/
